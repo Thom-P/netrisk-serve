@@ -1,10 +1,15 @@
 ## General
 
+## Nginx
+- Need to understand conf file for streamlit
+
 ## Seiscomp
 - check if seiscomp update config can be limited to necessary modules only
 - enforce env variable validity?
 - install and run seiscomp as user instead of root?
 
+## Mariadb
+- check if init mounted db overrides existing one at container restart/rebuild
 
 ## Vsftpd
 - clean up vsftpd conf file

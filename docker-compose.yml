@@ -1,4 +1,16 @@
 services:
+  proxy: 
+    image: nginx:1.26-alpine-slim
+    depends_on:
+      - streamlit
+    restart: always
+    container_name: nginx
+    volumes:
+      - ./nginx_init/nginx.conf:/etc/nginx/nginx.conf:ro  # Nginx conf mounted as read-only
+    networks:
+      - streamlit_net
+    ports:
+      - 80:80
   db:
     image: mariadb:11.2
     restart: always
@@ -29,8 +41,8 @@ services:
     container_name: adminer
     environment:
       ADMINER_DEFAULT_SERVER: sc_mariadb
-    ports:
-      - "8081:8080"
+    #ports:
+    #  - "8081:8080"
     networks:
       - adminer_net
   ftp:
@@ -44,15 +56,15 @@ services:
     volumes:
       - ftp_data:/data/ftp
     environment:
-       - STATION_NAME=${STATION_NAME}
-       - STATION_PASSWD=${STATION_PASSWD}
-       - COUNTRY_CODE=${COUNTRY_CODE:-XX}
-       - STATE=${STATE:-State}
-       - LOCALITY=${LOCALITY:-City}
-       - ORGANIZATION=${ORGANIZATION:-Company}
-       - SECTION=${SECTION:-Section}
-       - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
-       - EMAIL_ADRESS=${EMAIL_ADRESS:-}
+      - STATION_NAME=${STATION_NAME}
+      - STATION_PASSWD=${STATION_PASSWD}
+      - COUNTRY_CODE=${COUNTRY_CODE:-XX}
+      - STATE=${STATE:-State}
+      - LOCALITY=${LOCALITY:-City}
+      - ORGANIZATION=${ORGANIZATION:-Company}
+      - SECTION=${SECTION:-Section}
+      - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
+      - EMAIL_ADRESS=${EMAIL_ADRESS:-}
   seiscomp:
     build: ./seiscomp
     depends_on:
@@ -60,8 +72,10 @@ services:
         condition: service_healthy
     restart: always
     container_name: seiscomp
-    ports:
+    expose:
       - "8080:8080"
+    #ports:
+    #  - "8080:8080"
     networks:
       - db_net
       - streamlit_net
@@ -80,7 +94,8 @@ services:
       - seiscomp
     restart: always
     container_name: streamlit
-    ports:
+    #ports:
+    expose:
       - "8501:8501"
     networks:
       - streamlit_net
