@@ -1,0 +1,14 @@
+## General
+
+## Seiscomp
+- check if seiscomp update config can be limited to necessary modules only
+- enforce env variable validity?
+- install and run seiscomp as user instead of root?
+
+
+## Vsftpd
+- clean up vsftpd conf file
+- check dotenv variable validity
+- verify where to generate ssl vertificate
+
+## Streamlit

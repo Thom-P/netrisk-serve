@@ -1,0 +1,93 @@
+services:
+  db:
+    image: mariadb:11.2
+    restart: always
+    container_name: sc_mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DATABASE_NAME:-seiscomp}
+      MYSQL_USER: ${USER_NAME:-sysop}
+      MYSQL_PASSWORD: ${USER_PASSWD:-sysop}
+      MYSQL_ROOT_HOST: localhost
+    volumes:
+      - sc_mariadb_data:/var/lib/mysql
+      - ./mariadb_init:/docker-entrypoint-initdb.d  # Initial seiscomp db template loaded from mariadb_init folder
+    expose:
+      - "3306"
+    networks:
+      - db_net
+      - adminer_net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  adminer:
+    image: adminer
+    restart: always
+    container_name: adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: sc_mariadb
+    ports:
+      - "8081:8080"
+    networks:
+      - adminer_net
+  ftp:
+    build: ./ftp
+    restart: always
+    container_name: vsftpd
+    ports:
+      - "20:20"
+      - "21:21"
+      - "7000-7500:7000-7500"
+    volumes:
+      - ftp_data:/data/ftp
+    environment:
+       - STATION_NAME=${STATION_NAME}
+       - STATION_PASSWD=${STATION_PASSWD}
+       - COUNTRY_CODE=${COUNTRY_CODE:-XX}
+       - STATE=${STATE:-State}
+       - LOCALITY=${LOCALITY:-City}
+       - ORGANIZATION=${ORGANIZATION:-Company}
+       - SECTION=${SECTION:-Section}
+       - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
+       - EMAIL_ADRESS=${EMAIL_ADRESS:-}
+  seiscomp:
+    build: ./seiscomp
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    container_name: seiscomp
+    ports:
+      - "8080:8080"
+    networks:
+      - db_net
+      - streamlit_net
+    volumes:
+      - ftp_data:/data/ftp
+    environment:
+       - DATABASE_NAME=${DATABASE_NAME:-seiscomp}
+       - USER_NAME=${USER_NAME:-sysop}
+       - USER_PASSWD=${USER_PASSWD:-sysop}
+       - ORGANIZATION=${ORGANIZATION:-Company}
+       - SECTION=${SECTION:-Section}
+       - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
+  streamlit:
+    build: ./streamlit
+    depends_on:
+      - seiscomp
+    restart: always
+    container_name: streamlit
+    ports:
+      - "8501:8501"
+    networks:
+      - streamlit_net
+volumes:
+  sc_mariadb_data:
+  ftp_data:
+networks:
+  db_net:
+  adminer_net:
+  streamlit_net:
