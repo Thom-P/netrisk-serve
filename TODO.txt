@@ -1,7 +1,6 @@
 ## General
 
 ## Nginx
-- Need to understand conf file for streamlit
 
 ## Seiscomp
 - check if seiscomp update config can be limited to necessary modules only
