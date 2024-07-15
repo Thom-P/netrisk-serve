@@ -8,10 +8,12 @@ services:
     environment:
       UI_USER: ${UI_USER:-admin}
       UI_PASSWD: ${UI_PASSWD:-admin}
+    volumes:
+      - ssl_cert:/etc/ssl/certs
     networks:
       - streamlit_net
     ports:
-      - 80:80
+      - 443:443
   db:
     image: mariadb:11.2
     restart: always
@@ -56,6 +58,7 @@ services:
       - "7000-7500:7000-7500"
     volumes:
       - ftp_data:/data/ftp
+      - ssl_cert:/etc/ssl/certs
     environment:
       - STATION_NAME=${STATION_NAME}
       - STATION_PASSWD=${STATION_PASSWD}
@@ -103,6 +106,7 @@ services:
 volumes:
   sc_mariadb_data:
   ftp_data:
+  ssl_cert:
 networks:
   db_net:
   adminer_net:

@@ -16,7 +16,7 @@ EOF
 fi
 
 # Generate ssl certificate (should do only once before first docker run instead?)
-<<EOF openssl req -x509 -nodes -days 1825 -newkey rsa:2048 -keyout /etc/vsftpd/vsftpd.key -out /etc/vsftpd/vsftpd.pem
+<<EOF openssl req -x509 -nodes -days 1825 -newkey rsa:2048 -keyout /etc/ssl/certs/netrisk.key -out /etc/ssl/certs/netrisk.pem
 $COUNTRY_CODE
 $STATE
 $LOCALITY
