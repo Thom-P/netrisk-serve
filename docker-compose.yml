@@ -1,12 +1,13 @@
 services:
   proxy: 
-    image: nginx:1.26-alpine-slim
+    build: ./nginx
     depends_on:
       - streamlit
     restart: always
     container_name: nginx
-    volumes:
-      - ./nginx_init/nginx.conf:/etc/nginx/nginx.conf:ro  # Nginx conf mounted as read-only
+    environment:
+      UI_USER: ${UI_USER:-admin}
+      UI_PASSWD: ${UI_PASSWD:-admin}
     networks:
       - streamlit_net
     ports:
