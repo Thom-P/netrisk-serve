@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",
     menu_items=None
-    )
+)
 # st.sidebar.markdown("# Home")
 
 sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
