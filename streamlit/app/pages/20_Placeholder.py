@@ -1,7 +1,11 @@
+import os
+import string
+
 import streamlit as st
 from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
+
 
 st.set_page_config(
     page_title='Add stations',
@@ -11,6 +15,18 @@ st.set_page_config(
     menu_items=None
 )
 # st.sidebar.markdown('# Placeholder')
+
+# Hacky patch to remove +/- buttons on number inputs causing instabilities
+# on repetitive clicks
+# https://github.com/streamlit/streamlit/issues/894
+st.markdown("""
+<style>
+    button.step-up {display: none;}
+    button.step-down {display: none;}
+    div[data-baseweb] {border-radius: 4px;}
+</style>""",
+unsafe_allow_html=True)
+
 st.title('Add stations')
 
 # Instrument and responses online catalog
@@ -18,20 +34,53 @@ st.title('Add stations')
 # todo: verify sensor and datalogger keys "depth"
 nrl = NRL()
 
+############################################################################
 st.markdown("## Station parameters")
 
 # todo: add validation for all inputs, min num of chars, type of chars, etc
 cols1 = st.columns(7)
 
-net = cols1[0].text_input("Network code", value="", max_chars=2, type="default", help=None, placeholder="??")
-stat = cols1[1].text_input("Station code", value="", max_chars=5, type="default", help=None, placeholder="????")
-lat = cols1[2].number_input("Station latitude (decimal degree)", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f") 
-lon = cols1[3].number_input("Station longitude (decimal degree)", value=1.2097, min_value=-180.0, max_value=180.0, format="%.4f") 
+valid_chars = set(string.ascii_uppercase + string.digits + '-')
+code_help_str = "1 - 8 alphanumeric characters or dash"
+coord_help_str = "in decimal degrees - WGS84"
+net_code = cols1[0].text_input("Network code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
+sta_code = cols1[1].text_input("Station code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
+lat = cols1[2].number_input("Station latitude", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str) 
+lon = cols1[3].number_input("Station longitude", value=1.2097, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str) 
 elev = cols1[4].number_input("Ground surface elevation (m)", value=0, min_value=-414, max_value=8848, format="%d")
 site = cols1[5].text_input("Station site name", value="", max_chars=64, type="default", help=None) 
-net, stat, lat, lon, elev, site
-#start
-#end
+
+
+def is_valid_code(code, valid_chars):
+    # Following norm: http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
+    if len(code) < 1 or len(code) > 8:
+        return False
+    if any(c not in valid_chars for c in code):
+        return False
+    return True
+
+if net_code is None or is_valid_code(net_code, valid_chars) is False or sta_code is None or is_valid_code(sta_code, valid_chars) is False:
+    st.write("Incomplete or invalid field...")
+    st.stop()
+else:
+    st.write((net_code, sta_code, lat, lon, elev, site))
+
+sta = Station(
+        code=sta_code,
+        latitude=lat,
+        longitude=lon,
+        elevation=elev,
+        site=Site(name=site)
+)
+
+net = Network(
+        code=net_code,
+        stations=[sta],
+)
+
+############################################################################
+st.markdown("## Channels")
+
 
 chan = st.text_input("Channel code", value="", max_chars=3, type="default", help=None)
 #cols1 = st.columns(7)
@@ -91,25 +140,10 @@ def create_inv(net, sta, lat, lon, elev, site, chan, loc_str, response):
 # Inventory template for writing stationXML file
     inv = Inventory(
         networks=[],
-        source="$UI_USER"
+        source=os.environ["UI_USER"]
     )
 
-    net = Network(
-        code=net,
-        stations=[],
-        #description="A test stations.",
-        # Start-and end dates are optional.
-        #start_date=obspy.UTCDateTime(2016, 1, 2)
-    )
-
-    sta = Station(
-        code=sta,
-        latitude=lat,
-        longitude=lon,
-        elevation=elev,
-        #creation_date=obspy.UTCDateTime(2016, 1, 2),
-        site=Site(name=site)
-    )
+    
 
     cha = Channel(
         code=chan,
@@ -136,7 +170,9 @@ def create_inv(net, sta, lat, lon, elev, site, chan, loc_str, response):
 # the StationXML schema to ensure it produces a valid StationXML file.
 def create_xml():
     inv = create_inv(net, stat, lat, lon, elev, site, chan, loc_str, response)
-    inv.write("station.xml", format="stationxml", validate=True)
+    fname = f'{net}.{stat}.xml'
+    inv.write(f'/data/inventory/ {fname}', format="stationxml", validate=True)
     return
 
-st.button("Create XML", on_click=create_xml, type="secondary")
+# todo: warn override if file exists (or same net code, stat exists)
+st.button("Create station XML", on_click=create_xml, type="secondary")

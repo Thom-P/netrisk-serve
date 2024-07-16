@@ -105,6 +105,10 @@ services:
       - "8501"
     networks:
       - streamlit_net
+    volumes:
+      - ./streamlit/tmp_xml:/data/inventory
+    environment:
+      UI_USER: ${UI_USER:-anonymous}  # to use in station xml creation (source field)
 volumes:
   sc_mariadb_data:
   ftp_data:
