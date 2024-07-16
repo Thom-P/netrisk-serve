@@ -3,6 +3,7 @@ services:
     build: ./nginx
     depends_on:
       - streamlit
+      - ftp  # for the ssl certif
     restart: always
     container_name: nginx
     environment:
@@ -44,8 +45,8 @@ services:
     container_name: adminer
     environment:
       ADMINER_DEFAULT_SERVER: sc_mariadb
-    #ports:
-    #  - "8081:8080"
+    ports:
+      - "8081:8080"  # for debug
     networks:
       - adminer_net
   ftp:

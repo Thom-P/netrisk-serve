@@ -30,7 +30,6 @@ sensor_param = None
 if sensor is not None and isinstance(nrl.sensors[sensor_manufacturer][sensor], dict):
     sensor_params = nrl.sensors[sensor_manufacturer][sensor].keys()
     sensor_param = st.selectbox(nrl.sensors[sensor_manufacturer][sensor].__str__(), sensor_params, index=None, placeholder="Choose an option")
-sensor_param
 ADC_manufacturer = st.selectbox("Select digitizer manufacturer", nrl.dataloggers.keys(), index=None, placeholder="Choose an option")
 ADCs = [] if ADC_manufacturer is None else nrl.dataloggers[ADC_manufacturer].keys()
 ADC = st.selectbox("Select digitizer", ADCs, index=None, placeholder="Choose an option", disabled=ADC_manufacturer is None)
@@ -42,7 +41,8 @@ ADC_sample_rate = None
 if ADC_gain is not None and isinstance(nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain], dict):
     ADC_sample_rates = nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain].keys()
     ADC_sample_rate = st.selectbox(nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain].__str__(), ADC_sample_rates, index=None, placeholder="Choose an option")
-
+[sensor_manufacturer, sensor, sensor_param]
+[ADC_manufacturer, ADC, ADC_gain, ADC_sample_rate]
 response = nrl.get_response(
     sensor_keys=[sensor_manufacturer, sensor, sensor_param],
     datalogger_keys=[ADC_manufacturer, ADC, ADC_gain, ADC_sample_rate]
