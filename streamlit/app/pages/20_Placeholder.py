@@ -16,38 +16,52 @@ st.title('Add stations')
 # todo: verify sensor and datalogger keys "depth"
 nrl = NRL()
 
-st.write("New station")
+st.markdown("## Station parameters")
 
 # todo: add validation for all inputs, min num of chars, type of chars, etc
-net = st.text_input("Network code", value="", max_chars=2, type="default", help=None, placeholder="??")
-stat = st.text_input("Station code", value="", max_chars=5, type="default", help=None, placeholder="????")
-loc = st.text_input("Location code", value="00", max_chars=2, type="default", help=None, placeholder="00") 
+cols1 = st.columns(3)
 
-sensor_manufacturer = st.selectbox("Select sensor manufacturer", nrl.sensors.keys(), index=None, placeholder="Choose an option")
-sensors = [] if sensor_manufacturer is None else nrl.sensors[sensor_manufacturer].keys()
-sensor = st.selectbox("Select sensor", sensors, index=None, placeholder="Choose an option", disabled=sensor_manufacturer is None)
-sensor_param = None
-if sensor is not None and isinstance(nrl.sensors[sensor_manufacturer][sensor], dict):
-    sensor_params = nrl.sensors[sensor_manufacturer][sensor].keys()
-    sensor_param = st.selectbox(nrl.sensors[sensor_manufacturer][sensor].__str__(), sensor_params, index=None, placeholder="Choose an option")
-ADC_manufacturer = st.selectbox("Select digitizer manufacturer", nrl.dataloggers.keys(), index=None, placeholder="Choose an option")
-ADCs = [] if ADC_manufacturer is None else nrl.dataloggers[ADC_manufacturer].keys()
-ADC = st.selectbox("Select digitizer", ADCs, index=None, placeholder="Choose an option", disabled=ADC_manufacturer is None)
-ADC_gain = None
-if ADC is not None and isinstance(nrl.dataloggers[ADC_manufacturer][ADC], dict):
-    ADC_gains = nrl.dataloggers[ADC_manufacturer][ADC].keys()
-    ADC_gain = st.selectbox(nrl.dataloggers[ADC_manufacturer][ADC].__str__(), ADC_gains, index=None, placeholder="Choose an option")
-ADC_sample_rate = None
-if ADC_gain is not None and isinstance(nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain], dict):
-    ADC_sample_rates = nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain].keys()
-    ADC_sample_rate = st.selectbox(nrl.dataloggers[ADC_manufacturer][ADC][ADC_gain].__str__(), ADC_sample_rates, index=None, placeholder="Choose an option")
-[sensor_manufacturer, sensor, sensor_param]
-[ADC_manufacturer, ADC, ADC_gain, ADC_sample_rate]
-response = nrl.get_response(
-    sensor_keys=[sensor_manufacturer, sensor, sensor_param],
-    datalogger_keys=[ADC_manufacturer, ADC, ADC_gain, ADC_sample_rate]
-)
-response
+net = cols1[0].text_input("Network code", value="", max_chars=2, type="default", help=None, placeholder="??")
+stat = cols1[1].text_input("Station code", value="", max_chars=5, type="default", help=None, placeholder="????")
+loc = cols1[2].text_input("Location code", value="00", max_chars=2, type="default", help=None, placeholder="00") 
+#make location num instead, add lat lon dep az dip
+# make add chans tab, start and end time, chan code, and the sens, digit, 
+
+def create_selectbox(choices: dict):
+    label = choices.__str__().partition('(')[0]
+    choice = st.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
+    return choice
+
+st.markdown("## Sensor")
+sensor_keys=[]
+curr_choices = nrl.sensors
+while isinstance(curr_choices, dict):
+    choice = create_selectbox(curr_choices)
+    if choice is None:
+        st.stop()
+    else:
+        sensor_keys.append(choice)
+        curr_choices = curr_choices[choice]
+curr_choices
+
+st.markdown("## Datalogger")
+datalogger_keys=[]
+curr_choices = nrl.dataloggers
+while isinstance(curr_choices, dict):
+    choice = create_selectbox(curr_choices)
+    if choice is None:
+        st.stop()
+    else:
+        datalogger_keys.append(choice)
+        curr_choices = curr_choices[choice]
+curr_choices
+
+with st.spinner('Loading response file...'):
+    response = nrl.get_response(
+        sensor_keys=sensor_keys,
+        datalogger_keys=datalogger_keys
+    )
+    response
 
 with st.form("new_station_form"):
     checkbox_val = st.checkbox("Form checkbox")
