@@ -14,7 +14,8 @@ services:
     networks:
       - streamlit_net
     ports:
-      - 443:443
+      #- "443:443" # when ready to expose to web
+      - "127.0.0.1:443:443"  # only accessible form server (via ssh and port forward)
   db:
     image: mariadb:11.2
     restart: always
@@ -46,7 +47,7 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: sc_mariadb
     ports:
-      - "8081:8080"  # for debug
+      - "127.0.0.1:8081:8080"  # for debug
     networks:
       - adminer_net
   ftp:
@@ -78,7 +79,7 @@ services:
     restart: always
     container_name: seiscomp
     expose:
-      - "8080:8080"
+      - "8080"
     #ports:
     #  - "8080:8080"
     networks:
@@ -101,7 +102,7 @@ services:
     container_name: streamlit
     #ports:
     expose:
-      - "8501:8501"
+      - "8501"
     networks:
       - streamlit_net
 volumes:
