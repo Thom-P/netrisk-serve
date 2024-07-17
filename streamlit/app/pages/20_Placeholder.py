@@ -41,7 +41,7 @@ st.markdown("## Station parameters")
 cols1 = st.columns(7)
 
 valid_chars = set(string.ascii_uppercase + string.digits + '-')
-code_help_str = "1 - 8 alphanumeric characters or dash"
+code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
 coord_help_str = "in decimal degrees - WGS84"
 net_code = cols1[0].text_input("Network code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
 sta_code = cols1[1].text_input("Station code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
@@ -80,13 +80,73 @@ net = Network(
 
 ############################################################################
 st.markdown("## Channels")
+band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
+band_codes = {
+    'J': 'fs > 5000', 
+    'F': '1000 ≤ fs < 5000, Tc ≥ 10',
+    'G': '1000 ≤ fs < 5000, Tc < 10', 
+    'D': '250 ≤ fs < 1000, Tc < 10',
+    'C': '250 ≤ fs < 1000, Tc ≥ 10', 
+    'E': 'Extremely Short Period, 80 ≤ fs < 250, Tc < 10',
+    'S': 'Short Period, 10 ≤ fs < 80, Tc < 10',
+    'H': 'High Broadband, 80 ≤ fs < 250, Tc ≥ 10',
+    'B': 'Broadband, 10 ≤ fs < 80, Tc ≥ 10',
+    'M': 'Mid Period, 1 < fs < 10',
+    'L': 'Long Period, fs ~ 1',
+    'V': 'Very Long Period, 0.1 ≤ fs < 1',
+    'U': 'Ultra Long Period, 0.01 ≤ fs < 0.1', 
+    'W': 'Ultra-ultra Long Period, 0.001 ≤ fs < 0.01', 
+    'R': 'Extremely Long Period, 0.0001 ≤ fs < 0.001',
+    'P': 'On the order of 0.1 to 1 day, 0.00001 ≤ fs < 0.0001',
+    'T': 'On the order of 1 to 10 days, 0.000001 ≤ fs < 0.00001',
+    'Q': 'Greater than 10 days, fs < 0.000001',
+    'I': 'Irregularly sampled'
+}
+st.page_link(band_url, label=':blue[More info on band codes ↗]')
+band_code = st.selectbox("Band code (fs: sample rate, Tc: lower bound of instrument response)", band_codes, format_func=lambda code: f'{code}: {band_codes[code]}')
+if band_code is None:
+    st.stop()
 
+source_codes = {
+    'H': 'High Gain Seismometer',
+    'L': 'Low Gain Seismometer',
+    'M': 'Mass Position Seismometer',
+    'N': 'Accelerometer',
+    'P': 'Geophone, very short period seismometer with natural frequency 5 - 10 Hz or higher',
+    'A': 'Tilt Meter',
+    'B': 'Creep Meter',
+    'C': 'Calibration input',
+    'D': 'Pressure',
+    'E': 'Electronic Test Point',
+    'F': 'Magnetometer',
+    'I': 'Humidity',
+    'J': 'Rotational Sensor',
+    'K': 'Temperature',
+    'O': 'Water Current',
+    'G': 'Gravimeter',
+    'Q': 'Electric Potential',
+    'R': 'Rainfall',
+    'S': 'Linear Strain',
+    'T': 'Tide',
+    'U': 'Bolometer',
+    'V': 'Volumetric Strain',
+    'W': 'Wind',
+    'X': 'Derived or generated channel',
+    'Y': 'Non-specific instruments',
+    'Z': 'Synthesized Beams'
+}
+
+source_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#source-and-subsource-codes'
+st.page_link(source_url, label=':blue[More info on source codes? ↗]')
+source_code = st.selectbox("Source code", source_codes, format_func=lambda code: f'{code}: {source_codes[code]}')
+if band_code is None:
+    st.stop()
+band_code, source_code
 
 chan = st.text_input("Channel code", value="", max_chars=3, type="default", help=None)
 #cols1 = st.columns(7)
-loc = st.number_input("Location code", value="min", min_value=0, max_value=99, step=None, format="%02d", help=None, placeholder="00") 
-loc_str = f'{loc:02d}'
-chan, loc_str
+loc_code = st.text_input("Location code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
+chan, loc_code
 #make location num instead, add lat lon dep az dip
 # make add chans tab, start and end time, chan code, and the sens, digit, 
 
@@ -147,7 +207,7 @@ def create_inv(net, sta, lat, lon, elev, site, chan, loc_str, response):
 
     cha = Channel(
         code=chan,
-        location_code=loc_str,
+        location_code=loc_code,
         # Note that these coordinates can differ from the station coordinates.
         latitude=lat,
         longitude=lon,
