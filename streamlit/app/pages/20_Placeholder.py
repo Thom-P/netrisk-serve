@@ -8,7 +8,7 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
 
 st.set_page_config(
-    page_title='Add stations',
+    page_title='Add station',
     page_icon=None,
     layout="wide",
     initial_sidebar_state="auto",
@@ -27,28 +27,29 @@ st.markdown("""
 </style>""",
 unsafe_allow_html=True)
 
-st.title('Add stations')
+st.title('Add station')
 
 # Instrument and responses online catalog
-# todoldeprecated: need to use v2 offline copy instead...
-# todo: verify sensor and datalogger keys "depth"
+# todo deprecated: need to use v2 offline copy instead...
 nrl = NRL()
 
 ############################################################################
 st.markdown("## Station parameters")
 
-# todo: add validation for all inputs, min num of chars, type of chars, etc
-cols1 = st.columns(7)
-
 valid_chars = set(string.ascii_uppercase + string.digits + '-')
 code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
 coord_help_str = "in decimal degrees - WGS84"
-net_code = cols1[0].text_input("Network code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
-sta_code = cols1[1].text_input("Station code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
-lat = cols1[2].number_input("Station latitude", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str) 
-lon = cols1[3].number_input("Station longitude", value=1.2097, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str) 
-elev = cols1[4].number_input("Ground surface elevation (m)", value=0, min_value=-414, max_value=8848, format="%d")
-site = cols1[5].text_input("Station site name", value="", max_chars=64, type="default", help=None) 
+
+net_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/network-codes.html#'
+st.page_link(net_url, label=':blue[More info on naming conventions ↗]')
+
+cols1 = st.columns(7)
+net_code = cols1[0].text_input("__Network code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
+sta_code = cols1[1].text_input("__Station code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
+lat = cols1[2].number_input("__Station latitude__", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str) 
+lon = cols1[3].number_input("__Station longitude__", value=1.2097, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str) 
+elev = cols1[4].number_input("__Ground surface elevation__ (m)", value=0, min_value=-414, max_value=8848, format="%d")
+site = cols1[5].text_input("__Station site name__", value="", max_chars=64, type="default", help=None) 
 
 
 def is_valid_code(code, valid_chars):
@@ -59,11 +60,12 @@ def is_valid_code(code, valid_chars):
         return False
     return True
 
-if net_code is None or is_valid_code(net_code, valid_chars) is False or sta_code is None or is_valid_code(sta_code, valid_chars) is False:
-    st.write("Incomplete or invalid field...")
+if net_code is None or is_valid_code(net_code, valid_chars) is False:
+    st.write(":red[Invalid network code!]")
     st.stop()
-else:
-    st.write((net_code, sta_code, lat, lon, elev, site))
+elif sta_code is None or is_valid_code(sta_code, valid_chars) is False:
+    st.write(":red[Invalid station code!]")
+    st.stop()
 
 sta = Station(
         code=sta_code,
@@ -78,9 +80,13 @@ net = Network(
         stations=[sta],
 )
 
+st.divider()
 ############################################################################
-st.markdown("## Channels")
+st.markdown("## Channel(s)")
+
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
+st.page_link(band_url, label=':blue[More info on channel codes ↗]')
+
 band_codes = {
     'J': 'fs > 5000', 
     'F': '1000 ≤ fs < 5000, Tc ≥ 10',
@@ -102,8 +108,9 @@ band_codes = {
     'Q': 'Greater than 10 days, fs < 0.000001',
     'I': 'Irregularly sampled'
 }
-st.page_link(band_url, label=':blue[More info on band codes ↗]')
-band_code = st.selectbox("Band code (fs: sample rate, Tc: lower bound of instrument response)", band_codes, format_func=lambda code: f'{code}: {band_codes[code]}')
+
+cols2 = st.columns(3)
+band_code = cols2[0].selectbox("__Band code__ - fs: sample rate (Hz); Tc: lower period bound of instrument response (s)", band_codes, format_func=lambda code: f'{code} - {band_codes[code]}')
 if band_code is None:
     st.stop()
 
@@ -136,19 +143,54 @@ source_codes = {
     'Z': 'Synthesized Beams'
 }
 
-source_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#source-and-subsource-codes'
-st.page_link(source_url, label=':blue[More info on source codes? ↗]')
-source_code = st.selectbox("Source code", source_codes, format_func=lambda code: f'{code}: {source_codes[code]}')
+source_code = cols2[1].selectbox("__Source code (instrument)__", source_codes, format_func=lambda code: f'{code} - {source_codes[code]}')
 if band_code is None:
     st.stop()
-band_code, source_code
 
-chan = st.text_input("Channel code", value="", max_chars=3, type="default", help=None)
-#cols1 = st.columns(7)
-loc_code = st.text_input("Location code", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
-chan, loc_code
-#make location num instead, add lat lon dep az dip
+# need one category per source code...todo
+subsource_codes = { 
+    'N, E, Z': 'North, East, Up',
+    '1, 2, Z': 'Orthogonal components, nontraditional horizontals',
+    '1, 2, 3': 'Orthogonal components, nontraditional orientations',
+    'T, R': 'For rotated components or beams (Transverse, Radial)',
+    'A, B, C': 'Triaxial (Along the edges of a cube turned up on a corner)',
+    'U, V, W': 'Optional components, also used for raw triaxial output'
+}
+
+subsource_code = cols2[2].selectbox("__Subsource code(s) (components)__", subsource_codes, format_func=lambda code: f'{code} - {subsource_codes[code]}')
+if subsource_code is None:
+    st.stop()
+subsource_code_list = subsource_code.split(', ')
+
+col3 = st.columns(len(subsource_code_list))
+channels = []
+for i, sub_code in enumerate(subsource_code_list):
+    cont = col3[i].container(border=True)
+    chan_code = '_'.join((band_code, source_code, sub_code))
+    with cont:
+        st.write(f"__Channel {chan_code}__")
+        loc_code = st.text_input("Location code", value="00", max_chars=8, type="default", help=code_help_str, key=f'{band_code}{source_code}{sub_code}')
+    cha = Channel(
+        code=chan_code,
+        location_code=loc_code,
+        # Note that these coordinates can differ from the station coordinates.
+        # todo allow change
+        latitude=lat,
+        longitude=lon,
+        elevation=elev,
+        depth=0.0,
+        #azimuth=0.0,
+        #dip=-90.0,
+        #sample_rate=200
+    )
+    channels.append(cha)
+
+
+# add lat lon dep az dip
 # make add chans tab, start and end time, chan code, and the sens, digit, 
+
+st.divider()
+## Sensor choice
 
 def create_selectbox(choices: dict):
     label = choices.__str__().partition('(')[0]
@@ -186,6 +228,9 @@ with st.spinner('Loading response file...'):
     )
     response
 
+## Summary
+st.markdown("Summary")
+
 #with st.form("new_station_form"):
 #    checkbox_val = st.checkbox("Form checkbox")
 
@@ -196,40 +241,26 @@ with st.spinner('Loading response file...'):
 
 #st.write("Outside the form")
 
-def create_inv(net, sta, lat, lon, elev, site, chan, loc_str, response):
+def create_inv(net, sta, channels, response):
 # Inventory template for writing stationXML file
     inv = Inventory(
-        networks=[],
+        networks=[net],
         source=os.environ["UI_USER"]
     )
-
     
-
-    cha = Channel(
-        code=chan,
-        location_code=loc_code,
-        # Note that these coordinates can differ from the station coordinates.
-        latitude=lat,
-        longitude=lon,
-        elevation=elev,
-        depth=0.0,
-        #azimuth=0.0,
-        #dip=-90.0,
-        #sample_rate=200
-    )
-
     # Now tie it all together.
-    cha.response = response
-    sta.channels.append(cha)
-    net.stations.append(sta)
-    inv.networks.append(net)
+    #[cha.response = response for cha in channels]
+    for cha in channels:
+        cha.response = response
+    sta.channels = channels
     return inv
 
+inv = create_inv(net, sta, channels, response)
+st.write(inv)
 
 # Write to a StationXML file. Also force a validation against
 # the StationXML schema to ensure it produces a valid StationXML file.
 def create_xml():
-    inv = create_inv(net, stat, lat, lon, elev, site, chan, loc_str, response)
     fname = f'{net}.{stat}.xml'
     inv.write(f'/data/inventory/ {fname}', format="stationxml", validate=True)
     return
