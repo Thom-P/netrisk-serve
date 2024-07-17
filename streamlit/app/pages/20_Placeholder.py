@@ -43,7 +43,7 @@ coord_help_str = "in decimal degrees - WGS84"
 net_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/network-codes.html#'
 st.page_link(net_url, label=':blue[More info on naming conventions ↗]')
 
-cols1 = st.columns(7)
+cols1 = st.columns(6)
 net_code = cols1[0].text_input("__Network code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
 sta_code = cols1[1].text_input("__Station code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
 lat = cols1[2].number_input("__Station latitude__", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str) 
@@ -61,10 +61,12 @@ def is_valid_code(code, valid_chars):
     return True
 
 if net_code is None or is_valid_code(net_code, valid_chars) is False:
-    st.write(":red[Invalid network code!]")
+    #st.write(":red[Invalid or empty network code!]")
+    st.warning('Invalid or empty network code', icon="⚠️")
     st.stop()
 elif sta_code is None or is_valid_code(sta_code, valid_chars) is False:
-    st.write(":red[Invalid station code!]")
+    #st.write(":red[Invalid or empty station code!]")
+    st.warning('Invalid or empty station code', icon="⚠️")
     st.stop()
 
 sta = Station(
@@ -80,9 +82,13 @@ net = Network(
         stations=[sta],
 )
 
+st.success(f"{sta}", icon="✅")
+
 st.divider()
 ############################################################################
 st.markdown("## Channel(s)")
+
+st.markdown("### Channel code(s)")
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
@@ -154,7 +160,15 @@ subsource_codes = {
     '1, 2, 3': 'Orthogonal components, nontraditional orientations',
     'T, R': 'For rotated components or beams (Transverse, Radial)',
     'A, B, C': 'Triaxial (Along the edges of a cube turned up on a corner)',
-    'U, V, W': 'Optional components, also used for raw triaxial output'
+    'U, V, W': 'Optional components, also used for raw triaxial output',
+    'N': 'North',
+    'E': 'East',
+    'Z': 'Up',
+    '1': 'Orthogonal components, nontraditional orientations',
+    '2': 'Orthogonal components, nontraditional orientations',
+    '3': 'Orthogonal components, nontraditional orientations',
+    'T': 'For rotated components or beams (Transverse)',
+    'R': 'For rotated components or beams (Radial)',
 }
 
 subsource_code = cols2[2].selectbox("__Subsource code(s) (components)__", subsource_codes, format_func=lambda code: f'{code} - {subsource_codes[code]}')
@@ -162,46 +176,23 @@ if subsource_code is None:
     st.stop()
 subsource_code_list = subsource_code.split(', ')
 
-col3 = st.columns(len(subsource_code_list))
-channels = []
-for i, sub_code in enumerate(subsource_code_list):
-    cont = col3[i].container(border=True)
-    chan_code = '_'.join((band_code, source_code, sub_code))
-    with cont:
-        st.write(f"__Channel {chan_code}__")
-        loc_code = st.text_input("Location code", value="00", max_chars=8, type="default", help=code_help_str, key=f'{band_code}{source_code}{sub_code}')
-    cha = Channel(
-        code=chan_code,
-        location_code=loc_code,
-        # Note that these coordinates can differ from the station coordinates.
-        # todo allow change
-        latitude=lat,
-        longitude=lon,
-        elevation=elev,
-        depth=0.0,
-        #azimuth=0.0,
-        #dip=-90.0,
-        #sample_rate=200
-    )
-    channels.append(cha)
-
-
-# add lat lon dep az dip
-# make add chans tab, start and end time, chan code, and the sens, digit, 
-
-st.divider()
+# todo make it optional
 ## Sensor choice
-
-def create_selectbox(choices: dict):
+def create_selectbox(choices: dict, col):
     label = choices.__str__().partition('(')[0]
-    choice = st.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
+    choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
 
-st.markdown("## Sensor")
+# todo make sure max depth is not greater than 6
+st.markdown("### Sensor")
+col_sensor = st.columns(6, vertical_alignment="bottom")
+i_col = 0
 sensor_keys=[]
 curr_choices = nrl.sensors
 while isinstance(curr_choices, dict):
-    choice = create_selectbox(curr_choices)
+    col = col_sensor[i_col]
+    choice = create_selectbox(curr_choices, col)
+    i_col += 1
     if choice is None:
         st.stop()
     else:
@@ -209,11 +200,18 @@ while isinstance(curr_choices, dict):
         curr_choices = curr_choices[choice]
 curr_choices
 
-st.markdown("## Datalogger")
+#st.divider()
+
+# todo make sure max depth is not greater than 6
+st.markdown("### Datalogger")
+col_datalogger = st.columns(6, vertical_alignment="bottom")
+j_col = 0
 datalogger_keys=[]
 curr_choices = nrl.dataloggers
 while isinstance(curr_choices, dict):
-    choice = create_selectbox(curr_choices)
+    col = col_datalogger[j_col]
+    choice = create_selectbox(curr_choices, col)
+    j_col += 1
     if choice is None:
         st.stop()
     else:
@@ -227,6 +225,41 @@ with st.spinner('Loading response file...'):
         datalogger_keys=datalogger_keys
     )
     response
+
+#######################################
+## Display channels
+
+col3 = st.columns(len(subsource_code_list))
+channels = []
+for i, sub_code in enumerate(subsource_code_list):
+    cont = col3[i].container(border=True)
+    chan_code = '_'.join((band_code, source_code, sub_code))
+    with cont:
+        st.write(f"__Channel {chan_code}__")
+        loc_code = st.text_input("Location code", value="00", max_chars=8, type="default", help=code_help_str, key=f'loc{band_code}{source_code}{sub_code}')
+        chan_lat = st.number_input("__Channel latitude__", value=lat, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f'lat{band_code}{source_code}{sub_code}') 
+        chan_lon = st.number_input("__Channel longitude__", value=lon, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f'lon{band_code}{source_code}{sub_code}') 
+        chan_depth = st.number_input("__Sensor depth__ (m)", value=0, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f'depth{band_code}{source_code}{sub_code}')
+        chan_elev = elev - chan_depth
+        st.write(f"__Sensor elevation__ = {chan_elev} m") 
+        #st.number_input("__Sensor elevation__ (m)", value=elev, min_value=-10000, max_value=10000, format="%d", help="Should correspond to ground elevation minus depth", key=f'elev{band_code}{source_code}{sub_code}')
+    cha = Channel(
+        code=chan_code,
+        location_code=loc_code,
+        # Note that these coordinates can differ from the station coordinates.
+        latitude=chan_lat,
+        longitude=chan_lon,
+        elevation=chan_elev,
+        depth=chan_depth,
+        #azimuth=0.0,
+        #dip=-90.0,
+        #sample_rate=200
+    )
+    channels.append(cha)
+
+# make add chans tab, start and end time, chan code, and the sens, digit, 
+
+st.divider()
 
 ## Summary
 st.markdown("Summary")
