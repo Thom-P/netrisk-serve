@@ -32,7 +32,7 @@ def get_station_parameters():
     if lat is None or lon is None or elev is None:
         st.warning('Empty coordinate(s)', icon="⚠️")
         st.stop()
-    if len(site) == 0: 
+    if site is None or len(site) == 0: 
         st.warning('Empty site name', icon="⚠️")
         st.stop()
     return net_code, sta_code, lat, lon, elev, site
@@ -101,3 +101,49 @@ def create_selectbox(choices: dict, col):
     label = choices.__str__().partition('(')[0]
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
+
+def build_channel_objects(band_code, source_code, subsource_code, response, sta):
+    channel_objs = []
+    code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
+    coord_help_str = "in decimal degrees - WGS84"
+    subsource_code_list = subsource_code.split(', ')
+    cols = st.columns(len(subsource_code_list))
+    for i, sub_code in enumerate(subsource_code_list):
+        cont = cols[i].container(border=True)
+        chan_code = '_'.join((band_code, source_code, sub_code))
+        with cont:
+            st.write(f"__Channel {chan_code}__")
+            loc_code = st.text_input("Location code", value="00", max_chars=8, type="default", help=code_help_str, key=f'loc{band_code}{source_code}{sub_code}')
+            chan_lat = st.number_input("__Channel latitude__", value=sta.latitude, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f'lat{band_code}{source_code}{sub_code}') 
+            chan_lon = st.number_input("__Channel longitude__", value=sta.longitude, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f'lon{band_code}{source_code}{sub_code}') 
+            chan_depth = st.number_input("__Sensor depth__ (m)", value=0, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f'depth{band_code}{source_code}{sub_code}')
+            chan_elev = sta.elevation - chan_depth
+            st.write(f"__Sensor elevation__ = {chan_elev} m") 
+            #st.number_input("__Sensor elevation__ (m)", value=elev, min_value=-10000, max_value=10000, format="%d", help="Should correspond to ground elevation minus depth", key=f'elev{band_code}{source_code}{sub_code}')
+        cha = Channel(
+            code=chan_code,
+            location_code=loc_code,
+            # Note that these coordinates can differ from the station coordinates.
+            latitude=chan_lat,
+            longitude=chan_lon,
+            elevation=chan_elev,
+            depth=chan_depth,
+            response=response,
+            #azimuth=0.0,
+            #dip=-90.0,
+            #sample_rate=200
+        )
+        channel_objs.append(cha)
+
+
+##################################################
+#class Instrument:
+#    def __init__(self):
+#        self.sensor_keys = None
+#        self.datalogger_keys = None
+#        self.response = None
+#        self.channels = []
+
+#class StationXML:
+#    def __init__(self):
+#        self.params

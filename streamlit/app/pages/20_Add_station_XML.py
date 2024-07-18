@@ -1,5 +1,5 @@
 import os
-import string
+import io
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -9,7 +9,7 @@ from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
-from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device
+from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects
 
 st.set_page_config(
     page_title='Add station',
@@ -43,45 +43,50 @@ st.markdown("## Station parameters")
 net_code, sta_code, lat, lon, elev, site = get_station_parameters()
 
 net, sta = build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site)
-st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) - Lat., Lon. = {sta.latitude}, {sta.longitude} - Elev. = {sta.elevation} m", icon="✅")
+st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m", icon="✅")
 st.divider()
 
 ############################################################################
 st.markdown("## Channel(s)")
 
+channels = []
 st.markdown("### Channel code(s)")
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
 band_code, source_code, subsource_code = get_channel_codes()
-subsource_code_list = subsource_code.split(', ')
 
-sensor_keys, datalogger_keys = None, None
-if st.toggle("Choose sensor", value = True):
+attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = True)
+response = None
+if attach_response:
     sensor_keys = choose_device(nrl.sensors, 'Sensor')
-if st.toggle("Choose datalogger", value = True):
     datalogger_keys = choose_device(nrl.dataloggers, 'Datalogger')
-
-if sensor_keys is not None or datalogger_keys is not None:
     with st.spinner('Loading response file...'):
         response = nrl.get_response(
             sensor_keys=sensor_keys,
             datalogger_keys=datalogger_keys
         )
+    with st.expander("Visualize instrument response"):
         #st.info(response, icon="ℹ️") # messes format
-        response
-        fig, (ax0, ax1) = plt.subplots(2, 1)
-        response.plot(1e-3, axes=(ax0, ax1))
-        fig_html = mpld3.fig_to_html(fig)
-        components.html(fig_html, height=600)
+        cols = st.columns(2, vertical_alignment="center")
+        with cols[0]:
+            st.write(response)
+        #fig, (ax0, ax1) = plt.subplots(2, 1)
+        #response.plot(1e-3, axes=(ax0, ax1))
+        with cols[1]:
+            with st.spinner('Loading plot...'):
+                plot_buffer = io.BytesIO()
+                response.plot(1e-3, outfile=plot_buffer)
+                st.image(plot_buffer, use_column_width=True)
 
 
+curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sta)
+channels.append(curr_channels)
 st.stop()
 #######################################
 ## Display channels
 
 col3 = st.columns(len(subsource_code_list))
-channels = []
 for i, sub_code in enumerate(subsource_code_list):
     cont = col3[i].container(border=True)
     chan_code = '_'.join((band_code, source_code, sub_code))
