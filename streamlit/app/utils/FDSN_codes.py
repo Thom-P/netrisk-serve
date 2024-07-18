@@ -1,3 +1,7 @@
+import string
+
+valid_chars = set(string.ascii_uppercase + string.digits + '-')
+
 band_codes = {
     'J': 'fs > 5000', 
     'F': '1000 ≤ fs < 5000, Tc ≥ 10',

@@ -2,11 +2,14 @@ import os
 import string
 
 import streamlit as st
+import streamlit.components.v1 as components
+import mpld3
+import matplotlib.pyplot as plt
 from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
-from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes
+from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device
 
 st.set_page_config(
     page_title='Add station',
@@ -37,18 +40,7 @@ nrl = NRL()
 ############################################################################
 st.markdown("## Station parameters")
 
-valid_chars = set(string.ascii_uppercase + string.digits + '-')
 net_code, sta_code, lat, lon, elev, site = get_station_parameters()
-
-if net_code is None or is_valid_code(net_code, valid_chars) is False:
-    st.warning('Invalid or empty network code', icon="⚠️")
-    st.stop()
-elif sta_code is None or is_valid_code(sta_code, valid_chars) is False:
-    st.warning('Invalid or empty station code', icon="⚠️")
-    st.stop()
-elif len(site) == 0: 
-    st.warning('Empty site name', icon="⚠️")
-    st.stop()
 
 net, sta = build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site)
 st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) - Lat., Lon. = {sta.latitude}, {sta.longitude} - Elev. = {sta.elevation} m", icon="✅")
@@ -64,56 +56,27 @@ st.page_link(band_url, label=':blue[More info on channel codes ↗]')
 band_code, source_code, subsource_code = get_channel_codes()
 subsource_code_list = subsource_code.split(', ')
 
-# todo make it optional
-## Sensor choice
-def create_selectbox(choices: dict, col):
-    label = choices.__str__().partition('(')[0]
-    choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
-    return choice
+sensor_keys, datalogger_keys = None, None
+if st.toggle("Choose sensor", value = True):
+    sensor_keys = choose_device(nrl.sensors, 'Sensor')
+if st.toggle("Choose datalogger", value = True):
+    datalogger_keys = choose_device(nrl.dataloggers, 'Datalogger')
 
-# todo make sure max depth is not greater than 6
-st.markdown("### Sensor")
-col_sensor = st.columns(6, vertical_alignment="bottom")
-i_col = 0
-sensor_keys=[]
-curr_choices = nrl.sensors
-while isinstance(curr_choices, dict):
-    col = col_sensor[i_col]
-    choice = create_selectbox(curr_choices, col)
-    i_col += 1
-    if choice is None:
-        st.stop()
-    else:
-        sensor_keys.append(choice)
-        curr_choices = curr_choices[choice]
-curr_choices
+if sensor_keys is not None or datalogger_keys is not None:
+    with st.spinner('Loading response file...'):
+        response = nrl.get_response(
+            sensor_keys=sensor_keys,
+            datalogger_keys=datalogger_keys
+        )
+        #st.info(response, icon="ℹ️") # messes format
+        response
+        fig, (ax0, ax1) = plt.subplots(2, 1)
+        response.plot(1e-3, axes=(ax0, ax1))
+        fig_html = mpld3.fig_to_html(fig)
+        components.html(fig_html, height=600)
 
-#st.divider()
 
-# todo make sure max depth is not greater than 6
-st.markdown("### Datalogger")
-col_datalogger = st.columns(6, vertical_alignment="bottom")
-j_col = 0
-datalogger_keys=[]
-curr_choices = nrl.dataloggers
-while isinstance(curr_choices, dict):
-    col = col_datalogger[j_col]
-    choice = create_selectbox(curr_choices, col)
-    j_col += 1
-    if choice is None:
-        st.stop()
-    else:
-        datalogger_keys.append(choice)
-        curr_choices = curr_choices[choice]
-curr_choices
-
-with st.spinner('Loading response file...'):
-    response = nrl.get_response(
-        sensor_keys=sensor_keys,
-        datalogger_keys=datalogger_keys
-    )
-    response
-
+st.stop()
 #######################################
 ## Display channels
 
