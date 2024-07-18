@@ -6,6 +6,7 @@ from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 
+from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes
 
 st.set_page_config(
     page_title='Add station',
@@ -37,28 +38,7 @@ nrl = NRL()
 st.markdown("## Station parameters")
 
 valid_chars = set(string.ascii_uppercase + string.digits + '-')
-code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
-coord_help_str = "in decimal degrees - WGS84"
-
-net_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/network-codes.html#'
-st.page_link(net_url, label=':blue[More info on naming conventions ↗]')
-
-cols1 = st.columns(6)
-net_code = cols1[0].text_input("__Network code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
-sta_code = cols1[1].text_input("__Station code__", value="", max_chars=8, type="default", help=code_help_str, placeholder="")
-lat = cols1[2].number_input("__Station latitude__", value=44.3387, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str) 
-lon = cols1[3].number_input("__Station longitude__", value=1.2097, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str) 
-elev = cols1[4].number_input("__Ground surface elevation__ (m)", value=0, min_value=-414, max_value=8848, format="%d")
-site = cols1[5].text_input("__Station site name__", value="", max_chars=64, type="default", help=None) 
-
-
-def is_valid_code(code, valid_chars):
-    # Following norm: http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
-    if len(code) < 1 or len(code) > 8:
-        return False
-    if any(c not in valid_chars for c in code):
-        return False
-    return True
+net_code, sta_code, lat, lon, elev, site = get_station_parameters()
 
 if net_code is None or is_valid_code(net_code, valid_chars) is False:
     st.warning('Invalid or empty network code', icon="⚠️")
@@ -70,22 +50,10 @@ elif len(site) == 0:
     st.warning('Empty site name', icon="⚠️")
     st.stop()
 
-sta = Station(
-        code=sta_code,
-        latitude=lat,
-        longitude=lon,
-        elevation=elev,
-        site=Site(name=site)
-)
-
-net = Network(
-        code=net_code,
-        stations=[sta],
-)
-
+net, sta = build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site)
 st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) - Lat., Lon. = {sta.latitude}, {sta.longitude} - Elev. = {sta.elevation} m", icon="✅")
-
 st.divider()
+
 ############################################################################
 st.markdown("## Channel(s)")
 
@@ -93,88 +61,7 @@ st.markdown("### Channel code(s)")
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
-
-band_codes = {
-    'J': 'fs > 5000', 
-    'F': '1000 ≤ fs < 5000, Tc ≥ 10',
-    'G': '1000 ≤ fs < 5000, Tc < 10', 
-    'D': '250 ≤ fs < 1000, Tc < 10',
-    'C': '250 ≤ fs < 1000, Tc ≥ 10', 
-    'E': 'Extremely Short Period, 80 ≤ fs < 250, Tc < 10',
-    'S': 'Short Period, 10 ≤ fs < 80, Tc < 10',
-    'H': 'High Broadband, 80 ≤ fs < 250, Tc ≥ 10',
-    'B': 'Broadband, 10 ≤ fs < 80, Tc ≥ 10',
-    'M': 'Mid Period, 1 < fs < 10',
-    'L': 'Long Period, fs ~ 1',
-    'V': 'Very Long Period, 0.1 ≤ fs < 1',
-    'U': 'Ultra Long Period, 0.01 ≤ fs < 0.1', 
-    'W': 'Ultra-ultra Long Period, 0.001 ≤ fs < 0.01', 
-    'R': 'Extremely Long Period, 0.0001 ≤ fs < 0.001',
-    'P': 'On the order of 0.1 to 1 day, 0.00001 ≤ fs < 0.0001',
-    'T': 'On the order of 1 to 10 days, 0.000001 ≤ fs < 0.00001',
-    'Q': 'Greater than 10 days, fs < 0.000001',
-    'I': 'Irregularly sampled'
-}
-
-cols2 = st.columns(3)
-band_code = cols2[0].selectbox("__Band code__ - fs: sample rate (Hz); Tc: lower period bound of instrument response (s)", band_codes, format_func=lambda code: f'{code} - {band_codes[code]}')
-if band_code is None:
-    st.stop()
-
-source_codes = {
-    'H': 'High Gain Seismometer',
-    'L': 'Low Gain Seismometer',
-    'M': 'Mass Position Seismometer',
-    'N': 'Accelerometer',
-    'P': 'Geophone, very short period seismometer with natural frequency 5 - 10 Hz or higher',
-    'A': 'Tilt Meter',
-    'B': 'Creep Meter',
-    'C': 'Calibration input',
-    'D': 'Pressure',
-    'E': 'Electronic Test Point',
-    'F': 'Magnetometer',
-    'I': 'Humidity',
-    'J': 'Rotational Sensor',
-    'K': 'Temperature',
-    'O': 'Water Current',
-    'G': 'Gravimeter',
-    'Q': 'Electric Potential',
-    'R': 'Rainfall',
-    'S': 'Linear Strain',
-    'T': 'Tide',
-    'U': 'Bolometer',
-    'V': 'Volumetric Strain',
-    'W': 'Wind',
-    'X': 'Derived or generated channel',
-    'Y': 'Non-specific instruments',
-    'Z': 'Synthesized Beams'
-}
-
-source_code = cols2[1].selectbox("__Source code (instrument type)__", source_codes, format_func=lambda code: f'{code} - {source_codes[code]}')
-if band_code is None:
-    st.stop()
-
-# need one category per source code...todo
-subsource_codes = { 
-    'N, E, Z': 'North, East, Up',
-    '1, 2, Z': 'Orthogonal components, nontraditional horizontals',
-    '1, 2, 3': 'Orthogonal components, nontraditional orientations',
-    'T, R': 'For rotated components or beams (Transverse, Radial)',
-    'A, B, C': 'Triaxial (Along the edges of a cube turned up on a corner)',
-    'U, V, W': 'Optional components, also used for raw triaxial output',
-    'N': 'North',
-    'E': 'East',
-    'Z': 'Up',
-    '1': 'Orthogonal components, nontraditional orientations',
-    '2': 'Orthogonal components, nontraditional orientations',
-    '3': 'Orthogonal components, nontraditional orientations',
-    'T': 'For rotated components or beams (Transverse)',
-    'R': 'For rotated components or beams (Radial)',
-}
-
-subsource_code = cols2[2].selectbox("__Subsource code(s) (components)__", subsource_codes, format_func=lambda code: f'{code} - {subsource_codes[code]}')
-if subsource_code is None:
-    st.stop()
+band_code, source_code, subsource_code = get_channel_codes()
 subsource_code_list = subsource_code.split(', ')
 
 # todo make it optional
