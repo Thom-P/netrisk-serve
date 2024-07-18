@@ -25,3 +25,5 @@
 - possibility to download and upload stationXML directly 
 - handle XML validity with obspy?
 - interactive xml edit system ? using st df data editor
+- add several instrument/channel groups
+

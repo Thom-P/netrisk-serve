@@ -61,12 +61,13 @@ def is_valid_code(code, valid_chars):
     return True
 
 if net_code is None or is_valid_code(net_code, valid_chars) is False:
-    #st.write(":red[Invalid or empty network code!]")
     st.warning('Invalid or empty network code', icon="⚠️")
     st.stop()
 elif sta_code is None or is_valid_code(sta_code, valid_chars) is False:
-    #st.write(":red[Invalid or empty station code!]")
     st.warning('Invalid or empty station code', icon="⚠️")
+    st.stop()
+elif len(site) == 0: 
+    st.warning('Empty site name', icon="⚠️")
     st.stop()
 
 sta = Station(
@@ -82,7 +83,7 @@ net = Network(
         stations=[sta],
 )
 
-st.success(f"{sta}", icon="✅")
+st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) - Lat., Lon. = {sta.latitude}, {sta.longitude} - Elev. = {sta.elevation} m", icon="✅")
 
 st.divider()
 ############################################################################
@@ -149,7 +150,7 @@ source_codes = {
     'Z': 'Synthesized Beams'
 }
 
-source_code = cols2[1].selectbox("__Source code (instrument)__", source_codes, format_func=lambda code: f'{code} - {source_codes[code]}')
+source_code = cols2[1].selectbox("__Source code (instrument type)__", source_codes, format_func=lambda code: f'{code} - {source_codes[code]}')
 if band_code is None:
     st.stop()
 
@@ -293,10 +294,20 @@ st.write(inv)
 
 # Write to a StationXML file. Also force a validation against
 # the StationXML schema to ensure it produces a valid StationXML file.
-def create_xml():
-    fname = f'{net}.{stat}.xml'
-    inv.write(f'/data/inventory/ {fname}', format="stationxml", validate=True)
-    return
+def create_xml(fname):
+    res = inv.write(fname, format="stationxml", validate=True)
+    return res
+
+fpath = '/data/inventory/'
+fname = f"{fpath}{net_code}.{sta_code}.xml"
+if os.path.isfile(fname):
+    st.warning(f"{net_code}.{sta_code}.xml already exists on the server!", icon="⚠️")
+    create_button_msg = 'Overwrite existing station XML'
+else:
+    create_button_msg = 'Create station XML'
 
 # todo: warn override if file exists (or same net code, stat exists)
-st.button("Create station XML", on_click=create_xml, type="secondary")
+create = st.button(create_button_msg, type="secondary")
+if create:
+    res = create_xml(fname)
+    st.success("StationXML file created successfully", icon="✅")
