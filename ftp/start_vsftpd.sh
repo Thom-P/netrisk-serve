@@ -27,5 +27,5 @@ $EMAIL_ADRESS
 EOF
 
 
-# Start vsftpd as foreground process
-/usr/sbin/vsftpd vsftpd.conf
+# Start vsftpd as foreground process, exec for replacing bash PID and receive docker signals
+exec /usr/sbin/vsftpd vsftpd.conf

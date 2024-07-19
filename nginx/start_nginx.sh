@@ -4,4 +4,4 @@
 printf "$UI_USER:$(openssl passwd -5 $UI_PASSWD)\n" >> /etc/nginx/.htpasswd
 
 # Start nginx as foreground process
-nginx -g 'daemon off;'
+exec nginx -g 'daemon off;'

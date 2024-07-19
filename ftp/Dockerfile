@@ -23,4 +23,7 @@ EOF
 
 COPY vsftpd.conf start_vsftpd.sh ./
 
+# test if shuts down faster
+STOPSIGNAL SIGQUIT
+
 ENTRYPOINT ["./start_vsftpd.sh"]
