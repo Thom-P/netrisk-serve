@@ -37,8 +37,6 @@ st.title('Add station')
 # todo deprecated: need to use v2 offline copy instead...
 nrl = NRL()
 
-if 'current_channels' not in st.session_state:
-    st.session_state.current_channels = []
 if 'saved_channels' not in st.session_state:
     st.session_state.saved_channels = []
  
@@ -64,7 +62,7 @@ st.page_link(band_url, label=':blue[More info on channel codes ↗]')
 band_code, source_code, subsource_code = get_channel_codes()
 
 response = None
-attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = True)
+attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = False)
 if attach_response:
     sensor_keys = choose_device(nrl.sensors, 'Sensor')
     datalogger_keys = choose_device(nrl.dataloggers, 'Datalogger')
@@ -86,12 +84,17 @@ if attach_response:
                 response.plot(1e-3, outfile=plot_buffer)
                 st.image(plot_buffer, use_column_width=True)
 
-curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sta)
-curr_channels
-st.session_state.current_channels = curr_channels
-if st.button("Add channel(s)"):
-    st.session_state.all_channels.extend(curr_channels)  # add to onclick callback instead
-    st.session_state.current_channels = []
+placeholder = st.empty() # for cleaning widgets
+curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sta, placeholder)
+#st.session_state.current_channels = curr_channels
+st.session_state
+if st.button("Add channel(s)", type='primary'):
+    st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead
+    # could add here a way to prevent double channels
+    for chan in curr_channels:
+        st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
+    placeholder.empty()
+    #st.session_state.current_channels = []
     # how to remove chan widgets?
     # keep curr resp inst/dl in seesion state
 
@@ -106,9 +109,9 @@ st.write("Station:")
 st.write(f"{net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m")
 
 st.write("Channels:")
-st.write(len(st.session_state.all_channels))
-for i, cha in enumerate(st.session_state.all_channels):
-    chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, elev: {cha.depth}, sens=, l="
+st.write(len(st.session_state.saved_channels))
+for i, cha in enumerate(st.session_state.saved_channels):
+    chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
     st.write(chan_info)
 
 ############################ 
@@ -117,7 +120,7 @@ for i, cha in enumerate(st.session_state.all_channels):
 # Write to a StationXML file. Also force a validation against
 # the StationXML schema to ensure it produces a valid StationXML file.
 def create_xml(fname, net):
-    net.stations[0].channels = st.session_state.all_channels
+    net.stations[0].channels = st.session_state.saved_channels
     inv = Inventory(
         networks=[net],
         source=os.environ["UI_USER"]  # todo add institution
@@ -136,7 +139,10 @@ else:
 
 create = st.button(create_button_msg, type="primary")
 if create:
-    res = create_xml(fname)
+    if len(st.session_state.saved_channels) == 0:
+        st.error("You need at least one channel to create a station xml file!", icon="🚨")
+        st.stop()
+    res = create_xml(fname, net)
     st.success("StationXML file created successfully", icon="✅")
 
 

@@ -102,23 +102,28 @@ def create_selectbox(choices: dict, col):
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
 
-def build_channel_objects(band_code, source_code, subsource_code, response, sta):
+def build_channel_objects(band_code, source_code, subsource_code, response, sta, ph):
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
     subsource_code_list = subsource_code.split(', ')
-    cols = st.columns(len(subsource_code_list))
+    cols = ph.columns(len(subsource_code_list))
     for i, sub_code in enumerate(subsource_code_list):
         cont = cols[i].container(border=True)
         chan_code = '_'.join((band_code, source_code, sub_code))
         with cont:
             st.write(f"__Channel {chan_code}__")
-            loc_code = st.text_input("Location code", value="00", max_chars=8, type="default", help=code_help_str, key=f'loc{band_code}{source_code}{sub_code}')
-            chan_lat = st.number_input("__Channel latitude__", value=sta.latitude, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f'lat{band_code}{source_code}{sub_code}') 
-            chan_lon = st.number_input("__Channel longitude__", value=sta.longitude, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f'lon{band_code}{source_code}{sub_code}') 
-            chan_depth = st.number_input("__Sensor depth__ (m)", value=0, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f'depth{band_code}{source_code}{sub_code}')
+            value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00"
+            loc_code = st.text_input("Location code", value=value, max_chars=8, type="default", help=code_help_str, key=f"loc_chan_{i}")
+            
+            chan_lat = st.number_input("__Channel latitude__", value=sta.latitude, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f"lat_chan_{i}") 
+            
+            chan_lon = st.number_input("__Channel longitude__", value=sta.longitude, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f"lon_chan_{i}") 
+            
+            chan_depth = st.number_input("__Sensor depth__ (m)", value=0, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f"depth_chan_{i}")
+            
             chan_elev = sta.elevation - chan_depth
-            st.write(f"__Sensor elevation__ = {chan_elev} m") 
+            #st.write(f"__Sensor elevation__ = {chan_elev} m") # warning: confusing, value not updated until add chan, do not display or investigate 
             #st.number_input("__Sensor elevation__ (m)", value=elev, min_value=-10000, max_value=10000, format="%d", help="Should correspond to ground elevation minus depth", key=f'elev{band_code}{source_code}{sub_code}')
         cha = Channel(
             code=chan_code,
