@@ -134,6 +134,7 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sta)
             #sample_rate=200
         )
         channel_objs.append(cha)
+    return channel_objs
 
 
 ##################################################
