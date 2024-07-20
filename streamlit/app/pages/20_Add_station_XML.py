@@ -39,7 +39,7 @@ nrl = NRL()
 
 if 'saved_channels' not in st.session_state:
     st.session_state.saved_channels = []
- 
+
 ############################################################################
 st.markdown("## Station parameters")
 
@@ -86,20 +86,14 @@ if attach_response:
 
 placeholder = st.empty() # for cleaning widgets
 curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sta, placeholder)
-#st.session_state.current_channels = curr_channels
-st.session_state
+
 if st.button("Add channel(s)", type='primary'):
     st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead
     # could add here a way to prevent double channels
     for chan in curr_channels:
         st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
     placeholder.empty()
-    #st.session_state.current_channels = []
-    # how to remove chan widgets?
     # keep curr resp inst/dl in seesion state
-
-st.session_state
-#channels.append(curr_channels)
 
 st.divider()
 #######################################
@@ -114,7 +108,7 @@ for i, cha in enumerate(st.session_state.saved_channels):
     chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
     st.write(chan_info)
 
-############################ 
+############################
 ## XML File creation
 
 # Write to a StationXML file. Also force a validation against
@@ -155,4 +149,3 @@ if create:
 #        st.write("net", net, "checkbox", checkbox_val)
 
 #st.write("Outside the form")
-

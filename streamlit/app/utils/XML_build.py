@@ -16,13 +16,13 @@ def get_station_parameters():
     cols1 = st.columns(6)
     net_code = cols1[0].text_input("__Network code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
     sta_code = cols1[1].text_input("__Station code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
-    
-    lat = cols1[2].number_input("__Station latitude__", value=None, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, placeholder="Required") 
-    lon = cols1[3].number_input("__Station longitude__", value=None, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, placeholder="Required") 
+
+    lat = cols1[2].number_input("__Station latitude__", value=None, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, placeholder="Required")
+    lon = cols1[3].number_input("__Station longitude__", value=None, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, placeholder="Required")
     elev = cols1[4].number_input("__Ground surface elevation__ (m)", value=None, min_value=-414, max_value=8848, format="%d", placeholder="Required")
-    
-    site = cols1[5].text_input("__Station site name__", value=None, max_chars=64, type="default", help=None, placeholder="Required") 
-    
+
+    site = cols1[5].text_input("__Station site name__", value=None, max_chars=64, type="default", help=None, placeholder="Required")
+
     if net_code is None or is_valid_code(net_code, valid_chars) is False:
         st.warning('Invalid or empty network code', icon="⚠️")
         st.stop()
@@ -32,7 +32,7 @@ def get_station_parameters():
     if lat is None or lon is None or elev is None:
         st.warning('Empty coordinate(s)', icon="⚠️")
         st.stop()
-    if site is None or len(site) == 0: 
+    if site is None or len(site) == 0:
         st.warning('Empty site name', icon="⚠️")
         st.stop()
     return net_code, sta_code, lat, lon, elev, site
@@ -69,14 +69,14 @@ def get_channel_codes():
         code = cols2[i].selectbox(
             labels[i],
             code_dict,
-            index=None, 
+            index=None,
             format_func=lambda code: f'{code} - {code_dict[code]}'
         )
         if code is None:
             st.stop()
         code_choices.append(code)
     band_code, source_code, subsource_code = code_choices
-    return band_code, source_code, subsource_code 
+    return band_code, source_code, subsource_code
 
 def choose_device(device_dict, device_type: str):
     ## Device choice (sensor or datalogger)
@@ -113,18 +113,21 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sta,
         chan_code = '_'.join((band_code, source_code, sub_code))
         with cont:
             st.write(f"__Channel {chan_code}__")
-            value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00"
+            value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00" # otherwise looses previous value if widget hidden
             loc_code = st.text_input("Location code", value=value, max_chars=8, type="default", help=code_help_str, key=f"loc_chan_{i}")
-            
-            chan_lat = st.number_input("__Channel latitude__", value=sta.latitude, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f"lat_chan_{i}") 
-            
-            chan_lon = st.number_input("__Channel longitude__", value=sta.longitude, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f"lon_chan_{i}") 
-            
-            chan_depth = st.number_input("__Sensor depth__ (m)", value=0, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f"depth_chan_{i}")
-            
+
+            value = st.session_state[f"lat_chan_{i}"] if f"lat_chan_{i}" in st.session_state else sta.latitude # otherwise looses previous value if widget hidden
+            chan_lat = st.number_input("__Channel latitude__", value=value, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f"lat_chan_{i}")
+
+            value = st.session_state[f"lon_chan_{i}"] if f"lon_chan_{i}" in st.session_state else sta.longitude # otherwise looses previous value if widget hidden
+            chan_lon = st.number_input("__Channel longitude__", value=value, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f"lon_chan_{i}")
+
+            value = st.session_state[f"depth_chan_{i}"] if f"depth_chan_{i}" in st.session_state else 0 # otherwise looses previous value if widget hidden
+            chan_depth = st.number_input("__Sensor depth__ (m)", value=value, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f"depth_chan_{i}")
+
             chan_elev = sta.elevation - chan_depth
-            #st.write(f"__Sensor elevation__ = {chan_elev} m") # warning: confusing, value not updated until add chan, do not display or investigate 
-            #st.number_input("__Sensor elevation__ (m)", value=elev, min_value=-10000, max_value=10000, format="%d", help="Should correspond to ground elevation minus depth", key=f'elev{band_code}{source_code}{sub_code}')
+            st.write(f"__Sensor elevation__ = {chan_elev} m") # only shows correct value if session_state used in previous widgets
+
         cha = Channel(
             code=chan_code,
             location_code=loc_code,
