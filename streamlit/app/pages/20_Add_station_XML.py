@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
+from obspy.core.inventory.util import Equipment
 
 from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects
 
@@ -61,11 +62,16 @@ band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-cod
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
 band_code, source_code, subsource_code = get_channel_codes()
 
+# should add response params to session_state
 response = None
+sensor = None
+datalogger = None
 attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = False)
 if attach_response:
     sensor_keys = choose_device(nrl.sensors, 'Sensor')
+    sensor = Equipment(manufacturer=sensor_keys[0], type=sensor_keys[1], description='; '.join(sensor_keys[2:]))
     datalogger_keys = choose_device(nrl.dataloggers, 'Datalogger')
+    datalogger = Equipment(manufacturer=datalogger_keys[0], type=datalogger_keys[1], description='; '.join(datalogger_keys[2:]))
     with st.spinner('Loading response file...'):
         response = nrl.get_response(
             sensor_keys=sensor_keys,
@@ -85,7 +91,7 @@ if attach_response:
                 st.image(plot_buffer, use_column_width=True)
 
 placeholder = st.empty() # for cleaning widgets
-curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sta, placeholder)
+curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sensor, datalogger, sta, placeholder)
 
 if st.button("Add channel(s)", type='primary'):
     st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead

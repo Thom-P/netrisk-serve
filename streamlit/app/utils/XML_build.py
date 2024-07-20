@@ -102,7 +102,7 @@ def create_selectbox(choices: dict, col):
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
 
-def build_channel_objects(band_code, source_code, subsource_code, response, sta, ph):
+def build_channel_objects(band_code, source_code, subsource_code, response, sensor, datalogger, sta, ph):
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
@@ -127,7 +127,14 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sta,
 
             chan_elev = sta.elevation - chan_depth
             st.write(f"__Sensor elevation__ = {chan_elev} m") # only shows correct value if session_state used in previous widgets
+            if response is not None:
+                st.divider()
+                sensor_str = f"__Sensor__: {sensor.manufacturer} - {sensor.type} ({sensor.description})"
+                datalogger_str = f"__Datalogger__: {datalogger.manufacturer} - {datalogger.type} ({datalogger.description})"
+                st.write(sensor_str)
+                st.write(datalogger_str)
 
+        equipments = None if response is None else (sensor, datalogger)
         cha = Channel(
             code=chan_code,
             location_code=loc_code,
@@ -137,6 +144,7 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sta,
             elevation=chan_elev,
             depth=chan_depth,
             response=response,
+            equipments=equipments
             #azimuth=0.0,
             #dip=-90.0,
             #sample_rate=200
