@@ -1,9 +1,9 @@
 services:
-  proxy: 
+  proxy:
     build: ./nginx
     depends_on:
       - streamlit
-      - ftp  # for the ssl certif
+      - ftp # for the ssl certif
     restart: always
     container_name: nginx
     environment:
@@ -15,7 +15,8 @@ services:
       - streamlit_net
     ports:
       #- "443:443" # when ready to expose to web
-      - "127.0.0.1:443:443"  # only accessible form server (via ssh and port forward)
+      #- "127.0.0.1:443:443" # only accessible form server (via ssh and port forward)
+      - "443:443" # test only allow single ip to connect
   db:
     image: mariadb:11.2
     restart: always
@@ -28,7 +29,7 @@ services:
       MYSQL_ROOT_HOST: localhost
     volumes:
       - sc_mariadb_data:/var/lib/mysql
-      - ./mariadb_init:/docker-entrypoint-initdb.d  # Initial seiscomp db template loaded from mariadb_init folder
+      - ./mariadb_init:/docker-entrypoint-initdb.d # Initial seiscomp db template loaded from mariadb_init folder
     expose:
       - "3306"
     networks:
@@ -47,7 +48,7 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: sc_mariadb
     ports:
-      - "127.0.0.1:8081:8080"  # for debug
+      - "127.0.0.1:8081:8080" # for debug
     networks:
       - adminer_net
   ftp:
@@ -88,12 +89,12 @@ services:
     volumes:
       - ftp_data:/data/ftp
     environment:
-       - DATABASE_NAME=${DATABASE_NAME:-seiscomp}
-       - USER_NAME=${USER_NAME:-sysop}
-       - USER_PASSWD=${USER_PASSWD:-sysop}
-       - ORGANIZATION=${ORGANIZATION:-Company}
-       - SECTION=${SECTION:-Section}
-       - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
+      - DATABASE_NAME=${DATABASE_NAME:-seiscomp}
+      - USER_NAME=${USER_NAME:-sysop}
+      - USER_PASSWD=${USER_PASSWD:-sysop}
+      - ORGANIZATION=${ORGANIZATION:-Company}
+      - SECTION=${SECTION:-Section}
+      - COMMON_NAME=${COMMON_NAME:-Netrisk Server}
   streamlit:
     build: ./streamlit
     depends_on:
@@ -108,7 +109,7 @@ services:
     volumes:
       - ./streamlit/tmp_xml:/data/inventory
     environment:
-      UI_USER: ${UI_USER:-anonymous}  # to use in station xml creation (source field)
+      UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:
   sc_mariadb_data:
   ftp_data:
