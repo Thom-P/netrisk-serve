@@ -9,6 +9,7 @@ from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
+import pandas as pd
 
 from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects
 
@@ -110,9 +111,25 @@ st.write(f"{net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {st
 
 st.write("Channels:")
 st.write(len(st.session_state.saved_channels))
+channels_data =[]
 for i, cha in enumerate(st.session_state.saved_channels):
-    chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
-    st.write(chan_info)
+    #chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
+    channels_data.append((cha.code, cha.location_code, cha.latitude, cha.longitude, cha.elevation, cha.depth))
+    #st.write(chan_info)
+df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Latitude', 'Longitude', 'Elevation', 'Depth'])
+event = st.dataframe(df, hide_index=True, on_select='rerun',
+    column_config={
+        'Latitude': st.column_config.NumberColumn(format="%.4f"),
+        'Longitude': st.column_config.NumberColumn(format="%.4f")
+    })
+
+
+def delete_rows(rows):
+    for row in reversed(rows):  # reverse so that delete doesnt change remaining indices
+        del st.session_state.saved_channels[row]
+
+if st.button("Delete selected rows", on_click=delete_rows, args=[event.selection['rows']]):
+    pass
 
 ############################
 ## XML File creation
