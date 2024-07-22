@@ -63,6 +63,7 @@ services:
     volumes:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs
+      - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
     environment:
       - STATION_NAME=${STATION_NAME}
       - STATION_PASSWD=${STATION_PASSWD}
@@ -108,7 +109,8 @@ services:
     networks:
       - streamlit_net
     volumes:
-      - ./streamlit/tmp_xml:/data/inventory
+      - ./streamlit/tmp_xml:/data/inventory # will need to share that with seiscomp (no need for mounted vol?)
+      - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:

@@ -33,6 +33,10 @@ st.markdown("""
 </style>""",
 unsafe_allow_html=True)
 
+sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
+main_body_logo = "static/netrisk-serve-icon-transparent.png"
+st.logo(sidebar_logo, icon_image=main_body_logo)
+
 st.title('Add station')
 
 # Instrument and responses online catalog
@@ -130,11 +134,11 @@ event = st.dataframe(df, hide_index=True, on_select='rerun',
         'Latitude (°)': st.column_config.NumberColumn(format="%.4f"),
         'Longitude (°)': st.column_config.NumberColumn(format="%.4f"),
         'Start date (UTC)': st.column_config.DatetimeColumn(
-                    format="DD MMM YYYY, hh:mm",
+                    format="DD MMM YYYY, HH:mm",
                     step=60,
                 ),
         'End date (UTC)': st.column_config.DatetimeColumn(
-                    format="DD MMM YYYY, hh:mm",
+                    format="DD MMM YYYY, HH:mm",
                     step=60,
                 ),
     })

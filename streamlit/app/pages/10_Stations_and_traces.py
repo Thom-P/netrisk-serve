@@ -22,8 +22,12 @@ st.set_page_config(
     page_icon=None, layout="wide",
     initial_sidebar_state="auto",
     menu_items=None
-    )
+)
 # st.sidebar.markdown('Stations and traces')
+
+sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
+main_body_logo = "static/netrisk-serve-icon-transparent.png"
+st.logo(sidebar_logo, icon_image=main_body_logo)
 
 st.markdown('## Stations and traces')
 
@@ -71,7 +75,7 @@ def get_trace(net, sta, loc, chans, start_date, end_date):
         return None
     except Exception as e:
         st.exception(e)
-        # print(f"Unexpected {err=}, {type(err)=}") 
+        # print(f"Unexpected {err=}, {type(err)=}")
         return None
     return waveform_stream
 
@@ -105,7 +109,7 @@ net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to t
 #with st.sidebar:
 #    #index_preselect = net_codes[st.session_state['net']] if st.session_state['net'] is not None else None
 #    # widget should handle session state
-#    st.session_state['net'] = st.selectbox('Network', net_codes.keys(), placeholder="Choose a Network")  
+#    st.session_state['net'] = st.selectbox('Network', net_codes.keys(), placeholder="Choose a Network")
 #    net = st.session_state['net']
 #    inv_stations = []
 #    if net is not None:
@@ -313,7 +317,7 @@ with tab2:
         # nb: filehandle instead of filename also works!
         # need a unique key otherwise error
         dl_msg = 'Note that filtered traces are much larger than their ' \
-            'unfiltered counterparts (compressed digital counts).' 
+            'unfiltered counterparts (compressed digital counts).'
         st.download_button(
             label='Download trace(s)',
             data=file_buff,
@@ -342,10 +346,10 @@ with tab2:
 # labels = {
 #        'x':"X Axis Title",
 #        'y':"X Axis Title" ,
-#        'color':'Z Label'      
+#        'color':'Z Label'
 #        }
-# fig = px.imshow(im,aspect='equal',labels = labels)  
-# fig = px.imshow(im, labels = labels)  
+# fig = px.imshow(im,aspect='equal',labels = labels)
+# fig = px.imshow(im, labels = labels)
 # st.plotly_chart(fig)
 
 
@@ -361,7 +365,7 @@ with tab3:  # need indep vars?
     chan = col32.selectbox("Select chan", chan_codes)
     # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
     # chans = st.session_state['chans']
-    
+
     day = st.date_input('Day', value="default_value_today")
 
     # fmin, fmax = None, None
@@ -369,7 +373,7 @@ with tab3:  # need indep vars?
     #    col27, col28 = st.columns(2)
     #    fmin = col27.number_input('Lower Freq. (Hz)', min_value=0, max_value=50, value=0)
     #    fmax = col28.number_input('Higher Freq. (Hz)', min_value=fmin, max_value=50)
-    #    # add validity check vs fs 
+    #    # add validity check vs fs
 
 if st.button('View day plot', disabled=True if chan is None else False):
     with st.spinner('Loading...'):
