@@ -11,7 +11,7 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
 import pandas as pd
 
-from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects
+from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop
 
 st.set_page_config(
     page_title='Add station',
@@ -52,18 +52,15 @@ st.success(f"__Station__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude
 st.divider()
 
 ############################################################################
-#st.markdown("## Instrument(s)")
-#myInstruments = []
-#if st.button
-
-channels = []
 st.markdown("## Channel code(s)")
+channels = []
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
 band_code, source_code, subsource_code = get_channel_codes()
+start_datetime, end_datetime = get_channel_start_stop()
 
-# should add response params to session_state
+# todo: add response params to session_state?
 response = None
 sensor = None
 datalogger = None
@@ -92,7 +89,7 @@ if attach_response:
                 st.image(plot_buffer, use_column_width=True)
 
 placeholder = st.empty() # for cleaning widgets
-curr_channels = build_channel_objects(band_code, source_code, subsource_code, response, sensor, datalogger, sta, placeholder)
+curr_channels = build_channel_objects(band_code, source_code, subsource_code, start_datetime, end_datetime, response, sensor, datalogger, sta, placeholder)
 
 if st.button("Add channel(s)", type='primary'):
     st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead
@@ -125,13 +122,21 @@ for i, cha in enumerate(st.session_state.saved_channels):
         sensor_str = "None"
         datalogger_str = "None"
 
-    channels_data.append((cha.code, cha.location_code, cha.latitude, cha.longitude, cha.elevation, cha.depth, sensor_str, datalogger_str))
+    channels_data.append((cha.code, cha.location_code, cha.start_date, cha.end_date, cha.latitude, cha.longitude, cha.elevation, cha.depth, sensor_str, datalogger_str))
     #st.write(chan_info)
-df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Latitude (°)', 'Longitude (°)', 'Elevation (m)', 'Depth (m)', 'Sensor', 'Datalogger'])
+df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Start date (UTC)', 'End date (UTC)', 'Latitude (°)', 'Longitude (°)', 'Elevation (m)', 'Depth (m)', 'Sensor', 'Datalogger'])
 event = st.dataframe(df, hide_index=True, on_select='rerun',
     column_config={
         'Latitude (°)': st.column_config.NumberColumn(format="%.4f"),
-        'Longitude (°)': st.column_config.NumberColumn(format="%.4f")
+        'Longitude (°)': st.column_config.NumberColumn(format="%.4f"),
+        'Start date (UTC)': st.column_config.DatetimeColumn(
+                    format="DD MMM YYYY, hh:mm",
+                    step=60,
+                ),
+        'End date (UTC)': st.column_config.DatetimeColumn(
+                    format="DD MMM YYYY, hh:mm",
+                    step=60,
+                ),
     })
 
 

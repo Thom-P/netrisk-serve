@@ -1,7 +1,9 @@
 import string
+import datetime
 
 import streamlit as st
 from obspy.core.inventory import Inventory, Network, Station, Channel, Site
+from obspy.core import UTCDateTime
 
 from utils.FDSN_codes import band_codes, source_codes, subsource_codes, valid_chars
 
@@ -102,7 +104,7 @@ def create_selectbox(choices: dict, col):
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
 
-def build_channel_objects(band_code, source_code, subsource_code, response, sensor, datalogger, sta, ph):
+def build_channel_objects(band_code, source_code, subsource_code, start_date, end_date, response, sensor, datalogger, sta, ph):
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
@@ -147,13 +149,43 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sens
             elevation=chan_elev,
             depth=chan_depth,
             response=response,
-            equipments=equipments
+            equipments=equipments,
+            start_date=UTCDateTime(start_date),
+            end_date=UTCDateTime(end_date) if end_date is not None else None,
             #azimuth=0.0,
             #dip=-90.0,
             #sample_rate=200
         )
         channel_objs.append(cha)
     return channel_objs
+
+
+def get_channel_start_stop():
+    cols = st.columns(4)
+    start_day = cols[0].date_input('__Channel(s) start date__ (UTC)',
+        value=None)
+    if start_day is None:
+        st.warning('Start date needed', icon="⚠️")
+        st.stop()
+    start_time = cols[1].time_input(
+        '__Channel(s) start time__',
+        value=datetime.time(0, 0),
+        step=3600
+    )
+    stop_day = cols[2].date_input(
+        '__Channel(s) stop date__ (UTC - leave empty if still running)',
+        value=None,
+        min_value=start_day
+    )
+    stop_time = cols[3].time_input(
+        '__Channel(s) stop time__',
+        value=datetime.time(0, 0),
+        step=3600
+    )
+    start_date = datetime.datetime.combine(start_day, start_time)
+    stop_date = datetime.datetime.combine(stop_day, stop_time) if stop_day is not None else None
+    return start_date, stop_date
+
 
 
 ##################################################
