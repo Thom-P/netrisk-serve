@@ -47,17 +47,17 @@ st.markdown("## Station parameters")
 
 net_code, sta_code, lat, lon, elev, site = get_station_parameters()
 
-net, sta = build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site)
-st.success(f"Station {net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m", icon="✅")
+net, sta = build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site)  #
+st.success(f"__Station__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude, Longitude__: {sta.latitude:.4f}, {sta.longitude:.4f} — __Elevation__: {sta.elevation} m", icon="✅")
 st.divider()
 
 ############################################################################
-st.markdown("## Instrument(s)")
+#st.markdown("## Instrument(s)")
 #myInstruments = []
 #if st.button
 
 channels = []
-st.markdown("### Channel code(s)")
+st.markdown("## Channel code(s)")
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
@@ -105,22 +105,33 @@ if st.button("Add channel(s)", type='primary'):
 st.divider()
 #######################################
 ## Display channels
-st.markdown("### Summary")
-st.write("Station:")
-st.write(f"{net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m")
+st.markdown("## Summary")
+#st.write("__Station:__")
+st.markdown("### Station:")
+#st.write(f"{net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m")
+st.info(f"__Code__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude, Longitude__: {sta.latitude:.4f}, {sta.longitude:.4f} — __Elevation__: {sta.elevation} m")
 
-st.write("Channels:")
-st.write(len(st.session_state.saved_channels))
+#st.write("__Channels:__")
+st.markdown("### Channels:")
 channels_data =[]
 for i, cha in enumerate(st.session_state.saved_channels):
     #chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
-    channels_data.append((cha.code, cha.location_code, cha.latitude, cha.longitude, cha.elevation, cha.depth))
+    if cha.response is not None:
+        sensor = cha.equipments[0]
+        datalogger = cha.equipments[1]
+        sensor_str = f"{sensor.manufacturer} - {sensor.type} ({sensor.description})"
+        datalogger_str = f"{datalogger.manufacturer} - {datalogger.type} ({datalogger.description})"
+    else:
+        sensor_str = "None"
+        datalogger_str = "None"
+
+    channels_data.append((cha.code, cha.location_code, cha.latitude, cha.longitude, cha.elevation, cha.depth, sensor_str, datalogger_str))
     #st.write(chan_info)
-df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Latitude', 'Longitude', 'Elevation', 'Depth'])
+df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Latitude (°)', 'Longitude (°)', 'Elevation (m)', 'Depth (m)', 'Sensor', 'Datalogger'])
 event = st.dataframe(df, hide_index=True, on_select='rerun',
     column_config={
-        'Latitude': st.column_config.NumberColumn(format="%.4f"),
-        'Longitude': st.column_config.NumberColumn(format="%.4f")
+        'Latitude (°)': st.column_config.NumberColumn(format="%.4f"),
+        'Longitude (°)': st.column_config.NumberColumn(format="%.4f")
     })
 
 
@@ -128,7 +139,8 @@ def delete_rows(rows):
     for row in reversed(rows):  # reverse so that delete doesnt change remaining indices
         del st.session_state.saved_channels[row]
 
-if st.button("Delete selected rows", on_click=delete_rows, args=[event.selection['rows']]):
+selected_rows = event.selection['rows']
+if len(selected_rows) > 0 and st.button("Delete selected rows", on_click=delete_rows, args=[selected_rows]):
     pass
 
 ############################

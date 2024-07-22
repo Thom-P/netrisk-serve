@@ -115,6 +115,9 @@ def build_channel_objects(band_code, source_code, subsource_code, response, sens
             st.write(f"__Channel {chan_code}__")
             value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00" # otherwise looses previous value if widget hidden
             loc_code = st.text_input("Location code", value=value, max_chars=8, type="default", help=code_help_str, key=f"loc_chan_{i}")
+            if loc_code is None or is_valid_code(loc_code, valid_chars) is False:
+                   st.warning('Invalid or empty location code', icon="⚠️")
+                   st.stop()
 
             value = st.session_state[f"lat_chan_{i}"] if f"lat_chan_{i}" in st.session_state else sta.latitude # otherwise looses previous value if widget hidden
             chan_lat = st.number_input("__Channel latitude__", value=value, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f"lat_chan_{i}")
