@@ -37,7 +37,7 @@ RUN echo root > /etc/incron.allow \
     && cat <<'EOF' | incrontab -
 /data/ftp/ IN_CLOSE_WRITE /usr/local/app/obspy/bin/python /usr/local/app/myo2mseed.py $@/$#
 /usr/local/app/mseed_segments/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec scart -v -I $@/$# -i /usr/local/app/seiscomp/var/lib/archive
-/data/xml/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec import_inv fdsnxml $@/$# seiscomp/etc/inventory/$#
+/data/xml/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec import_inv fdsnxml $@/$# /usr/local/app/seiscomp/etc/inventory/$#
 EOF
 # need to add sync on xml removal
 

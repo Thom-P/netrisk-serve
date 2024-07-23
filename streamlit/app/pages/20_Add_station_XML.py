@@ -167,7 +167,8 @@ def create_xml(fname, net):
     res = inv.write(fname, format="stationxml", validate=True)
     return res
 
-fpath = '/data/inventory/'
+#fpath = '/data/inventory/'
+fpath = '/data/xml/'
 fname = f"{fpath}{net_code}.{sta_code}.xml"
 if os.path.isfile(fname):
     st.warning(f"{net_code}.{sta_code}.xml already exists on the server!", icon="⚠️")
