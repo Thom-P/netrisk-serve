@@ -48,9 +48,11 @@ services:
     container_name: adminer
     environment:
       ADMINER_DEFAULT_SERVER: sc_mariadb
-    ports:
-      #- "127.0.0.1:8081:8080" # for debug
-      - "8081:8080" # for debug
+    expose:
+      - "8080"
+    #ports:
+    #- "127.0.0.1:8081:8080" # for debug
+    #- "80:8080" # for debug
     networks:
       - adminer_net
   ftp:
