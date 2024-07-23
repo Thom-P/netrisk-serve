@@ -90,6 +90,7 @@ services:
       - streamlit_net
     volumes:
       - ftp_data:/data/ftp
+      - fdsnXML_data:/data/xml
     environment:
       - DATABASE_NAME=${DATABASE_NAME:-seiscomp}
       - USER_NAME=${USER_NAME:-sysop}
@@ -111,11 +112,13 @@ services:
     volumes:
       - ./streamlit/tmp_xml:/data/inventory # will need to share that with seiscomp (no need for mounted vol?)
       - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
+      - fdsnXML_data:/data/xml
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:
   sc_mariadb_data:
   ftp_data:
+  fdsnXML_data:
   ssl_cert:
 networks:
   db_net:
