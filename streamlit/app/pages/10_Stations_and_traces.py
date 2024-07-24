@@ -32,7 +32,7 @@ st.logo(sidebar_logo, icon_image=main_body_logo)
 st.markdown('## Stations and traces')
 
 
-@st.cache_data  # use obspy client instead?
+#@st.cache_data  # use obspy client instead?
 def fetch_stations():
     url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
         'network=*&format=text&level=station'
@@ -44,7 +44,7 @@ def fetch_stations():
     return text
 
 
-@st.cache_data
+#@st.cache_data
 def fetch_channels(net, sta):
     url = f'http://seiscomp:8080/fdsnws/station/1/query?' \
         f'network={net}' \
@@ -59,7 +59,7 @@ def fetch_channels(net, sta):
     return text
 
 
-@st.cache_data(show_spinner=False)
+#@st.cache_data(show_spinner=False)
 def get_trace(net, sta, loc, chans, start_date, end_date):
     try:
         waveform_stream = client.get_waveforms(

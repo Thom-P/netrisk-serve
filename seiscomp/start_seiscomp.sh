@@ -30,7 +30,10 @@ seiscomp/bin/seiscomp --asroot enable fdsnws
 service incron start # Daemon to trigger myo to mseed conversion and SDS archiving routines
 seiscomp/bin/seiscomp --asroot start scmaster # Run Seiscomp master as background process
 seiscomp/bin/seiscomp --asroot update-config # Only needed for added init data in Dockerfile
-seiscomp/bin/seiscomp --asroot exec fdsnws # Run Web services as foreground process to keep container up
+seiscomp/bin/seiscomp --asroot start fdsnws # Run Web services as background to allow reload when inventory updates
+#seiscomp/bin/seiscomp --asroot exec fdsnws # Run Web services as foreground process to keep container up
+sleep infinity # need cleaner solution
+# DIDNT WORK Test use of init in docker compose to allow the two seiscomp process to run in background without container stopping
 
 # Seiscomp setup questions (for reference)
 # Agency ID []:

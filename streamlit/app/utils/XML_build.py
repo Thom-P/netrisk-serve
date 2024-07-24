@@ -112,7 +112,8 @@ def build_channel_objects(band_code, source_code, subsource_code, start_date, en
     cols = ph.columns(len(subsource_code_list))
     for i, sub_code in enumerate(subsource_code_list):
         cont = cols[i].container(border=True)
-        chan_code = '_'.join((band_code, source_code, sub_code))
+        #chan_code = '_'.join((band_code, source_code, sub_code))
+        chan_code = ''.join((band_code, source_code, sub_code)) # temporary revert to old standard for testing
         with cont:
             st.write(f"__Channel {chan_code}__")
             value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00" # otherwise looses previous value if widget hidden

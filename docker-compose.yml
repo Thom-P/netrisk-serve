@@ -80,6 +80,7 @@ services:
       - EMAIL_ADRESS=${EMAIL_ADRESS:-}
   seiscomp:
     build: ./seiscomp
+    #init: true # DIDNT WORK...to allow the two seiscomp processes (master and fdsnws) to run in the background
     depends_on:
       db:
         condition: service_healthy
