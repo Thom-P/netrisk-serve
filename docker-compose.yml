@@ -13,6 +13,7 @@ services:
       - ssl_cert:/etc/ssl/certs
     networks:
       - streamlit_net
+      - adminer_net # to debug
     ports:
       #- "443:443" # when ready to expose to web
       #- "127.0.0.1:443:443" # only accessible form server (via ssh and port forward)

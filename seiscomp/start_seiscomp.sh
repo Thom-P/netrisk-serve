@@ -1,6 +1,10 @@
 #!/bin/bash
-# Seiscomp setup
-seiscomp/bin/seiscomp --asroot setup <<EOF
+
+if [ -f "SETUP_COMPLETED" ]; then
+    echo "SeisComP setup previously executed, skipping setup step."
+else
+    # Run seiscomp setup at first container start only (otherwise overwrites inventory)
+    seiscomp/bin/seiscomp --asroot setup <<EOF
 $SECTION
 $COMMON_NAME
 $ORGANIZATION
@@ -16,6 +20,8 @@ $USER_NAME
 $USER_PASSWD
 P
 EOF
+    touch "SETUP_COMPLETED"
+fi
 
 # Enable Web Services
 seiscomp/bin/seiscomp --asroot enable fdsnws
@@ -28,24 +34,24 @@ seiscomp/bin/seiscomp --asroot exec fdsnws # Run Web services as foreground proc
 
 # Seiscomp setup questions (for reference)
 # Agency ID []:
-# Datacenter ID []:                 
+# Datacenter ID []:
 # Organization string []:
-# Enable database storage. [yes]: 
+# Enable database storage. [yes]:
 #  0) mysql/mariadb
 #       MySQL/MariaDB server.
 #  1) postgresql
 #       PostgresSQL server version 9 or later.
 #  2) sqlite3
 #       SQLite3 database.
-# Database backend [0]: 
+# Database backend [0]:
 # Create database [yes]:
 # Database name. [seiscomp]:
 # Database hostname. [localhost]:
-# Database read-write user. [sysop]: 
-# Database read-write password. [sysop]: 
-# Database public hostname. [localhost]: 
-# Database read-only user. [sysop]: 
-# Database read-only password. [sysop]: 
+# Database read-write user. [sysop]:
+# Database read-write password. [sysop]:
+# Database public hostname. [localhost]:
+# Database read-only user. [sysop]:
+# Database read-only password. [sysop]:
 #
 # Finished setup
 # --------------
