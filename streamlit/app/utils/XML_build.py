@@ -104,7 +104,7 @@ def create_selectbox(choices: dict, col):
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
 
-def build_channel_objects(band_code, source_code, subsource_code, start_date, end_date, response, sensor, datalogger, sta, ph):
+def build_channel_objects(band_code, source_code, subsource_code, use_old_format, start_date, end_date, response, sensor, datalogger, sta, ph):
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
@@ -112,8 +112,10 @@ def build_channel_objects(band_code, source_code, subsource_code, start_date, en
     cols = ph.columns(len(subsource_code_list))
     for i, sub_code in enumerate(subsource_code_list):
         cont = cols[i].container(border=True)
-        #chan_code = '_'.join((band_code, source_code, sub_code))
-        chan_code = ''.join((band_code, source_code, sub_code)) # temporary revert to old standard for testing
+        if use_old_format:
+            chan_code = ''.join((band_code, source_code, sub_code))
+        else:
+            chan_code = '_'.join((band_code, source_code, sub_code))
         with cont:
             st.write(f"__Channel {chan_code}__")
             value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00" # otherwise looses previous value if widget hidden
