@@ -115,7 +115,6 @@ services:
     networks:
       - streamlit_net
     volumes:
-      - ./streamlit/tmp_xml:/data/inventory # will need to share that with seiscomp (no need for mounted vol?)
       - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
       - fdsnXML_data:/data/xml
     environment:
