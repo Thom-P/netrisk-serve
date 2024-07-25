@@ -61,7 +61,7 @@ channels = []
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
-use_old_format = st.toggle("Use previous (deprecated) format for channel code (eg: HHZ)", value = False)
+use_old_format = st.toggle("Use SEED v2.4 deprecated format for channel code (eg: HHZ)", value = True, disabled=True, help="Seiscomp FDSNWS does not seem to handle newer format, older format enforced for the moment.")
 band_code, source_code, subsource_code = get_channel_codes()
 start_datetime, end_datetime = get_channel_start_stop()
 

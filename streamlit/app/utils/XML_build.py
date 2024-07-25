@@ -19,7 +19,7 @@ def get_station_parameters():
     net_code = cols1[0].text_input("__Network code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
     sta_code = cols1[1].text_input("__Station code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
 
-    lat = cols1[2].number_input("__Station latitude__", value=None, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, placeholder="Required")
+    lat = cols1[2].number_input("__Station latitude__", value=None, min_value=-90.0, max_value=89.999999, format="%.4f", help=coord_help_str, placeholder="Required")
     lon = cols1[3].number_input("__Station longitude__", value=None, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, placeholder="Required")
     elev = cols1[4].number_input("__Ground surface elevation__ (m)", value=None, min_value=-414, max_value=8848, format="%d", placeholder="Required")
 
@@ -32,7 +32,7 @@ def get_station_parameters():
         st.warning('Invalid or empty station code', icon="⚠️")
         st.stop()
     if lat is None or lon is None or elev is None:
-        st.warning('Empty coordinate(s)', icon="⚠️")
+        st.warning('Invalid or empty coordinate(s)', icon="⚠️")
         st.stop()
     if site is None or len(site) == 0:
         st.warning('Empty site name', icon="⚠️")
