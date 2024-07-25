@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
+import io
 
+import zipfile
 import streamlit as st
 import pandas as pd
 
@@ -51,6 +53,36 @@ def delete_files(rows):
 
 selected_rows = event.selection['rows']
 #if st.button("Delete selected files", on_click=delete_files, args=[selected_rows], disabled=len(selected_rows) == 0):
-if st.button("Delete selected files", disabled=len(selected_rows) == 0):
+is_disabled = len(selected_rows) == 0
+if st.button("Delete selected files", disabled=is_disabled):
     delete_files(selected_rows)
     #st.rerun() # needed?
+
+@st.experimental_dialog("Download archive")
+def prepare_archive(files):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode='a', compression=zipfile.ZIP_DEFLATED, allowZip64=False) as zip_file:
+        for file_name in files:
+            zip_file.write('/data/xml/' + file_name)
+    st.download_button(
+        label=f"Download",
+        data=zip_buffer,
+        file_name='stationXML_files.zip',
+    )
+
+#with open('C:/1.zip', 'wb') as f:
+#    f.write(zip_buffer.getvalue())
+
+if len(selected_rows) == 1:
+    fname = df['File name'].iloc[selected_rows[0]]
+    with open('/data/xml/' + fname, 'rt') as file:
+        st.download_button(
+            label=f"Download {fname}",
+            data=file,
+            file_name=fname,
+            #disabled=is_disabled
+            #help=dl_msg
+        )
+else:
+    if st.button('Prepare archive for download'):
+        prepare_archive(df['File name'].iloc[selected_rows].tolist())
