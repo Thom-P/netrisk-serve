@@ -1,15 +1,16 @@
+## Next:
+- try to encrypt vuser db: https://stackoverflow.com/questions/15767273/encrypted-password-in-berkeley-db-for-vsftpd-using-pam-userdb-so
+- button to delete and add vusers. Display only password hash or ****
+
 ## General
 - cycle data myo and sds data volumes?
 - verify that sensitive infos do not end up in docker images thru env
 - verify that all container stop gracefully with docker stop (find a way for SIGTERM catch in vsftpd and seiscomp)
 
 ## Nginx
-- add authentication
-- switch to https
 
 ## Seiscomp
 - send alert to user if myo to mseed conversion failure?
-- check if seiscomp update config can be limited to necessary modules only
 - enforce env variable validity?
 - install and run seiscomp as user instead of root?
 
@@ -26,4 +27,3 @@
 - possibility to download and upload stationXML directly
 - handle XML validity with obspy?
 - interactive xml edit system ? using st df data editor
-- add several instrument/channel groups
