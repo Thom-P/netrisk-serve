@@ -15,9 +15,9 @@ import pandas as pd
 #)
 # st.sidebar.markdown('# Placeholder')
 
-sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
-main_body_logo = "static/netrisk-serve-icon-transparent.png"
-st.logo(sidebar_logo, icon_image=main_body_logo)
+#sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
+#main_body_logo = "static/netrisk-serve-icon-transparent.png"
+#st.logo(sidebar_logo, icon_image=main_body_logo)
 
 st.title('My station XML files')
 

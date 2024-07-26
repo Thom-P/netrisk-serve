@@ -115,7 +115,7 @@ services:
     networks:
       - streamlit_net
     volumes:
-      - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
+      - ./streamlit/ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
       - fdsnXML_data:/data/xml
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)

@@ -5,6 +5,8 @@ RUN <<EOF
     apt install -y vsftpd db-util
     rm -rf /var/lib/apt/lists/*
 EOF
+# might just need python3-dev
+#libdb dev, gcc
 
 # Setup vsftpd restricted user and data directory
 RUN <<EOF

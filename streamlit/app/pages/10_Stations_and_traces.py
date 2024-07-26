@@ -25,11 +25,11 @@ client = Client("http://seiscomp:8080")  # todo connection test here
 #)
 # st.sidebar.markdown('Stations and traces')
 
-sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
-main_body_logo = "static/netrisk-serve-icon-transparent.png"
-st.logo(sidebar_logo, icon_image=main_body_logo)
+#sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
+#main_body_logo = "static/netrisk-serve-icon-transparent.png"
+#st.logo(sidebar_logo, icon_image=main_body_logo)
 
-st.markdown('## Stations and traces')
+st.title('Stations and traces')
 
 
 #@st.cache_data  # use obspy client instead?
