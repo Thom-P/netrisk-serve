@@ -17,12 +17,12 @@ import matplotlib.pyplot as plt
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 
-st.set_page_config(
-    page_title='Stations and Traces',
-    page_icon=None, layout="wide",
-    initial_sidebar_state="auto",
-    menu_items=None
-)
+#st.set_page_config(
+#    page_title='Stations and Traces',
+#    page_icon=None, layout="wide",
+#    initial_sidebar_state="auto",
+#    menu_items=None
+#)
 # st.sidebar.markdown('Stations and traces')
 
 sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
