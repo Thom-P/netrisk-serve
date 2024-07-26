@@ -40,26 +40,15 @@ event = st.dataframe(df, hide_index=True, on_select='rerun',
 
 @st.experimental_dialog("Confirmation required")
 def delete_files(rows):
-    st.write("The following files will be deleted on the server:")
+    st.write("The following file(s) will be deleted on the server:")
     st.write(', '.join(df['File name'].iloc[rows].tolist()))
-    if st.button("Confirm deletion"):
+    if st.button("Delete"):
         for row in rows:
             os.remove('/data/xml/' + df['File name'].iloc[row])
         st.rerun()
-        #for row in reversed(rows):  # reverse so that delete doesnt change remaining indices
-        #    st.write(row)
-            #st.toast(row['File name'])
-            #del os.remove(row['name'])
-
-selected_rows = event.selection['rows']
-#if st.button("Delete selected files", on_click=delete_files, args=[selected_rows], disabled=len(selected_rows) == 0):
-is_disabled = len(selected_rows) == 0
-if st.button("Delete selected files", disabled=is_disabled):
-    delete_files(selected_rows)
-    #st.rerun() # needed?
 
 @st.experimental_dialog("Download archive")
-def prepare_archive(files):
+def download_xml_archive(files):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode='a', compression=zipfile.ZIP_DEFLATED, allowZip64=False) as zip_file:
         for file_name in files:
@@ -70,19 +59,25 @@ def prepare_archive(files):
         file_name='stationXML_files.zip',
     )
 
-#with open('C:/1.zip', 'wb') as f:
-#    f.write(zip_buffer.getvalue())
 
-if len(selected_rows) == 1:
-    fname = df['File name'].iloc[selected_rows[0]]
+@st.experimental_dialog("Download XML file")
+def download_xml_file(fname):
     with open('/data/xml/' + fname, 'rt') as file:
         st.download_button(
-            label=f"Download {fname}",
+            label=f"Download",
             data=file,
             file_name=fname,
-            #disabled=is_disabled
-            #help=dl_msg
-        )
-else:
-    if st.button('Prepare archive for download'):
-        prepare_archive(df['File name'].iloc[selected_rows].tolist())
+    )
+
+selected_rows = event.selection['rows']
+is_disabled = len(selected_rows) == 0
+
+cols = st.columns([1, 1, 6]) # hack to have buttons side by side without big gap
+if cols[0].button("Delete selected file(s)", disabled=is_disabled):
+    delete_files(selected_rows)
+
+if cols[1].button("Download selected file(s)", disabled=is_disabled):
+    if len(selected_rows) > 1:
+        download_xml_archive(df['File name'].iloc[selected_rows].tolist())
+    else:
+        download_xml_file(df['File name'].iloc[selected_rows[0]])
