@@ -31,6 +31,9 @@ def create_account():
     if len(login) < 4:
         st.warning("Logins should have at least 4 characters")
         st.stop()
+    if st.session_state.user_db.exists(login.encode('utf-8')):
+        st.error("This login already exists.")
+        st.stop()
     password = st.text_input("Password:", type='password')
     if len(password) < 6:
         st.warning("Passwords should have at least 6 characters")
