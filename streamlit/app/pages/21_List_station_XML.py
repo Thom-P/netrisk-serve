@@ -38,7 +38,7 @@ event = st.dataframe(df, hide_index=True, on_select='rerun',
     })
 
 
-@st.experimental_dialog("Confirmation required")
+@st.dialog("Confirmation required")
 def delete_files(rows):
     st.write("The following file(s) will be deleted on the server:")
     st.write(', '.join(df['File name'].iloc[rows].tolist()))
@@ -47,7 +47,7 @@ def delete_files(rows):
             os.remove('/data/xml/' + df['File name'].iloc[row])
         st.rerun()
 
-@st.experimental_dialog("Download archive")
+@st.dialog("Download archive")
 def download_xml_archive(files):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode='a', compression=zipfile.ZIP_DEFLATED, allowZip64=False) as zip_file:
@@ -60,7 +60,7 @@ def download_xml_archive(files):
     )
 
 
-@st.experimental_dialog("Download XML file")
+@st.dialog("Download XML file")
 def download_xml_file(fname):
     with open('/data/xml/' + fname, 'rt') as file:
         st.download_button(
