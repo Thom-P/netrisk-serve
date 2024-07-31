@@ -12,9 +12,13 @@ EOF
 RUN <<EOF
     mkdir /etc/vsftpd
     mkdir -p -m 600 /var/run/vsftpd/empty
-    useradd --home-dir /home/vsftpd --gid nogroup -m --shell /user/sbin/nologin vsftpd
+    useradd --home-dir /home/vsftpd --gid nogroup -m --shell /usr/sbin/nologin vsftpd
     mkdir -p /data/ftp && chown vsftpd:nogroup /data/ftp
+    echo -n | db_load -T -t hash /etc/vsftpd/vsftpd-virtual-user.db
+    chmod 600 /etc/vsftpd/vsftpd-virtual-user.db
 EOF
+# /etc/vsftpd now mounted to volume in docker compose
+# db load creates empty berkeley db file
 
 # PAM configuration for virtual users (stations) authentication
 RUN cat > /etc/pam.d/vsftpd <<EOF

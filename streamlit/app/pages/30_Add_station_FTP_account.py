@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import pandas as pd
 import berkeleydb.db as db
@@ -7,7 +9,7 @@ st.title('Station FTP accounts')
 
 if 'user_db' not in st.session_state:
     user_db = db.DB()
-    user_db.open('/data/ftp_users/vusers.db')
+    user_db.open('/data/ftp_users/vsftpd-virtual-user.db')
     st.session_state['user_db'] = user_db
 users = st.session_state.user_db.items()
 
@@ -41,6 +43,7 @@ def create_account():
     if st.button("Create"):
         st.session_state.user_db.put(login.encode('utf-8'), password.encode('utf-8'))
         st.session_state.user_db.sync()
+        os.mkdir(f"/data/ftp/{login}") # todo add char validation and verif if already exists
         st.rerun()
 
 selected_rows = event.selection['rows']

@@ -67,7 +67,7 @@ services:
     volumes:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs
-      - ./ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
+      - ftp_userdb:/etc/vsftpd # need to share with streamlit
     environment:
       - STATION_NAME=${STATION_NAME}
       - STATION_PASSWD=${STATION_PASSWD}
@@ -115,13 +115,15 @@ services:
     networks:
       - streamlit_net
     volumes:
-      - ./streamlit/ftp_users:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
+      - ftp_userdb:/data/ftp_users # need to share with vsftpd (no need for mounted volume?)
       - fdsnXML_data:/data/xml
+      - ftp_data:/data/ftp # to allow creation of station folders
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:
   sc_mariadb_data:
   ftp_data:
+  ftp_userdb:
   fdsnXML_data:
   ssl_cert:
 networks:
