@@ -65,7 +65,7 @@ services:
     ports:
       - "20:20"
       - "21:21"
-      - "7000-7500:7000-7500"
+      #- "7000-7500:7000-7500"
     volumes:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs

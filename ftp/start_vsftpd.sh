@@ -28,8 +28,8 @@ vsftpd_stop() {
 
 trap vsftpd_stop SIGINT SIGTERM
 echo "Starting vsftpd"
-#/usr/sbin/vsftpd vsftpd.conf &
-sleep infinity &
+/usr/sbin/vsftpd vsftpd.conf &
+#sleep infinity &
 pid=$!
 echo $pid > /var/run/vsftpd/vsftpd.pid
 wait $pid && exit $?
