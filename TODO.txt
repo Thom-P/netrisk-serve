@@ -1,6 +1,7 @@
 ## Next:
 - try to encrypt vuser db: https://stackoverflow.com/questions/15767273/encrypted-password-in-berkeley-db-for-vsftpd-using-pam-userdb-so
-- button to delete and add vusers. Display only password hash or ****
+- vuser display only password hash or ****
+- ask deletion/download of vuser myo data before deleting account?
 
 ## General
 - cycle data myo and sds data volumes?

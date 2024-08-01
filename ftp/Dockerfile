@@ -5,10 +5,8 @@ RUN <<EOF
     apt install -y vsftpd db-util
     rm -rf /var/lib/apt/lists/*
 EOF
-# might just need python3-dev
-#libdb dev, gcc
 
-# Setup vsftpd restricted user and data directory
+# Setup vsftpd (v)users and data directory
 RUN <<EOF
     mkdir /etc/vsftpd
     mkdir -p -m 600 /var/run/vsftpd/empty
@@ -28,8 +26,5 @@ session    required     pam_loginuid.so
 EOF
 
 COPY vsftpd.conf start_vsftpd.sh ./
-
-# test if shuts down faster
-STOPSIGNAL SIGQUIT
 
 ENTRYPOINT ["./start_vsftpd.sh"]

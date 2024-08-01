@@ -58,6 +58,8 @@ services:
       - adminer_net
   ftp:
     build: ./ftp
+    #init: true # test to debug vsfgtpd long stopping
+    #stop_signal: SIGQUIT
     restart: always
     container_name: vsftpd
     ports:
