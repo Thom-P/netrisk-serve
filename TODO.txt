@@ -6,7 +6,8 @@
 ## General
 - cycle data myo and sds data volumes?
 - verify that sensitive infos do not end up in docker images thru env
-- verify that all container stop gracefully with docker stop (find a way for SIGTERM catch in vsftpd and seiscomp)
+- define a log file for each process/app, and make it accessible to UI; on each action started from UI, catch respective log and display
+- verify that all container stop gracefully with docker stop (find a way for SIGTERM catch in seiscomp)
 
 ## Nginx
 

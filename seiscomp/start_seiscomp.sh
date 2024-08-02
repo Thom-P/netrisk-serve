@@ -1,5 +1,5 @@
 #!/bin/bash
-
+apt update && apt install procps -y
 if [ -f "SETUP_COMPLETED" ]; then
     echo "SeisComP setup previously executed, skipping setup step."
 else
@@ -26,14 +26,40 @@ fi
 # Enable Web Services
 seiscomp/bin/seiscomp --asroot enable fdsnws
 
+# signal trap function inspired by https://github.com/panubo/docker-vsftpd/blob/main/entry.sh
+seiscomp_stop() {
+  echo "Received SIGINT or SIGTERM: shutting down Seiscomp and Incron..."
+
+  seiscomp/bin/seiscomp --asroot stop fdsnws
+  seiscomp/bin/seiscomp --asroot stop scmaster
+  service incron stop
+  echo done
+  exit
+}
+
+trap seiscomp_stop SIGINT SIGTERM
+
 # Start all necessary processes
 service incron start # Daemon to trigger myo to mseed conversion and SDS archiving routines
 seiscomp/bin/seiscomp --asroot start scmaster # Run Seiscomp master as background process
-seiscomp/bin/seiscomp --asroot update-config # Only needed for added init data in Dockerfile
 seiscomp/bin/seiscomp --asroot start fdsnws # Run Web services as background to allow reload when inventory updates
-#seiscomp/bin/seiscomp --asroot exec fdsnws # Run Web services as foreground process to keep container up
-sleep infinity # need cleaner solution
-# DIDNT WORK Test use of init in docker compose to allow the two seiscomp process to run in background without container stopping
+pid_incron=$(cat /var/run/incrond.pid)
+pid_scmaster=$(cat seiscomp/var/run/scmaster.pid)
+pid_fdsnws=$(cat seiscomp/var/run/fdsnws.pid)
+echo $pid_incron $pid_scmaster $pid_fdsnws
+self_id=$$
+echo $self_id
+ps --ppid $self_id
+echo "#####"
+echo $BASHPID
+ps --ppid $BASHPID
+echo "#####"
+
+sleep infinity &
+pid_sleep1=$!
+#wait -f $pid_incron $pid_scmaster $pid_fdsnws  && seiscomp_stop # if any of the process stops, call the stop procedure to exit gracefully
+#wait -n $pid_sleep1 && seiscomp_stop
+wait $pid_incron
 
 # Seiscomp setup questions (for reference)
 # Agency ID []:
