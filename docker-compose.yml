@@ -58,21 +58,19 @@ services:
       - adminer_net
   ftp:
     build: ./ftp
-    #init: true # test to debug vsfgtpd long stopping
-    #stop_signal: SIGQUIT
+    init: true # allows to transfer stop/SIGTERM to vsftpd process
     restart: always
     container_name: vsftpd
     ports:
-      - "20:20"
+      #- "20:20" # not needed in PASSIVE mode
       - "21:21"
+      - "7000-7050:7000-7050" # reduced number of published port by 10x to reduce container startup and stop time
       #- "7000-7500:7000-7500"
     volumes:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs
       - ftp_userdb:/etc/vsftpd # need to share with streamlit
     environment:
-      - STATION_NAME=${STATION_NAME}
-      - STATION_PASSWD=${STATION_PASSWD}
       - COUNTRY_CODE=${COUNTRY_CODE:-XX}
       - STATE=${STATE:-State}
       - LOCALITY=${LOCALITY:-City}
