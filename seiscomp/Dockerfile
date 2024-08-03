@@ -11,7 +11,8 @@ RUN <<EOF
         python3-pip \
         python3.11-venv \
         mariadb-client \
-        incron
+        incron \
+        procps
 EOF
 
 #RUN useradd seiscomp
@@ -26,8 +27,8 @@ RUN tar xzf ./seiscomp-6.4.3-debian-12-x86_64.tar.gz \
     && rm -rf /var/lib/apt/lists/*
 
 # tmp: to remove in fine
-COPY OG35.mseed ./
-RUN seiscomp/bin/seiscomp exec scart -v -I /usr/local/app/OG35.mseed -i --with-filecheck --with-filename
+#COPY OG35.mseed ./
+#RUN seiscomp/bin/seiscomp exec scart -v -I /usr/local/app/OG35.mseed -i --with-filecheck --with-filename
 #COPY OG35.xml ./
 #RUN seiscomp/bin/seiscomp exec import_inv fdsnxml OG35.xml seiscomp/etc/inventory/OG35.xml
 
