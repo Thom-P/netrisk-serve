@@ -5,3 +5,4 @@ mpld3
 streamlit-folium
 streamlit
 berkeleydb
+passlib

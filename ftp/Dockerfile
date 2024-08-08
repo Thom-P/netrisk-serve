@@ -20,8 +20,8 @@ RUN chmod 600 /etc/vsftpd/vsftpd-virtual-user.db
 
 # PAM configuration for virtual users (stations) authentication
 RUN cat > /etc/pam.d/vsftpd <<EOF
-auth       required     pam_userdb.so db=/etc/vsftpd/vsftpd-virtual-user
-account    required     pam_userdb.so db=/etc/vsftpd/vsftpd-virtual-user
+auth       required     pam_userdb.so db=/etc/vsftpd/vsftpd-virtual-user    crypt=crypt
+account    required     pam_userdb.so db=/etc/vsftpd/vsftpd-virtual-user    crypt=crypt
 session    required     pam_loginuid.so
 EOF
 
