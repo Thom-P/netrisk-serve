@@ -12,11 +12,11 @@ if 'user_db' not in st.session_state:
     user_db = db.DB()
     user_db.open('/data/ftp_users/vsftpd-virtual-user.db')
     st.session_state['user_db'] = user_db
-#users = st.session_state.user_db.items()
+users = st.session_state.user_db.items()
 
-#df = pd.DataFrame(users, columns=('Login', 'Password'), dtype=str)
-hashes = (bytes.decode('utf-8') for bytes in st.session_state.user_db.values())
-df = pd.DataFrame({'Login': pd.Series(st.session_state.user_db.keys(), dtype=str), 'Password hash': pd.Series(hashes, dtype=str)})
+df = pd.DataFrame(users, columns=('Login', 'Password hash'),  dtype=str)
+#hashes = (bytes.decode('utf-8') for bytes in st.session_state.user_db.values())
+#df = pd.DataFrame({'Login': pd.Series(st.session_state.user_db.keys(), dtype=str), 'Password hash': pd.Series(hashes, dtype=str)})
 #df = pd.DataFrame(users, columns=('Login', 'Password'))
 event = st.dataframe(data=df, hide_index=True, on_select='rerun')
 
@@ -27,6 +27,7 @@ def delete_accounts(rows):
     if st.button("Delete"):
         for row in rows:
             st.session_state.user_db.delete(df['Login'].iloc[row].encode('utf-8'))
+            #st.session_state.user_db.delete(df['Login'].iloc[row])
             st.session_state.user_db.sync()
             #db remove
         st.rerun()
@@ -45,10 +46,7 @@ def create_account():
         st.warning("Passwords should have at least 6 characters")
         st.stop()
     if st.button("Create"):
-        #password_hash = hashlib.sha512(password.encode('ascii')).digest()  # neeed to enforce validity: https://manpages.debian.org/bullseye/libcrypt-dev/crypt.5.en.html
-        #password_hash = hashlib.sha512(password.encode('ascii')).digest()  # neeed to enforce validity: https://manpages.debian.org/bullseye/libcrypt-dev/crypt.5.en.html
         password_hash = sha512_crypt.hash(password)
-        #st.session_state.user_db.put(login.encode('utf-8'), password.encode('utf-8'))
         st.session_state.user_db.put(login.encode('utf-8'), password_hash.encode('utf-8'))
         st.session_state.user_db.sync()
         os.mkdir(f"/data/ftp/{login}") # todo add char validation and verif if already exists
