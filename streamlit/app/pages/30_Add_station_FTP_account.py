@@ -15,9 +15,6 @@ if 'user_db' not in st.session_state:
 users = st.session_state.user_db.items()
 
 df = pd.DataFrame(users, columns=('Login', 'Password hash'),  dtype=str)
-#hashes = (bytes.decode('utf-8') for bytes in st.session_state.user_db.values())
-#df = pd.DataFrame({'Login': pd.Series(st.session_state.user_db.keys(), dtype=str), 'Password hash': pd.Series(hashes, dtype=str)})
-#df = pd.DataFrame(users, columns=('Login', 'Password'))
 event = st.dataframe(data=df, hide_index=True, on_select='rerun')
 
 @st.dialog("Confirmation required")
@@ -27,9 +24,7 @@ def delete_accounts(rows):
     if st.button("Delete"):
         for row in rows:
             st.session_state.user_db.delete(df['Login'].iloc[row].encode('utf-8'))
-            #st.session_state.user_db.delete(df['Login'].iloc[row])
             st.session_state.user_db.sync()
-            #db remove
         st.rerun()
 
 @st.dialog("New FTP account creation")
@@ -50,6 +45,7 @@ def create_account():
         st.session_state.user_db.put(login.encode('utf-8'), password_hash.encode('utf-8'))
         st.session_state.user_db.sync()
         os.mkdir(f"/data/ftp/{login}") # todo add char validation and verif if already exists
+        os.chmod(f"/data/ftp/{login}", 0o777) # need exec permission to write files into (could create vsftpd user in streamlit dockerfile as well instead)
         st.rerun()
 
 selected_rows = event.selection['rows']
