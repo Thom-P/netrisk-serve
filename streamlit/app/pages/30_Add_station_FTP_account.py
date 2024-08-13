@@ -47,7 +47,7 @@ def create_account():
         st.session_state.user_db.sync()
         os.mkdir(f"/data/ftp/{login}") # todo add char validation and verif if already exists
         os.chmod(f"/data/ftp/{login}", 0o777) # need exec permission to write files into (could create vsftpd user in streamlit dockerfile as well instead)
-        Path('/data/reload/RELOAD').touch()
+        Path('/data/reload/RELOAD').touch() # does not work reliably, need to check why
         st.rerun()
 
 selected_rows = event.selection['rows']
