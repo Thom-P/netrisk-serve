@@ -38,6 +38,7 @@ seiscomp_stop() {
 }
 
 trap seiscomp_stop SIGINT SIGTERM
+#trap "incrontab --reload" SIGUSR1  # to watch newly created station folder
 
 # Start all necessary processes
 service incron start # Daemon to trigger myo to mseed conversion and SDS archiving routines

@@ -36,10 +36,12 @@ RUN tar xzf ./seiscomp-6.4.3-debian-12-x86_64.tar.gz \
 # Also for importing xml files created via UI to Seiscomp inventory
 RUN echo root > /etc/incron.allow \
     && cat <<'EOF' | incrontab -
+/data/reload/ IN_CLOSE_WRITE incrontab --reload
 /data/ftp/ IN_CLOSE_WRITE /usr/local/app/obspy/bin/python /usr/local/app/myo2mseed.py $@/$#
 /usr/local/app/mseed_segments/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec scart -v -I $@/$# -i /usr/local/app/seiscomp/var/lib/archive
 /data/xml/ IN_CLOSE_WRITE /usr/local/app/station_XML_import.sh $@ $#
 EOF
+# first line to reload incron table at every new station dir creation (need to touch file within reload folder)
 # need to add sync on xml removal
 #/data/xml/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec import_inv fdsnxml $@/$# /usr/local/app/seiscomp/etc/inventory/$#
 

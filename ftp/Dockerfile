@@ -13,7 +13,7 @@ RUN <<EOF
     useradd --home-dir /home/vsftpd --gid nogroup -m --shell /usr/sbin/nologin vsftpd
     mkdir -p /data/ftp && chown vsftpd:nogroup /data/ftp
 EOF
-
+# need to create data ftp folder??
 # Copy empty berkeley db to host future vusers (stations) logins and passwords
 COPY empty.db /etc/vsftpd/vsftpd-virtual-user.db
 RUN chmod 600 /etc/vsftpd/vsftpd-virtual-user.db
