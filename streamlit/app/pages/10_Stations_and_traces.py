@@ -96,7 +96,8 @@ if text is None:
     st.stop()
 
 if "df" not in st.session_state:
-    st.session_state.df = pd.read_csv(io.StringIO(text[1:]), sep='|')
+    resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
+    st.session_state.df = pd.read_csv(io.StringIO(text[1:]), sep='|', dtype=resp_types)
 # remove first char '#' (header line included as comment)
 
 inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
