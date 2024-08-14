@@ -17,4 +17,4 @@ RUN pip3 install -r requirements.txt
 
 COPY app ./
 #HEALTHCHECK ? see streamlit docker
-ENTRYPOINT ["streamlit", "run", "Home.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

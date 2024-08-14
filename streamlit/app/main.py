@@ -1,6 +1,7 @@
 import streamlit as st
 
-# this will be common to all pages
+
+# This will be common to all pages
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",
@@ -22,14 +23,10 @@ st.markdown("""
 </style>""",
 unsafe_allow_html=True)
 
-
-#st.markdown("# Netrisk-serve")
-#st.markdown("### Station management, trace view, and data download")
-
-stat_and_traces = st.Page("pages/10_Stations_and_traces.py", title="Stations and traces", icon="📌")
-add_xml = st.Page("pages/20_Add_station_XML.py", title="Create new", icon="✏️")
-list_xml = st.Page("pages/21_List_station_XML.py", title="Manage files", icon="✏️")
-ftp_accounts = st.Page("pages/30_Add_station_FTP_account.py", title="Create new", icon="✏️")
+stat_and_traces = st.Page("app_pages/10_Stations_and_traces.py", title="Stations and traces", icon="📌")
+add_xml = st.Page("app_pages/20_Add_station_XML.py", title="Create new", icon="✏️")
+list_xml = st.Page("app_pages/21_List_station_XML.py", title="Manage files", icon="✏️")
+ftp_accounts = st.Page("app_pages/30_Add_station_FTP_account.py", title="Manage accounts", icon="✏️")
 
 pg = st.navigation(
         {
