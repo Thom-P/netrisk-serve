@@ -15,22 +15,9 @@ from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
 
 
-client = Client("http://seiscomp:8080")  # todo connection test here
-
-#st.set_page_config(
-#    page_title='Stations and Traces',
-#    page_icon=None, layout="wide",
-#    initial_sidebar_state="auto",
-#    menu_items=None
-#)
-# st.sidebar.markdown('Stations and traces')
-
-#sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
-#main_body_logo = "static/netrisk-serve-icon-transparent.png"
-#st.logo(sidebar_logo, icon_image=main_body_logo)
-
 st.title('Stations and traces')
 
+client = Client("http://seiscomp:8080")  # todo connection test here
 
 #@st.cache_data  # use obspy client instead?
 def fetch_stations():

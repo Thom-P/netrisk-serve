@@ -11,13 +11,20 @@ sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
 main_body_logo = "static/netrisk-serve-icon-transparent.png"
 st.logo(sidebar_logo, icon_image=main_body_logo)
 
-
+# Hacky patch to remove +/- buttons on number inputs causing instabilities
+# on repetitive clicks
+# https://github.com/streamlit/streamlit/issues/894
+st.markdown("""
+<style>
+    button.step-up {display: none;}
+    button.step-down {display: none;}
+    div[data-baseweb] {border-radius: 4px;}
+</style>""",
+unsafe_allow_html=True)
 
 
 #st.markdown("# Netrisk-serve")
 #st.markdown("### Station management, trace view, and data download")
-
-
 
 stat_and_traces = st.Page("pages/10_Stations_and_traces.py", title="Stations and traces", icon="📌")
 add_xml = st.Page("pages/20_Add_station_XML.py", title="Create new", icon="✏️")

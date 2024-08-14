@@ -13,29 +13,6 @@ import pandas as pd
 
 from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop
 
-#st.set_page_config(
-#    page_title='Add station',
-#    page_icon=None,
-#    layout="wide",
-#    initial_sidebar_state="auto",
-#)
-##    menu_items=None
-# st.sidebar.markdown('# Placeholder')
-
-# Hacky patch to remove +/- buttons on number inputs causing instabilities
-# on repetitive clicks
-# https://github.com/streamlit/streamlit/issues/894
-st.markdown("""
-<style>
-    button.step-up {display: none;}
-    button.step-down {display: none;}
-    div[data-baseweb] {border-radius: 4px;}
-</style>""",
-unsafe_allow_html=True)
-
-#sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
-#main_body_logo = "static/netrisk-serve-icon-transparent.png"
-#st.logo(sidebar_logo, icon_image=main_body_logo)
 
 st.title('Add station')
 
