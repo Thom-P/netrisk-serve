@@ -27,3 +27,6 @@
 - possibility to download and upload stationXML directly
 - handle XML validity with obspy?
 - interactive xml edit system ? using st df data editor
+- enforce string in sitename
+- resete/delete channels after writing xml file
+- in stations and traces (at least), improve session state handling to avoid repeated fetch calls but ensure a call is made when updated content (maybe delete session state on page nav?)

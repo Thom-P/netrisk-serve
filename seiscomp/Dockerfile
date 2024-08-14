@@ -39,7 +39,7 @@ RUN echo root > /etc/incron.allow \
 /data/reload/ IN_CLOSE_WRITE incrontab --reload
 /data/ftp/ IN_CLOSE_WRITE /usr/local/app/obspy/bin/python /usr/local/app/myo2mseed.py $@/$#
 /usr/local/app/mseed_segments/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec scart -v -I $@/$# -i /usr/local/app/seiscomp/var/lib/archive
-/data/xml/ IN_CLOSE_WRITE /usr/local/app/station_XML_import.sh $@ $#
+/data/xml/ IN_CLOSE_WRITE,IN_DELETE /usr/local/app/station_XML_sync.sh $@ $# $%
 EOF
 # first line to reload incron table at every new station dir creation (need to touch file within reload folder)
 # need to add sync on xml removal
@@ -53,6 +53,6 @@ RUN mkdir mseed_segments \
     && python3 -m pip install obspy \
     && deactivate
 
-COPY myo2mseed.py start_seiscomp.sh station_XML_import.sh ./
+COPY myo2mseed.py start_seiscomp.sh station_XML_sync.sh ./
 
 ENTRYPOINT ["./start_seiscomp.sh"]
