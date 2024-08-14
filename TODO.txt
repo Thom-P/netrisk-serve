@@ -13,6 +13,7 @@
 - send alert to user if myo to mseed conversion failure?
 - enforce env variable validity?
 - install and run seiscomp as user instead of root?
+- need to persist archive data
 
 ## Mariadb
 - check if init mounted db overrides existing one at container restart/rebuild
