@@ -1,4 +1,13 @@
 services:
+  #certbot:
+  #  image: certbot/certbot
+  #  container_name: certbot
+  #  volumes:
+  #    - certbot-etc:/etc/letsencrypt
+  #    #- certbot-var:/var/lib/letsencrypt
+  #  ports:
+  #    - "80:80"
+  #  command: certonly --standalone --cert-name=netrisk -m "test@tutu.com" -d "need_domain_name" --agree-tos
   proxy:
     build: ./nginx
     depends_on:
@@ -58,6 +67,8 @@ services:
       - adminer_net
   ftp:
     build: ./ftp
+    #depends_on:
+    #  - certbot # new certif handle test
     init: true # allows to transfer stop/SIGTERM to vsftpd process
     restart: always
     container_name: vsftpd
@@ -70,6 +81,7 @@ services:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs
       - ftp_userdb:/etc/vsftpd # need to share with streamlit
+    #  - certbot-etc:/etc/letsencrypt
     environment:
       - COUNTRY_CODE=${COUNTRY_CODE:-XX}
       - STATE=${STATE:-State}
@@ -128,6 +140,7 @@ volumes:
   fdsnXML_data:
   incron_reload:
   ssl_cert:
+  certbot-etc:
 networks:
   db_net:
   adminer_net:
