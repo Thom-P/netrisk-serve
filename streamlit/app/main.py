@@ -35,6 +35,7 @@ pg = st.navigation(
             "FTP accounts": [ftp_accounts],
         }
     )
+#clear session state here?
 pg.run()
 
 # former page config handling

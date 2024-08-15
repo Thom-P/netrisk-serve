@@ -161,6 +161,8 @@ if create:
         st.stop()
     res = create_xml(fname, net)
     st.success("StationXML file created successfully", icon="✅")
+    del st.session_state['stations_txt']  # to allow update
+    del st.session_state['df_stations']
 
 
    #with st.form("new_station_form"):

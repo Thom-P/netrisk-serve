@@ -77,14 +77,14 @@ def get_icon_div(label):
     ))
     return div
 
-
-text = fetch_stations()
-if text is None:
+if "stations_txt" not in st.session_state:
+    st.session_state.stations_txt = fetch_stations()
+if st.session_state.stations_txt is None:
     st.stop()
 
-if "df" not in st.session_state:
+if "df_stations" not in st.session_state:
     resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
-    st.session_state.df = pd.read_csv(io.StringIO(text[1:]), sep='|', dtype=resp_types)
+    st.session_state.df_stations = pd.read_csv(io.StringIO(st.session_state.stations_txt[1:]), sep='|', dtype=resp_types)
 # remove first char '#' (header line included as comment)
 
 inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
@@ -113,10 +113,10 @@ net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to t
 #    chans = st.session_state['chans']
 
 # Map
-map_center = st.session_state.df[['Latitude', 'Longitude']].mean(
+map_center = st.session_state.df_stations[['Latitude', 'Longitude']].mean(
     ).values.tolist()
 m = folium.Map(map_center)  # create map centered on network
-for _, row in st.session_state.df.iterrows():
+for _, row in st.session_state.df_stations.iterrows():
     info = row['Network'] + ' ' + row['Station'] + '\n' + row['SiteName']
     icon = get_icon_div(row['Station'])
     folium.Marker(
@@ -125,8 +125,8 @@ for _, row in st.session_state.df.iterrows():
         popup=info,
         tooltip='.'.join((row['Network'],row['Station']))
         ).add_to(m)
-sw = st.session_state.df[['Latitude', 'Longitude']].min().values.tolist()
-ne = st.session_state.df[['Latitude', 'Longitude']].max().values.tolist()
+sw = st.session_state.df_stations[['Latitude', 'Longitude']].min().values.tolist()
+ne = st.session_state.df_stations[['Latitude', 'Longitude']].max().values.tolist()
 m.fit_bounds([sw, ne]) # interferes with width...
 # keys = ('Network', 'Station', 'Latitude', 'Longitude', 'Elevation', 'SiteName', 'StartTime', 'EndTime')
 # m = folium.Map(location=(stations[0]['Latitude'], stations[0]['Longitude']), tiles='OpenTopoMap')
@@ -156,7 +156,7 @@ with tab2:
 
 with tab1:
     event = st.dataframe(
-        st.session_state.df,
+        st.session_state.df_stations,
         hide_index=True,
         key=None,
         on_select="rerun",
@@ -174,7 +174,7 @@ with tab1:
                 )
             st.stop()
 
-        net, sta = st.session_state.df.iloc[row_index[0]][['Network', 'Station']]
+        net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
         channel_data = fetch_channels(net, sta)
 
         if channel_data is None:
