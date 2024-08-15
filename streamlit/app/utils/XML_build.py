@@ -183,7 +183,8 @@ def get_channel_start_stop():
     stop_time = cols[3].time_input(
         '__Channel(s) stop time__',
         value=datetime.time(0, 0),
-        step=3600
+        step=3600,
+        disabled=True if stop_day is None else False
     )
     start_date = datetime.datetime.combine(start_day, start_time)
     stop_date = datetime.datetime.combine(stop_day, stop_time) if stop_day is not None else None

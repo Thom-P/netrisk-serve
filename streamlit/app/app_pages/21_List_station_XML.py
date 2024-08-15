@@ -33,8 +33,10 @@ def delete_files(rows):
     if st.button("Delete"):
         for row in rows:
             os.remove('/data/xml/' + df['File name'].iloc[row])
-        del st.session_state['stations_txt']  # to allow update
-        del st.session_state['df_stations']
+        if 'stations_txt' in st.session_state:
+            del st.session_state['stations_txt']  # to allow update
+        if 'df_stations' in st.session_state:
+            del st.session_state['df_stations']
         st.rerun()
 
 @st.dialog("Download archive")

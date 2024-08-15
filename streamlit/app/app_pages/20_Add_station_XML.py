@@ -161,16 +161,8 @@ if create:
         st.stop()
     res = create_xml(fname, net)
     st.success("StationXML file created successfully", icon="✅")
-    del st.session_state['stations_txt']  # to allow update
-    del st.session_state['df_stations']
-
-
-   #with st.form("new_station_form"):
-#    checkbox_val = st.checkbox("Form checkbox")
-
-#    # Every form must have a submit button.
-#    submitted = st.form_submit_button("Submit")
-#    if submitted:
-#        st.write("net", net, "checkbox", checkbox_val)
-
-#st.write("Outside the form")
+    if 'stations_txt' in st.session_state:
+        del st.session_state['stations_txt']  # to allow update
+    if 'df_stations' in st.session_state:
+        del st.session_state['df_stations']
+    del st.session_state['saved_channels'] # to prevent mess
