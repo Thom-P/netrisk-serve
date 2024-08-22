@@ -15,7 +15,8 @@ from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
 
 
-st.title('Stations and traces')
+#st.title('Stations and traces')
+st.header('Stations and traces')
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 

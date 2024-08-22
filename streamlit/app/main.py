@@ -12,6 +12,19 @@ sidebar_logo = "static/netrisk-serve-hr-logo-transparent.png"
 main_body_logo = "static/netrisk-serve-icon-transparent.png"
 st.logo(sidebar_logo, icon_image=main_body_logo)
 
+# try to reduce white margin top of each:w
+#  page
+st.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 1rem;
+                    padding-bottom: 1rem;
+                    padding-left: 5rem;
+                    padding-right: 5rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+
 # Hacky patch to remove +/- buttons on number inputs causing instabilities
 # on repetitive clicks
 # https://github.com/streamlit/streamlit/issues/894
@@ -37,12 +50,3 @@ pg = st.navigation(
     )
 #clear session state here?
 pg.run()
-
-# former page config handling
-
-## st.page_link("Home.py", label="Home", icon="🏠")
-#st.page_link("pages/10_Stations_and_traces.py", label="Stations", icon="📌")
-#st.page_link("pages/20_Add_station_XML.py", label="StationXML", icon="📈")
-#st.page_link("pages/21_List_station_XML.py", label="StationXML", icon="📈")
-#st.page_link("pages/30_Add_station_FTP_account.py", label="StationFTP")
-#st.page_link("http://seiscomp:8080", label="FDSN Web Service", icon="➡️")

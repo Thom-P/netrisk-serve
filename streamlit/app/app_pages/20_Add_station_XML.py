@@ -14,7 +14,8 @@ import pandas as pd
 from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop
 
 
-st.title('Add station')
+#st.title('Add station')
+st.header('Create station XML')
 
 # Instrument and responses online catalog
 # todo deprecated: need to use v2 offline copy instead...
@@ -24,7 +25,7 @@ if 'saved_channels' not in st.session_state:
     st.session_state.saved_channels = []
 
 ############################################################################
-st.markdown("## Station parameters")
+st.subheader("Station parameters")
 
 net_code, sta_code, lat, lon, elev, site = get_station_parameters()
 
@@ -33,7 +34,7 @@ st.success(f"__Station__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude
 st.divider()
 
 ############################################################################
-st.markdown("## Channel code(s)")
+st.subheader("Channel code(s)")
 channels = []
 
 band_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html#band-code'
@@ -84,14 +85,14 @@ if st.button("Add channel(s)", type='primary'):
 st.divider()
 #######################################
 ## Display channels
-st.markdown("## Summary")
+st.subheader("Summary")
 #st.write("__Station:__")
-st.markdown("### Station:")
+st.markdown("#### Station:")
 #st.write(f"{net.code}.{sta.code} ({sta.site.name}) — Latitude, Longitude = {sta.latitude}, {sta.longitude} — Elevation = {sta.elevation} m")
 st.info(f"__Code__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude, Longitude__: {sta.latitude:.4f}, {sta.longitude:.4f} — __Elevation__: {sta.elevation} m")
 
 #st.write("__Channels:__")
-st.markdown("### Channels:")
+st.markdown("#### Channels:")
 channels_data =[]
 for i, cha in enumerate(st.session_state.saved_channels):
     #chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude}, lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=, l="
