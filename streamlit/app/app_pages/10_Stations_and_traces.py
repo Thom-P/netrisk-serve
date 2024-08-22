@@ -25,9 +25,13 @@ client = Client("http://seiscomp:8080")  # todo connection test here
 def fetch_stations():
     url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
         'network=*&format=text&level=station'
-    data = requests.get(url)
+    try:
+        data = requests.get(url)
+    except FDSNNoDataException:
+        st.warning('No station found.', icon="⚠️")
+        return None
     if data.status_code != 200:
-        st.write(data.reason)
+        st.warning(data.reason, icon="⚠️")
         return None
     text = data.content.decode('utf-8')
     return text
@@ -79,15 +83,14 @@ def get_icon_div(label):
     ))
     return div
 
-if "stations_txt" not in st.session_state:
-    st.session_state.stations_txt = fetch_stations()
-if st.session_state.stations_txt is None:
-    st.stop()
-
 if "df_stations" not in st.session_state:
+    stations_txt = fetch_stations()
+    if stations_txt is None:
+        st.info("You first need to create a station XML file and an FTP account for each of your stations.", icon="ℹ️")
+        st.stop()
     resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
-    st.session_state.df_stations = pd.read_csv(io.StringIO(st.session_state.stations_txt[1:]), sep='|', dtype=resp_types)
-# remove first char '#' (header line included as comment)
+    st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
+    # remove first char '#' (header line included as comment)
 
 inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
 net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty
