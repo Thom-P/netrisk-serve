@@ -4,5 +4,6 @@ pandas
 mpld3
 streamlit-folium
 streamlit
+streamlit-dimensions
 berkeleydb
 passlib

@@ -8,6 +8,7 @@ import folium
 import pandas as pd
 import mpld3
 from streamlit_folium import st_folium
+from streamlit_dimensions import st_dimensions
 # from obspy import read
 from obspy.clients.fdsn import Client
 from obspy.core import UTCDateTime
@@ -140,8 +141,10 @@ col1, col2 = st.columns([0.6, 0.4])
 # from the map (so that it won't rerun the app when the user interacts)
 with col2:
     st.text("") # hack for pseudo alignment of map
-    st.text("")
-    map_data = st_folium(m, width=800, returned_objects=[])
+    #st.text("")
+    #map_data = st_folium(m, width=800, returned_objects=[])
+    map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
+
     # width of container should be checked using add-on
     # (https://github.com/avsolatorio/streamlit-dimensions), other wise messes
     # with bounding box when doesnt fit on screen
