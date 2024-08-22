@@ -1,6 +1,10 @@
 #!/bin/bash
-# Generate ssl certificate (should do only once before first docker run instead?)
-<<EOF openssl req -x509 -nodes -days 1825 -newkey rsa:2048 -keyout /etc/ssl/certs/netrisk.key -out /etc/ssl/certs/netrisk.pem
+# Generate ssl certificate if first start (could also check if expired)
+if [[ -f "/etc/ssl/certs/netrisk.key" ]]; then
+    echo "Using previously created ssl certificate."
+else
+    echo "Creating a new ssl certificate..."
+    <<EOF openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/certs/netrisk.key -out /etc/ssl/certs/netrisk.pem
 $COUNTRY_CODE
 $STATE
 $LOCALITY
@@ -9,6 +13,7 @@ $SECTION
 $COMMON_NAME
 $EMAIL_ADRESS
 EOF
+fi
 
 # Start vsftpd as foreground process, exec for replacing bash PID and receive docker signals (works only if init: true in compose(?))
 exec /usr/sbin/vsftpd vsftpd.conf
