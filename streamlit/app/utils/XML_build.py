@@ -84,12 +84,14 @@ def choose_device(device_dict, device_type: str):
     ## Device choice (sensor or datalogger)
     # todo make sure max depth is not greater than 6
     st.markdown(f"### {device_type}")
-    cols = st.columns(6, vertical_alignment="bottom")
+    #cols = st.columns(6, vertical_alignment="bottom")
+    n_cols = 6  # todo: solve wrap if goes beyond 6
+    cols = st.columns(n_cols, vertical_alignment="bottom")
     i_col = 0
     device_keys=[]
     curr_choices = device_dict
     while isinstance(curr_choices, dict):
-        col = cols[i_col]
+        col = cols[i_col % n_cols] # todo debug
         choice = create_selectbox(curr_choices, col)
         i_col += 1
         if choice is None:

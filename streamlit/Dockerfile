@@ -15,10 +15,10 @@ RUN pip3 install -r requirements.txt
 # might just need python3-dev
 #libdb dev, gcc
 
-COPY app ./
-COPY NRL_v2.resp.tar.gz ./static
+COPY NRL_v2.resp.tar.gz ./
+RUN tar xzf ./NRL_v2.resp.tar.gz && rm ./NRL_v2.resp.tar.gz
 
-RUN tar xzf ./static/NRL_v2.resp.tar.gz -C ./static/ && rm ./static/NRL_v2.resp.tar.gz
+COPY app ./
 
 #HEALTHCHECK ? see streamlit docker
 ENTRYPOINT ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

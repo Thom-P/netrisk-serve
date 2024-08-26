@@ -2,3 +2,4 @@
 .env
 **/tmp_xml
 seiscomp*.tar.gz
+NRL*.tar.gz

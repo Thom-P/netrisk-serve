@@ -20,7 +20,7 @@ st.header('Create station XML')
 # Instrument and responses online catalog
 # todo deprecated: need to use v2 offline copy instead...
 #nrl = NRL()
-nrl = NRL('static/NRL')
+nrl = NRL('./NRL')
 
 
 if 'saved_channels' not in st.session_state:
@@ -81,7 +81,7 @@ if st.button("Add channel(s)", type='primary'):
     # could add here a way to prevent double channels
     for chan in curr_channels:
         st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
-    placeholder.empty()
+    #placeholder.empty()
     # keep curr resp inst/dl in seesion state
 
 st.divider()
