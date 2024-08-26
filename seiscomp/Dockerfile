@@ -12,25 +12,21 @@ RUN <<EOF
         python3.11-venv \
         mariadb-client \
         incron \
+        curl \
         procps
 EOF
 
 #RUN useradd seiscomp
 #USER seiscomp
 
-COPY seiscomp-6.4.3-debian-12-x86_64.tar.gz ./
+#COPY seiscomp-6.4.3-debian-12-x86_64.tar.gz ./
+RUN curl -O "https://www.seiscomp.de/downloader/seiscomp-6.5.0-debian12-x86_64.tar.gz"
 
 # Install Seiscomp and create SDS archive directory at default location
-RUN tar xzf ./seiscomp-6.4.3-debian-12-x86_64.tar.gz \
+RUN tar xzf ./seiscomp-6.5.0-debian-12-x86_64.tar.gz \
     && yes | seiscomp/bin/seiscomp install-deps base fdsnws \
     && mkdir -p seiscomp/var/lib/archive \
     && rm -rf /var/lib/apt/lists/*
-
-# tmp: to remove in fine
-#COPY OG35.mseed ./
-#RUN seiscomp/bin/seiscomp exec scart -v -I /usr/local/app/OG35.mseed -i --with-filecheck --with-filename
-#COPY OG35.xml ./
-#RUN seiscomp/bin/seiscomp exec import_inv fdsnxml OG35.xml seiscomp/etc/inventory/OG35.xml
 
 # Incrontab for handling myo files received via FTP from stations (conversion and archiving)
 # Also for importing xml files created via UI to Seiscomp inventory

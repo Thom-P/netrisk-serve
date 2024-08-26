@@ -19,8 +19,8 @@ st.header('Create station XML')
 
 # Instrument and responses online catalog
 # todo deprecated: need to use v2 offline copy instead...
-#nrl = NRL()
-nrl = NRL('./NRL')
+nrl = NRL() # tmp revert to online
+#nrl = NRL('./NRL')
 
 
 if 'saved_channels' not in st.session_state:

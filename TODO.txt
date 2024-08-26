@@ -30,6 +30,7 @@
 - interactive xml edit system ? using st df data editor
 - prevent double identical channels in xml create
 - check/debug illegal resp error on some datalog choices
+- revert to offline NRL
 
 ## End
 - documentation/readme
