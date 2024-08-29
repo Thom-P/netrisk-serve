@@ -40,7 +40,7 @@ stat_and_traces = st.Page("app_pages/10_Stations_and_traces.py", title="Stations
 #add_xml = st.Page("app_pages/20_Add_station_XML.py", title="Create new station XML", icon="✏️")
 add_xml = st.Page("app_pages/20_Add_station_XML.py", title=" ")  # hacky way to make invisible
 list_xml = st.Page("app_pages/21_List_station_XML.py", title="Manage XML files", icon="📁")
-ftp_accounts = st.Page("app_pages/30_Add_station_FTP_account.py", title="Manage FTP accounts", icon="📡")
+ftp_accounts = st.Page("app_pages/30_Station_FTP_account.py", title="Manage FTP accounts", icon="📡")
 
 pg = st.navigation(
         [stat_and_traces, list_xml, ftp_accounts, add_xml]

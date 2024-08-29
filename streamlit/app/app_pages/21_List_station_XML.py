@@ -65,11 +65,14 @@ def download_xml_file(fname):
 selected_rows = event.selection['rows']
 is_disabled = len(selected_rows) == 0
 
+if xml_files:
+    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
+
 cols = st.columns([1, 1, 1, 5]) # hack to have buttons side by side without big gap
-if cols[0].button("Delete selected file(s)", disabled=is_disabled):
+if cols[0].button("Delete file(s)", disabled=is_disabled):
     delete_files(selected_rows)
 
-if cols[1].button("Download selected file(s)", disabled=is_disabled):
+if cols[1].button("Download file(s)", disabled=is_disabled):
     if len(selected_rows) > 1:
         download_xml_archive(df['File name'].iloc[selected_rows].tolist())
     else:
