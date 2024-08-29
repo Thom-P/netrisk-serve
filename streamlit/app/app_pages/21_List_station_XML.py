@@ -65,7 +65,7 @@ def download_xml_file(fname):
 selected_rows = event.selection['rows']
 is_disabled = len(selected_rows) == 0
 
-cols = st.columns([1, 1, 6]) # hack to have buttons side by side without big gap
+cols = st.columns([1, 1, 1, 5]) # hack to have buttons side by side without big gap
 if cols[0].button("Delete selected file(s)", disabled=is_disabled):
     delete_files(selected_rows)
 
@@ -74,3 +74,6 @@ if cols[1].button("Download selected file(s)", disabled=is_disabled):
         download_xml_archive(df['File name'].iloc[selected_rows].tolist())
     else:
         download_xml_file(df['File name'].iloc[selected_rows[0]])
+
+if cols[2].button("Create new file"):
+    st.switch_page("app_pages/20_Add_station_XML.py")
