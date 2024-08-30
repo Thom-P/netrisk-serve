@@ -1,6 +1,7 @@
 import requests
 import io
 import datetime
+import math
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -248,18 +249,48 @@ with tab2:
     filt_msg = "Applies a linear detrend and a 4th order" \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
+
+        def fmin_to_tmax():
+            st.session_state.tmax = 1. / st.session_state.fmin
+        def fmax_to_tmin():
+            st.session_state.tmin = 1. / st.session_state.fmax
+        def tmin_to_fmax():
+            st.session_state.fmax = 1. / st.session_state.tmin
+        def tmax_to_fmin():
+            st.session_state.fmin = 1. / st.session_state.tmax
+
         col27, col28 = st.columns(2)
         fmin = col27.number_input(
             'Lower Freq. (Hz)',
-            min_value=0,
-            max_value=50,
-            value=0
+            min_value=0.,
+            max_value=50.,
+            key='fmin',
+            on_change=fmin_to_tmax
         )
         fmax = col28.number_input(
             'Higher Freq. (Hz)',
             min_value=fmin,
-            max_value=50
+            max_value=50.,
+            key='fmax',
+            on_change=fmax_to_tmin
         )
+
+        tmin = col27.number_input(
+            'Lower Period (s)',
+            min_value=1./50,
+            max_value=10000.,
+            key='tmin',
+            on_change=tmin_to_fmax
+        )
+        tmax = col28.number_input(
+            'Higher Period (s)',
+            min_value=tmin,
+            max_value=10000.,
+            key='tmax',
+            on_change=tmax_to_fmin
+        )
+
+
         # add validity check vs fs
 
     if st.button('View Trace', disabled=False if chans else True):
