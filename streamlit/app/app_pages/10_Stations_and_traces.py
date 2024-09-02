@@ -249,46 +249,68 @@ with tab2:
     filt_msg = "Applies a linear detrend and a 4th order" \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
+        min_fs = 50.0 # need to fetch smallest fs of the channels to plot
 
-        def fmin_to_tmax():
-            st.session_state.tmax = 1. / st.session_state.fmin
-        def fmax_to_tmin():
-            st.session_state.tmin = 1. / st.session_state.fmax
-        def tmin_to_fmax():
-            st.session_state.fmax = 1. / st.session_state.tmin
-        def tmax_to_fmin():
-            st.session_state.fmin = 1. / st.session_state.tmax
+
+        # def fmin_to_tmax():
+        #     st.session_state.tmax = 1. / st.session_state.fmin
+        # def fmax_to_tmin():
+        #     st.session_state.tmin = 1. / st.session_state.fmax
+        # def tmin_to_fmax():
+        #     st.session_state.fmax = 1. / st.session_state.tmin
+        # def tmax_to_fmin():
+        #     st.session_state.fmin = 1. / st.session_state.tmax
 
         col27, col28 = st.columns(2)
-        fmin = col27.number_input(
-            'Lower Freq. (Hz)',
-            min_value=0.,
-            max_value=50.,
-            key='fmin',
-            on_change=fmin_to_tmax
-        )
-        fmax = col28.number_input(
-            'Higher Freq. (Hz)',
-            min_value=fmin,
-            max_value=50.,
-            key='fmax',
-            on_change=fmax_to_tmin
-        )
 
-        tmin = col27.number_input(
-            'Lower Period (s)',
-            min_value=1./50,
-            max_value=10000.,
-            key='tmin',
-            on_change=tmin_to_fmax
-        )
-        tmax = col28.number_input(
-            'Higher Period (s)',
-            min_value=tmin,
-            max_value=10000.,
-            key='tmax',
-            on_change=tmax_to_fmin
-        )
+        if col27.toggle('Use upper period'):
+            tmax = col27.number_input(
+                'Upper Period (s)',
+                min_value=1. / (0.9 * min_fs),
+                max_value=100000.,
+                #key='fmin',
+                #on_change=fmin_to_tmax
+            )
+            fmin = 1. / tmax
+        else:
+            fmin = col27.number_input(
+                'Lower Freq. (Hz)',
+                min_value=0.,
+                max_value=min_fs * 0.9,
+                #key='fmin',
+                #on_change=fmin_to_tmax
+            )
+        if col28.toggle('Use lower period'):
+            fmax = col28.number_input(
+                'Lower Period (s)',
+                min_value= 1. / (0.9 * min_fs),
+                max_value=1. / fmin,
+                #key='fmax',
+                #on_change=fmax_to_tmin
+            )
+        else:
+            fmax = col28.number_input(
+                'Higher Freq. (Hz)',
+                min_value=fmin,
+                max_value=min_fs * 0.9,
+                #key='fmax',
+                #on_change=fmax_to_tmin
+            )
+
+        # tmin = col27.number_input(
+        #     'Lower Period (s)',
+        #     min_value=1./min_fs,
+        #     max_value=100000.,
+        #     key='tmin',
+        #     on_change=tmin_to_fmax
+        # )
+        # tmax = col28.number_input(
+        #     'Higher Period (s)',
+        #     min_value=tmin,
+        #     max_value=100000.,
+        #     key='tmax',
+        #     on_change=tmax_to_fmin
+        # )
 
 
         # add validity check vs fs
