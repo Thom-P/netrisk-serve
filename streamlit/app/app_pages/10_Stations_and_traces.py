@@ -261,60 +261,54 @@ with tab2:
         # def tmax_to_fmin():
         #     st.session_state.fmin = 1. / st.session_state.tmax
 
+        unit = st.radio(
+              "Units",
+              ["Frequency", "Period"],
+              label_visibility="collapsed",
+              horizontal = True
+        )
+
+
         col27, col28 = st.columns(2)
 
-        if col27.toggle('Use upper period'):
-            tmax = col27.number_input(
+        #if col27.toggle('Use period'):
+        if unit == "Frequency":
+            fmin = col27.number_input(
+                           'Lower Freq. (Hz)',
+                           min_value=0.,
+                           max_value=min_fs * 0.9,
+                           #key='fmin',
+                           #on_change=fmin_to_tmax
+                    )
+            fmax = col28.number_input(
+                        'Higher Freq. (Hz)',
+                        min_value=fmin,
+                        max_value=min_fs * 0.9,
+                        #key='fmax',
+                        #on_change=fmax_to_tmin
+                    )
+        else:
+            tmin = col27.number_input(
+                        'Lower Period (s)',
+                        min_value=1. / (0.9 * min_fs),
+                        max_value=100000.,
+                        #key='fmax',
+                        #on_change=fmax_to_tmin
+            )
+
+            tmax = col28.number_input(
                 'Upper Period (s)',
-                min_value=1. / (0.9 * min_fs),
+                min_value=tmin,
                 max_value=100000.,
                 #key='fmin',
                 #on_change=fmin_to_tmax
             )
+            fmax = 1./ tmin
             fmin = 1. / tmax
-        else:
-            fmin = col27.number_input(
-                'Lower Freq. (Hz)',
-                min_value=0.,
-                max_value=min_fs * 0.9,
-                #key='fmin',
-                #on_change=fmin_to_tmax
-            )
-        if col28.toggle('Use lower period'):
-            fmax = col28.number_input(
-                'Lower Period (s)',
-                min_value= 1. / (0.9 * min_fs),
-                max_value=1. / fmin,
-                #key='fmax',
-                #on_change=fmax_to_tmin
-            )
-        else:
-            fmax = col28.number_input(
-                'Higher Freq. (Hz)',
-                min_value=fmin,
-                max_value=min_fs * 0.9,
-                #key='fmax',
-                #on_change=fmax_to_tmin
-            )
-
-        # tmin = col27.number_input(
-        #     'Lower Period (s)',
-        #     min_value=1./min_fs,
-        #     max_value=100000.,
-        #     key='tmin',
-        #     on_change=tmin_to_fmax
-        # )
-        # tmax = col28.number_input(
-        #     'Higher Period (s)',
-        #     min_value=tmin,
-        #     max_value=100000.,
-        #     key='tmax',
-        #     on_change=tmax_to_fmin
-        # )
-
 
         # add validity check vs fs
-
+        fmin
+        fmax
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Loading...'):
             traces = get_trace(
