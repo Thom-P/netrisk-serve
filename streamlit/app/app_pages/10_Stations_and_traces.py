@@ -292,7 +292,7 @@ with tab2:
             fmin = 1. / tmax
 
         # add validity check vs fs
-
+    traces = None
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Loading...'):
             traces = get_trace(
@@ -325,6 +325,25 @@ with tab2:
         # ax.set_xlabel('Time')
         # ax.set_ylabel('Counts')
 
+    #if traces is None:
+    #    st.stop()
+
+    # @st.fragment
+    # def download_trace(traces, fname):
+    #     file_buff = io.BytesIO()
+    #     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+    #     traces.write(file_buff, format=file_format)
+    #     st.download_button(
+    #         label='Download',
+    #         data=file_buff,
+    #         file_name=".".join([fname, file_format.lower()]),
+    #         type="secondary",
+    #     )
+
+        @st.fragment
+        def choose_format():
+            return st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+
         # Save all Traces into 1 file?
         # should get actual earliest start and latest end times
         chans_str = '_'.join(chans)
@@ -332,39 +351,46 @@ with tab2:
         if fmin is not None and fmax is not None:
             fname = f'{stream_id}_{start_date.isoformat()}_' \
                 f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-                f'{fmax}Hz.mseed'  # replace with actual dates
+                f'{fmax}Hz'  # replace with actual dates
         else:
             fname = f'{stream_id}_{start_date.isoformat()}_' \
-                f'{end_date.isoformat()}.mseed'
+                f'{end_date.isoformat()}'
             # replace with actual dates
         file_buff = io.BytesIO()
-        traces.write(file_buff, format="MSEED")
-        # select appropriate encoding?
-        # nb: filehandle instead of filename also works!
-        # need a unique key otherwise error
+
+        dl_msg = 'Note that filtered traces are much larger than their ' \
+            'unfiltered counterparts (compressed digital counts).'
+        file_format = choose_format()
+        #if st.button("Download trace", help=dl_msg):
+        #    download_trace(traces, fname)
+
+    #traces.write(file_buff, format="MSEED")
+    # select appropriate encoding?
+    # nb: filehandle instead of filename also works!
+    # need a unique key otherwise error
         dl_msg = 'Note that filtered traces are much larger than their ' \
             'unfiltered counterparts (compressed digital counts).'
         st.download_button(
             label='Download trace(s)',
             data=file_buff,
-            file_name=fname,
+            file_name=".".join([fname, file_format.lower()]),
             type="secondary",
             help=dl_msg
         )
 
-        # Easier to keep traces separated and download separately?,
-        # could also use a zip archive
-        # for trace in traces:
-        #    id = trace.get_id()
-        #    id
-        #    if fmin is not None and fmax is not None:
-        #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}_bandpassed_{fmin}Hz_{fmax}Hz.mseed' # replace with actual dates
-        #    else:
-        #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}.mseed' # replace with actual dates
-        #    file_buff = io.BytesIO()
-        #    trace.write(file_buff, format="MSEED") # select appropriate encoding? nb: filehandle instead of filename also works!
-        #    # need a unique key otherwise error
-        #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
+    # Easier to keep traces separated and download separately?,
+    # could also use a zip archive
+    # for trace in traces:
+    #    id = trace.get_id()
+    #    id
+    #    if fmin is not None and fmax is not None:
+    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}_bandpassed_{fmin}Hz_{fmax}Hz.mseed' # replace with actual dates
+    #    else:
+    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}.mseed' # replace with actual dates
+    #    file_buff = io.BytesIO()
+    #    trace.write(file_buff, format="MSEED") # select appropriate encoding? nb: filehandle instead of filename also works!
+    #    # need a unique key otherwise error
+    #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
 
 
 # import plotly.express as px
