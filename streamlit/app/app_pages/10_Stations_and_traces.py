@@ -162,6 +162,7 @@ with tab2:
     c = st.empty()
     c.write('Select a station in the previous tab.')
 
+# station info
 with tab1:
     event = st.dataframe(
         st.session_state.df_stations,
@@ -202,6 +203,7 @@ with tab1:
     with st.expander('## Todo: graph of data availability'):
         st.write('todo')
 
+# Trace
 with tab2:
     c.markdown(f'## {net}.{sta}')
     # if channel_data is None: # doesnt work as exec was stopped in prev tab
@@ -211,11 +213,14 @@ with tab2:
     col21, col22 = st.columns(2)
     loc_codes = sorted(channel_df['Location'].unique().tolist())
     loc = col21.selectbox("Select location", loc_codes) # add 2 digit format
-    chan_codes = channel_df.query('Location == @loc')['Channel'].unique(
-    ).tolist()
+    sub_df = channel_df.query('Location == @loc')
+    chan_codes = sub_df['Channel'].unique().tolist()
+    #chan_codes = channel_df.query('Location == @loc')['Channel'].unique(
+    #).tolist()
     chans = col22.multiselect("Select channel(s)", chan_codes)
     # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
     # chans = st.session_state['chans']
+
 
     col23, col24, col25, col26 = st.columns(4)
     start_day = col23.date_input('Start Date', value="default_value_today")
@@ -249,18 +254,9 @@ with tab2:
     filt_msg = "Applies a linear detrend and a 4th order" \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
-        min_fs = 50.0 # need to fetch smallest fs of the channels to plot
-
-
-        # def fmin_to_tmax():
-        #     st.session_state.tmax = 1. / st.session_state.fmin
-        # def fmax_to_tmin():
-        #     st.session_state.tmin = 1. / st.session_state.fmax
-        # def tmin_to_fmax():
-        #     st.session_state.fmax = 1. / st.session_state.tmin
-        # def tmax_to_fmin():
-        #     st.session_state.fmin = 1. / st.session_state.tmax
-
+        # get min fs from all selected channels
+        min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()
+        #min_fs = 50.0 # need to fetch smallest fs of the channels to plot
         unit = st.radio(
               "Units",
               ["Frequency", "Period"],
@@ -268,47 +264,35 @@ with tab2:
               horizontal = True
         )
 
-
         col27, col28 = st.columns(2)
-
-        #if col27.toggle('Use period'):
         if unit == "Frequency":
             fmin = col27.number_input(
                            'Lower Freq. (Hz)',
                            min_value=0.,
-                           max_value=min_fs * 0.9,
-                           #key='fmin',
-                           #on_change=fmin_to_tmax
+                           max_value=min_fs * 0.45,
                     )
             fmax = col28.number_input(
                         'Higher Freq. (Hz)',
                         min_value=fmin,
-                        max_value=min_fs * 0.9,
-                        #key='fmax',
-                        #on_change=fmax_to_tmin
+                        max_value=min_fs * 0.45,
                     )
         else:
             tmin = col27.number_input(
                         'Lower Period (s)',
-                        min_value=1. / (0.9 * min_fs),
+                        min_value=1. / (0.45 * min_fs),
                         max_value=100000.,
-                        #key='fmax',
-                        #on_change=fmax_to_tmin
             )
 
             tmax = col28.number_input(
                 'Upper Period (s)',
                 min_value=tmin,
                 max_value=100000.,
-                #key='fmin',
-                #on_change=fmin_to_tmax
             )
             fmax = 1./ tmin
             fmin = 1. / tmax
 
         # add validity check vs fs
-        fmin
-        fmax
+
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Loading...'):
             traces = get_trace(
@@ -417,20 +401,21 @@ with tab3:  # need indep vars?
     #    fmax = col28.number_input('Higher Freq. (Hz)', min_value=fmin, max_value=50)
     #    # add validity check vs fs
 
-if st.button('View day plot', disabled=True if chan is None else False):
-    with st.spinner('Loading...'):
-        traces = get_trace(net, sta, loc, chan)
-        if traces is None:
-            st.stop()
-        # if fmin is not None and fmax is not None:
-        #    traces.detrend("linear")
-        #    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-        fig = plt.figure()
-        traces.detrend("linear")
-        traces.filter("bandpass", freqmin=0.5, freqmax=30)
-        traces.plot(fig=fig, type='dayplot') # todo: add size to stretch to container size
-        # fig.axes[-1].set_xlabel('Time')
-        # fig.axes[-1].set_ylabel('Counts')
 
-        fig_html = mpld3.fig_to_html(fig)
-        components.html(fig_html, height=600)
+# if st.button('View day plot', disabled=True if chan is None else False):
+#     with st.spinner('Loading...'):
+#         traces = get_trace(net, sta, loc, chan)
+#         if traces is None:
+#             st.stop()
+#         # if fmin is not None and fmax is not None:
+#         #    traces.detrend("linear")
+#         #    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+#         fig = plt.figure()
+#         traces.detrend("linear")
+#         traces.filter("bandpass", freqmin=0.5, freqmax=30)
+#         traces.plot(fig=fig, type='dayplot') # todo: add size to stretch to container size
+#         # fig.axes[-1].set_xlabel('Time')
+#         # fig.axes[-1].set_ylabel('Counts')
+
+#         fig_html = mpld3.fig_to_html(fig)
+#         components.html(fig_html, height=600)
