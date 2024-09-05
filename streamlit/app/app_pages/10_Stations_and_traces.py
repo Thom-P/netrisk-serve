@@ -215,12 +215,7 @@ with tab2:
     loc = col21.selectbox("Select location", loc_codes) # add 2 digit format
     sub_df = channel_df.query('Location == @loc')
     chan_codes = sub_df['Channel'].unique().tolist()
-    #chan_codes = channel_df.query('Location == @loc')['Channel'].unique(
-    #).tolist()
     chans = col22.multiselect("Select channel(s)", chan_codes)
-    # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
-    # chans = st.session_state['chans']
-
 
     col23, col24, col25, col26 = st.columns(4)
     start_day = col23.date_input('Start Date', value="default_value_today")
@@ -255,8 +250,7 @@ with tab2:
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
         # get min fs from all selected channels
-        min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()
-        #min_fs = 50.0 # need to fetch smallest fs of the channels to plot
+        min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
         unit = st.radio(
               "Units",
               ["Frequency", "Period"],
@@ -312,71 +306,53 @@ with tab2:
             fig_html = mpld3.fig_to_html(fig)
             components.html(fig_html, height=600)
 
-        # fig = traces.plot(handle=True)
-        # st.pyplot(fig)
+            # fig = traces.plot(handle=True)
+            # st.pyplot(fig)
 
-        # approach below freezes on large traces
-        # (obspy uses special minmax method for large traces)
-        # fig, ax = plt.subplots()
-        # tr = traces[0]
-        # ax.plot(tr.times("matplotlib"), tr.data, "k-")
-        # ax.xaxis_date()
-        # fig.autofmt_xdate()
-        # ax.set_xlabel('Time')
-        # ax.set_ylabel('Counts')
-
-    #if traces is None:
-    #    st.stop()
-
-    # @st.fragment
-    # def download_trace(traces, fname):
-    #     file_buff = io.BytesIO()
-    #     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-    #     traces.write(file_buff, format=file_format)
-    #     st.download_button(
-    #         label='Download',
-    #         data=file_buff,
-    #         file_name=".".join([fname, file_format.lower()]),
-    #         type="secondary",
-    #     )
+            # approach below freezes on large traces
+            # (obspy uses special minmax method for large traces)
+            # fig, ax = plt.subplots()
+            # tr = traces[0]
+            # ax.plot(tr.times("matplotlib"), tr.data, "k-")
+            # ax.xaxis_date()
+            # fig.autofmt_xdate()
+            # ax.set_xlabel('Time')
+            # ax.set_ylabel('Counts')
 
         @st.fragment
-        def choose_format():
-            return st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+        def download_trace():
+            file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
 
-        # Save all Traces into 1 file?
-        # should get actual earliest start and latest end times
-        chans_str = '_'.join(chans)
-        stream_id = f'{net}.{sta}.{loc}.{chans_str}'
-        if fmin is not None and fmax is not None:
-            fname = f'{stream_id}_{start_date.isoformat()}_' \
-                f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-                f'{fmax}Hz'  # replace with actual dates
-        else:
-            fname = f'{stream_id}_{start_date.isoformat()}_' \
-                f'{end_date.isoformat()}'
-            # replace with actual dates
-        file_buff = io.BytesIO()
+            # Save all Traces into 1 file?
+            # should get actual earliest start and latest end times
+            chans_str = '_'.join(chans)
+            stream_id = f'{net}.{sta}.{loc}.{chans_str}'
+            if fmin is not None and fmax is not None:
+                fname = f'{stream_id}_{start_date.isoformat()}_' \
+                    f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
+                    f'{fmax}Hz'  # replace with actual dates
+            else:
+                fname = f'{stream_id}_{start_date.isoformat()}_' \
+                    f'{end_date.isoformat()}'
+                # replace with actual dates
+            file_buff = io.BytesIO()
+            traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
 
-        dl_msg = 'Note that filtered traces are much larger than their ' \
-            'unfiltered counterparts (compressed digital counts).'
-        file_format = choose_format()
-        #if st.button("Download trace", help=dl_msg):
-        #    download_trace(traces, fname)
+            # select appropriate encoding?
+            # nb: filehandle instead of filename also works!
+            # need a unique key otherwise error
+            dl_msg = 'Note that filtered traces are much larger than their ' \
+                'unfiltered counterparts (compressed digital counts).'
+            st.download_button(
+                label='Download trace(s)',
+                data=file_buff,
+                file_name=".".join([fname, file_format.lower()]),
+                type="secondary",
+                help=dl_msg
+            )
 
-    #traces.write(file_buff, format="MSEED")
-    # select appropriate encoding?
-    # nb: filehandle instead of filename also works!
-    # need a unique key otherwise error
-        dl_msg = 'Note that filtered traces are much larger than their ' \
-            'unfiltered counterparts (compressed digital counts).'
-        st.download_button(
-            label='Download trace(s)',
-            data=file_buff,
-            file_name=".".join([fname, file_format.lower()]),
-            type="secondary",
-            help=dl_msg
-        )
+        download_trace()
+
 
     # Easier to keep traces separated and download separately?,
     # could also use a zip archive
