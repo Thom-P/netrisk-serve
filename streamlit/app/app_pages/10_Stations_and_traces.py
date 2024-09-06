@@ -2,6 +2,7 @@ import requests
 import io
 import datetime
 import math
+import copy
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -322,7 +323,13 @@ with tab2:
         @st.fragment
         def download_trace():
             file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-
+            if file_format == "SAC":
+                # should only be one trace
+                if len(chans) > 1:
+                    st.info("SAC files can only contain single component data.", icon="ℹ️")
+                    st.stop()
+                trace_merged = copy.deepcopy(traces)
+                trace_merged.merge(method=1) # in place op, method use most recent value when overlap
             # Save all Traces into 1 file?
             # should get actual earliest start and latest end times
             chans_str = '_'.join(chans)
@@ -336,7 +343,12 @@ with tab2:
                     f'{end_date.isoformat()}'
                 # replace with actual dates
             file_buff = io.BytesIO()
-            traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+
+            if file_format == "MSEED":
+                traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+            elif file_format == "SAC":
+                trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+
 
             # select appropriate encoding?
             # nb: filehandle instead of filename also works!
