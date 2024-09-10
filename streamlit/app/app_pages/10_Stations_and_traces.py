@@ -306,7 +306,6 @@ with tab2:
             fig.axes[-1].set_ylabel('Counts')
             fig_html = mpld3.fig_to_html(fig)
             components.html(fig_html, height=600)
-
             # fig = traces.plot(handle=True)
             # st.pyplot(fig)
 
@@ -350,6 +349,7 @@ with tab2:
                 trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
 
 
+
             # select appropriate encoding?
             # nb: filehandle instead of filename also works!
             # need a unique key otherwise error
@@ -364,7 +364,6 @@ with tab2:
             )
 
         download_trace()
-
 
     # Easier to keep traces separated and download separately?,
     # could also use a zip archive
