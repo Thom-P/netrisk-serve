@@ -3,7 +3,7 @@ folium
 pandas
 mpld3
 streamlit-folium
-streamlit==1.37.0
+streamlit
 streamlit-dimensions
 berkeleydb
 passlib

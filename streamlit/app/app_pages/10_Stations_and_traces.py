@@ -300,14 +300,26 @@ with tab2:
             if fmin is not None and fmax is not None:
                 traces.detrend("linear")
                 traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-            fig = plt.figure()
-            traces.plot(fig=fig) # todo: add size to stretch to container size
+            #fig = plt.figure()
+            #traces.plot(fig=fig) # todo: add size to stretch to container size
+            #fig.axes[-1].set_xlabel('Time')
+            #fig.axes[-1].set_ylabel('Counts')
+            # This below causes logic issue (radio button not showing in fragment, why?)
+            #fig_html = mpld3.fig_to_html(fig)
+            #components.html(fig_html, height=600)
+
+            # fig is non-interactive with this approach
+            # issue seems to happen when plot is bigger than container size...
+            #fig = traces.plot(handle=True)
+
+            #fig = plt.figure()
+            #traces.plot(fig=fig) # todo: add size to stretch to container size
+            #fig = traces.plot(handle=True, size=(800, 250))
+            fig = traces.plot(handle=True)
             fig.axes[-1].set_xlabel('Time')
             fig.axes[-1].set_ylabel('Counts')
-            fig_html = mpld3.fig_to_html(fig)
-            components.html(fig_html, height=600)
-            # fig = traces.plot(handle=True)
-            # st.pyplot(fig)
+            #st.pyplot(fig, use_container_width=False)
+            st.pyplot(fig)
 
             # approach below freezes on large traces
             # (obspy uses special minmax method for large traces)
@@ -321,7 +333,12 @@ with tab2:
 
         @st.fragment
         def download_trace():
-            file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+            st.write("testtest")
+            st.toggle("test")
+            #st.radio("test", ["tut", "tat"])
+            #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+            st.stop()
+
             if file_format == "SAC":
                 # should only be one trace
                 if len(chans) > 1:
