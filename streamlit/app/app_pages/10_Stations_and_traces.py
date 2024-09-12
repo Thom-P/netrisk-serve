@@ -16,7 +16,7 @@ from obspy.clients.fdsn import Client
 from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 #st.title('Stations and traces')
 st.header('Stations and traces')
@@ -287,7 +287,8 @@ with tab2:
             fmin = 1. / tmax
 
         # add validity check vs fs
-    traces = None
+    if "traces" not in st.session_state:
+        st.session_state.traces = None
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Loading...'):
             traces = get_trace(
@@ -296,10 +297,15 @@ with tab2:
                 start_date, end_date
                 )
             if traces is None:
+                st.session_state.traces = None
                 st.stop()
             if fmin is not None and fmax is not None:
                 traces.detrend("linear")
                 traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+            st.session_state.traces = traces
+
+    if st.session_state.traces is not None:
+
             #fig = plt.figure()
             #traces.plot(fig=fig) # todo: add size to stretch to container size
             #fig.axes[-1].set_xlabel('Time')
@@ -315,11 +321,12 @@ with tab2:
             #fig = plt.figure()
             #traces.plot(fig=fig) # todo: add size to stretch to container size
             #fig = traces.plot(handle=True, size=(800, 250))
-            fig = traces.plot(handle=True)
-            fig.axes[-1].set_xlabel('Time')
-            fig.axes[-1].set_ylabel('Counts')
+
+        fig = st.session_state.traces.plot(handle=True)
+        fig.axes[-1].set_xlabel('Time')
+        fig.axes[-1].set_ylabel('Counts')
             #st.pyplot(fig, use_container_width=False)
-            st.pyplot(fig)
+        st.pyplot(fig)
 
             # approach below freezes on large traces
             # (obspy uses special minmax method for large traces)
@@ -331,56 +338,63 @@ with tab2:
             # ax.set_xlabel('Time')
             # ax.set_ylabel('Counts')
 
-        @st.fragment
-        def download_trace():
-            st.write("testtest")
-            st.toggle("test")
-            #st.radio("test", ["tut", "tat"])
-            #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-            st.stop()
-
-            if file_format == "SAC":
-                # should only be one trace
-                if len(chans) > 1:
-                    st.info("SAC files can only contain single component data.", icon="ℹ️")
-                    st.stop()
-                trace_merged = copy.deepcopy(traces)
-                trace_merged.merge(method=1) # in place op, method use most recent value when overlap
-            # Save all Traces into 1 file?
-            # should get actual earliest start and latest end times
-            chans_str = '_'.join(chans)
-            stream_id = f'{net}.{sta}.{loc}.{chans_str}'
-            if fmin is not None and fmax is not None:
-                fname = f'{stream_id}_{start_date.isoformat()}_' \
-                    f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-                    f'{fmax}Hz'  # replace with actual dates
-            else:
-                fname = f'{stream_id}_{start_date.isoformat()}_' \
-                    f'{end_date.isoformat()}'
-                # replace with actual dates
-            file_buff = io.BytesIO()
-
-            if file_format == "MSEED":
-                traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-            elif file_format == "SAC":
-                trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
 
 
+        # @st.fragment
+        # def download_trace():
+        #     st.write("testtest")
+        #     st.toggle("test")
+        #     #st.radio("test", ["tut", "tat"])
+        #     #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+        #     st.stop()
 
-            # select appropriate encoding?
-            # nb: filehandle instead of filename also works!
-            # need a unique key otherwise error
-            dl_msg = 'Note that filtered traces are much larger than their ' \
-                'unfiltered counterparts (compressed digital counts).'
-            st.download_button(
-                label='Download trace(s)',
-                data=file_buff,
-                file_name=".".join([fname, file_format.lower()]),
-                type="secondary",
-                help=dl_msg
-            )
+        #     if file_format == "SAC":
+        #         # should only be one trace
+        #         if len(chans) > 1:
+        #             st.info("SAC files can only contain single component data.", icon="ℹ️")
+        #             st.stop()
+        #         trace_merged = copy.deepcopy(traces)
+        #         trace_merged.merge(method=1) # in place op, method use most recent value when overlap
+        #     # Save all Traces into 1 file?
+        #     # should get actual earliest start and latest end times
+        #     chans_str = '_'.join(chans)
+        #     stream_id = f'{net}.{sta}.{loc}.{chans_str}'
+        #     if fmin is not None and fmax is not None:
+        #         fname = f'{stream_id}_{start_date.isoformat()}_' \
+        #             f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
+        #             f'{fmax}Hz'  # replace with actual dates
+        #     else:
+        #         fname = f'{stream_id}_{start_date.isoformat()}_' \
+        #             f'{end_date.isoformat()}'
+        #         # replace with actual dates
+        #     file_buff = io.BytesIO()
 
-        download_trace()
+        #     if file_format == "MSEED":
+        #         traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+        #     elif file_format == "SAC":
+        #         trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+
+
+
+        #     # select appropriate encoding?
+        #     # nb: filehandle instead of filename also works!
+        #     # need a unique key otherwise error
+        #     dl_msg = 'Note that filtered traces are much larger than their ' \
+        #         'unfiltered counterparts (compressed digital counts).'
+        #     st.download_button(
+        #         label='Download trace(s)',
+        #         data=file_buff,
+        #         file_name=".".join([fname, file_format.lower()]),
+        #         type="secondary",
+        #         help=dl_msg
+        #     )
+
+        # download_trace()
+
+
+
+
+
 
     # Easier to keep traces separated and download separately?,
     # could also use a zip archive
