@@ -340,56 +340,49 @@ with tab2:
 
 
 
-        # @st.fragment
-        # def download_trace():
-        #     st.write("testtest")
-        #     st.toggle("test")
-        #     #st.radio("test", ["tut", "tat"])
-        #     #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-        #     st.stop()
+        @st.fragment
+        def download_trace():
+            file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+            if file_format == "SAC":
+                # should only be one trace
+                if len(chans) > 1:
+                    st.info("SAC files can only contain single component data.", icon="ℹ️")
+                    st.stop()
+                trace_merged = copy.deepcopy(st.session_state.traces)
+                trace_merged.merge(method=1) # in place op, method use most recent value when overlap
+            # Save all Traces into 1 file?
+            # should get actual earliest start and latest end times
+            chans_str = '_'.join(chans)
+            stream_id = f'{net}.{sta}.{loc}.{chans_str}'
+            if fmin is not None and fmax is not None:
+                fname = f'{stream_id}_{start_date.isoformat()}_' \
+                    f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
+                    f'{fmax}Hz'  # replace with actual dates
+            else:
+                fname = f'{stream_id}_{start_date.isoformat()}_' \
+                    f'{end_date.isoformat()}'
+                # replace with actual dates
+            file_buff = io.BytesIO()
 
-        #     if file_format == "SAC":
-        #         # should only be one trace
-        #         if len(chans) > 1:
-        #             st.info("SAC files can only contain single component data.", icon="ℹ️")
-        #             st.stop()
-        #         trace_merged = copy.deepcopy(traces)
-        #         trace_merged.merge(method=1) # in place op, method use most recent value when overlap
-        #     # Save all Traces into 1 file?
-        #     # should get actual earliest start and latest end times
-        #     chans_str = '_'.join(chans)
-        #     stream_id = f'{net}.{sta}.{loc}.{chans_str}'
-        #     if fmin is not None and fmax is not None:
-        #         fname = f'{stream_id}_{start_date.isoformat()}_' \
-        #             f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-        #             f'{fmax}Hz'  # replace with actual dates
-        #     else:
-        #         fname = f'{stream_id}_{start_date.isoformat()}_' \
-        #             f'{end_date.isoformat()}'
-        #         # replace with actual dates
-        #     file_buff = io.BytesIO()
-
-        #     if file_format == "MSEED":
-        #         traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-        #     elif file_format == "SAC":
-        #         trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+            if file_format == "MSEED":
+                st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+            elif file_format == "SAC":
+                trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
 
 
 
-        #     # select appropriate encoding?
-        #     # nb: filehandle instead of filename also works!
-        #     # need a unique key otherwise error
-        #     dl_msg = 'Note that filtered traces are much larger than their ' \
-        #         'unfiltered counterparts (compressed digital counts).'
-        #     st.download_button(
-        #         label='Download trace(s)',
-        #         data=file_buff,
-        #         file_name=".".join([fname, file_format.lower()]),
-        #         type="secondary",
-        #         help=dl_msg
-        #     )
+            # select appropriate encoding?
+            dl_msg = 'Note that filtered traces are much larger than their ' \
+                'unfiltered counterparts (compressed digital counts).'
+            st.download_button(
+                label='Download trace(s)',
+                data=file_buff,
+                file_name=".".join([fname, file_format.lower()]),
+                type="secondary",
+                help=dl_msg
+            )
 
-        # download_trace()
+        download_trace()
 
 
 
