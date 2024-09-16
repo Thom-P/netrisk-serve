@@ -4,6 +4,7 @@ import io
 
 import zipfile
 import streamlit as st
+import numpy as np
 import pandas as pd
 
 
@@ -17,14 +18,33 @@ with os.scandir('/data/xml') as dir_entries:
         xml_files.append((entry.name, datetime.fromtimestamp(info.st_mtime), info.st_size / 1000.))
 
 df = pd.DataFrame(xml_files, columns=['File name', 'Last modified (UTC)', 'Size (kB)'])
-event = st.dataframe(df, hide_index=True, on_select='rerun',
-    column_config={
-        #'Size': st.column_config.NumberColumn(format="%.4f"),
-        'Last modified (UTC)': st.column_config.DatetimeColumn(
-                    format="DD MMM YYYY, HH:mm",
-                    step=60,
-                ),
-    })
+# event = st.dataframe(df, hide_index=True, on_select='rerun',
+#     column_config={
+#         #'Size': st.column_config.NumberColumn(format="%.4f"),
+#         'Last modified (UTC)': st.column_config.DatetimeColumn(
+#                     format="DD MMM YYYY, HH:mm",
+#                     step=60,
+#                 ),
+#     })
+
+
+# workaround to keep tickbox visible (https://github.com/streamlit/streamlit/issues/688)
+def dataframe_with_selections(df):
+    df_with_selections = df.copy()
+    df_with_selections.insert(0, "Select", False)
+    edited_df = st.data_editor(
+        df_with_selections,
+        hide_index=True,
+        column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+        disabled=df.columns,
+    )
+    selected_indices = list(np.where(edited_df.Select)[0])
+    selected_rows = df[edited_df.Select]
+    return {"selected_rows_indices": selected_indices, "selected_rows": selected_rows}
+
+selection = dataframe_with_selections(df)
+
+
 
 
 @st.dialog("Confirmation required")
@@ -62,11 +82,12 @@ def download_xml_file(fname):
             file_name=fname,
     )
 
-selected_rows = event.selection['rows']
+#selected_rows = event.selection['rows']
+selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
 
-if xml_files:
-    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
+#if xml_files:
+#    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
 
 cols = st.columns([1, 1, 1, 5]) # hack to have buttons side by side without big gap
 if cols[0].button("Delete file(s)", disabled=is_disabled):
