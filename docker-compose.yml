@@ -131,6 +131,8 @@ services:
       - fdsnXML_data:/data/xml
       - ftp_data:/data/ftp # to allow creation of station folders
       - incron_reload:/data/reload
+      - seiscomp_data_archive:/usr/local/app/seiscomp/var/lib/archive # to preserve data independantly of container
+      - seiscomp_inventory:/usr/local/app/seiscomp/etc/inventory # to preserve inventory (seiscomp scxml files) independantly of container
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:
@@ -139,8 +141,10 @@ volumes:
   ftp_userdb:
   fdsnXML_data:
   incron_reload:
+  seiscomp_data_archive:
+  seiscomp_inventory:
   ssl_cert:
-  certbot-etc:
+  #certbot-etc:
 networks:
   db_net:
   adminer_net:
