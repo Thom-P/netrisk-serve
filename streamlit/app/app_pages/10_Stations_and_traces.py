@@ -368,8 +368,13 @@ with tab2:
                 st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
             elif file_format == "SAC":
                 trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-
-
+            elif file_format == "SEGY":
+                try:
+                    st.session_state.traces.write(file_buff, format=file_format) 
+                except Exception as err:
+                    st.error(f"{err}", icon="🚨")
+                    st.stop()
+                #raise
 
             # select appropriate encoding?
             dl_msg = 'Note that filtered traces are much larger than their ' \
