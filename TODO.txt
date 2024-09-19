@@ -13,7 +13,6 @@
 - send alert to user if myo to mseed conversion failure?
 - enforce env variable validity?
 - install and run seiscomp as user instead of root?
-- need to persist archive data
 
 ## Mariadb
 - check if init mounted db overrides existing one at container restart/rebuild
@@ -21,7 +20,6 @@
 ## Vsftpd
 - clean up vsftpd conf file
 - check dotenv variable validity
-- verify where to generate ssl vertificate
 - allow special account to be able to manage  myo/mseed_segments/archive?
 
 ## Streamlit
@@ -31,6 +29,8 @@
 - prevent double identical channels in xml create
 - check/debug illegal resp error on some datalog choices
 - revert to offline NRL
+- handle masked array error in SAC writing (and split multi comp?)
+- handle trace length error in SEGY writing
 
 ## End
 - documentation/readme

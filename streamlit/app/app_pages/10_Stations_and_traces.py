@@ -63,7 +63,8 @@ def get_trace(net, sta, loc, chans, start_date, end_date):
             loc,
             chans,
             UTCDateTime(start_date),
-            UTCDateTime(end_date)
+            UTCDateTime(end_date),
+            attach_response=True
             )
     except FDSNNoDataException:
         st.warning('No data found for the requested period.', icon="⚠️")
@@ -286,11 +287,18 @@ with tab2:
             fmax = 1./ tmin
             fmin = 1. / tmax
 
-        # add validity check vs fs
+    # add validity check vs fs
+    
+    resp_msg = "Todo: help message here" \
+        "More here."
+    resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
+    #fig_deconv = plt.figure()
+    #resp_plot_buffer = io.BytesIO()
+    
     if "traces" not in st.session_state:
         st.session_state.traces = None
     if st.button('View Trace', disabled=False if chans else True):
-        with st.spinner('Loading...'):
+        with st.spinner('Fetching traces...'):
             traces = get_trace(
                 net, sta, loc,
                 ','.join(chans),
@@ -299,10 +307,20 @@ with tab2:
             if traces is None:
                 st.session_state.traces = None
                 st.stop()
-            if fmin is not None and fmax is not None:
+        if fmin is not None and fmax is not None:
+            with st.spinner('Filtering...'):
                 traces.detrend("linear")
                 traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-            st.session_state.traces = traces
+        if resp_remove:
+            with st.spinner('Removing instrument response...'):
+                try:
+                    traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=False, fig=None)
+                    # plot bugs
+                    #traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=True, fig=fig_deconv)
+                except Exception as err:
+                    st.error(err, icon="🚨")
+                    st.stop()
+        st.session_state.traces = traces
 
     if st.session_state.traces is not None:
 
@@ -337,7 +355,11 @@ with tab2:
             # fig.autofmt_xdate()
             # ax.set_xlabel('Time')
             # ax.set_ylabel('Counts')
-
+        
+        #with st.expander("Visualize response removal steps"):
+        #    with st.spinner('Loading plot...'):
+        #        st.pyplot(fig_deconv)
+        #        #st.image(resp_plot_buffer, use_column_width=True)
 
 
         @st.fragment
