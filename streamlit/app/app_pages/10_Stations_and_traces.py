@@ -314,6 +314,7 @@ with tab2:
         if resp_remove:
             with st.spinner('Removing instrument response...'):
                 try:
+                    traces.detrend("linear")
                     traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=False, fig=None)
                     # plot bugs
                     #traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=True, fig=fig_deconv)
@@ -452,15 +453,16 @@ with tab3:  # need indep vars?
     c.markdown(f'## {net}.{sta}')
     col31, col32 = st.columns(2)
     loc_codes = sorted(channel_df['Location'].unique().tolist())
-    loc = col31.selectbox("Select loc", loc_codes) # add 2 digit formatting
+    loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
     chan_codes = channel_df.query('Location == @loc')['Channel'].unique(
     ).tolist()
-    chan = col32.selectbox("Select chan", chan_codes)
+    chan = col32.selectbox("Select channel", chan_codes)
     # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
     # chans = st.session_state['chans']
 
     day = st.date_input('Day', value="default_value_today")
-
+    start_date = datetime.datetime(day.year, day.month, day.day)
+    end_date = start_date + datetime.timedelta(hours=24)
     # fmin, fmax = None, None
     # if st.checkbox('Apply filter', help="Applies a linear detrend and a 4th order Butterworth bandpass filter."):
     #    col27, col28 = st.columns(2)
@@ -469,20 +471,28 @@ with tab3:  # need indep vars?
     #    # add validity check vs fs
 
 
-# if st.button('View day plot', disabled=True if chan is None else False):
-#     with st.spinner('Loading...'):
-#         traces = get_trace(net, sta, loc, chan)
-#         if traces is None:
-#             st.stop()
-#         # if fmin is not None and fmax is not None:
-#         #    traces.detrend("linear")
-#         #    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-#         fig = plt.figure()
-#         traces.detrend("linear")
-#         traces.filter("bandpass", freqmin=0.5, freqmax=30)
-#         traces.plot(fig=fig, type='dayplot') # todo: add size to stretch to container size
-#         # fig.axes[-1].set_xlabel('Time')
-#         # fig.axes[-1].set_ylabel('Counts')
+    if "day_traces" not in st.session_state:
+        st.session_state.day_traces = None
+    if st.button('View day plot', disabled=True if chan is None else False):
+        with st.spinner('Fetching traces...'):
+            traces = get_trace(net, sta, loc, chan, start_date, end_date)
+            if traces is None:
+                st.session_state.day_traces = None
+                st.stop()
+        st.session_state.day_traces = traces
+            # if fmin is not None and fmax is not None:
+            #    traces.detrend("linear")
+            #    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+        st.session_state.day_traces.detrend("linear")
+        st.session_state.day_traces.merge(method=1)
+        # add info about these preprocesses 
+    if st.session_state.day_traces is not None:
+        
+        fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
+            #traces.filter("bandpass", freqmin=0.5, freqmax=30)
+            # fig.axes[-1].set_xlabel('Time')
+            # fig.axes[-1].set_ylabel('Counts')
 
-#         fig_html = mpld3.fig_to_html(fig)
-#         components.html(fig_html, height=600)
+        st.pyplot(fig)
+            #fig_html = mpld3.fig_to_html(fig)
+            #components.html(fig_html, height=600)

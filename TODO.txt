@@ -32,6 +32,7 @@
 - add day plots
 - add data avail
 - add auto processings
+- add explicit option to merge traces in MSEED?
 #- handle trace length error in SEGY writing
 
 ## End
