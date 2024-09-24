@@ -29,8 +29,10 @@
 - prevent double identical channels in xml create
 - check/debug illegal resp error on some datalog choices
 - revert to offline NRL
-- handle masked array error in SAC writing (and split multi comp?)
-- handle trace length error in SEGY writing
+- add day plots
+- add data avail
+- add auto processings
+#- handle trace length error in SEGY writing
 
 ## End
 - documentation/readme

@@ -248,7 +248,7 @@ with tab2:
     end_date = datetime.datetime.combine(end_day, end_time)
 
     fmin, fmax = None, None
-    filt_msg = "Applies a linear detrend and a 4th order" \
+    filt_msg = "Applies a linear detrend and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
         # get min fs from all selected channels
@@ -289,8 +289,8 @@ with tab2:
 
     # add validity check vs fs
     
-    resp_msg = "Todo: help message here" \
-        "More here."
+    resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
+        "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
     resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
     #fig_deconv = plt.figure()
     #resp_plot_buffer = io.BytesIO()
@@ -364,14 +364,17 @@ with tab2:
 
         @st.fragment
         def download_trace():
-            file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+            #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+            file_format = st.radio("Select file format", ["MSEED", "SAC"])
             if file_format == "SAC":
-                # should only be one trace
+                # should only be one trace, and with gap value filled
                 if len(chans) > 1:
                     st.info("SAC files can only contain single component data.", icon="ℹ️")
                     st.stop()
+                
+                st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
                 trace_merged = copy.deepcopy(st.session_state.traces)
-                trace_merged.merge(method=1) # in place op, method use most recent value when overlap
+                trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
             # Save all Traces into 1 file?
             # should get actual earliest start and latest end times
             chans_str = '_'.join(chans)
@@ -390,13 +393,13 @@ with tab2:
                 st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
             elif file_format == "SAC":
                 trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-            elif file_format == "SEGY":
-                try:
-                    st.session_state.traces.write(file_buff, format=file_format) 
-                except Exception as err:
-                    st.error(f"{err}", icon="🚨")
-                    st.stop()
-                #raise
+            #elif file_format == "SEGY":
+            #    try:
+            #        st.session_state.traces.write(file_buff, format=file_format) 
+            #    except Exception as err:
+            #        st.error(f"{err}", icon="🚨")
+            #        st.stop()
+            #    #raise
 
             # select appropriate encoding?
             dl_msg = 'Note that filtered traces are much larger than their ' \
