@@ -1,4 +1,5 @@
 ## Next:
+- data availability
 - ask deletion/download of vuser myo data before deleting account?
 
 ## General

@@ -28,6 +28,11 @@ RUN tar xzf ./seiscomp-6.5.0-debian12-x86_64.tar.gz \
     && mkdir -p seiscomp/var/lib/archive \
     && rm -rf /var/lib/apt/lists/*
 
+RUN cp seiscomp/etc/defaults/fdsnws.cfg seiscomp/etc/ \
+    && echo "dataAvailability.enable = True" >> seiscomp/etc/fdsnws.cfg \
+    && echo "serveAvailability = True" >> seiscomp/etc/fdsnws.cfg \
+    && echo "serveEvent = False" >> seiscomp/etc/fdsnws.cfg
+
 # Incrontab for handling myo files received via FTP from stations (conversion and archiving)
 # Also for importing xml files created via UI to Seiscomp inventory
 RUN echo root > /etc/incron.allow \
