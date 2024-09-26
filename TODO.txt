@@ -14,6 +14,7 @@
 - send alert to user if myo to mseed conversion failure?
 - enforce env variable validity?
 - install and run seiscomp as user instead of root?
+- make lighter image removing unused fetaures?
 
 ## Mariadb
 - check if init mounted db overrides existing one at container restart/rebuild

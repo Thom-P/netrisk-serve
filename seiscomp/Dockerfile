@@ -24,8 +24,8 @@ RUN curl -O "https://www.seiscomp.de/downloader/seiscomp-6.5.0-debian12-x86_64.t
 
 # Install Seiscomp and create SDS archive directory at default location
 RUN tar xzf ./seiscomp-6.5.0-debian12-x86_64.tar.gz \
-    && yes | seiscomp/bin/seiscomp install-deps base fdsnws \
     && mkdir -p seiscomp/var/lib/archive \
+    && yes | seiscomp/bin/seiscomp install-deps base fdsnws \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cp seiscomp/etc/defaults/fdsnws.cfg seiscomp/etc/ \

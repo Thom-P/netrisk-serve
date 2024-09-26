@@ -105,6 +105,8 @@ services:
       - db_net
       - streamlit_net
     volumes:
+      - seiscomp_data_archive:/usr/local/app/seiscomp/var/lib/archive # to preserve data independantly of container
+      - seiscomp_inventory:/usr/local/app/seiscomp/etc/inventory # to preserve inventory (seiscomp scxml files) independantly of container
       - ftp_data:/data/ftp
       - fdsnXML_data:/data/xml
       - incron_reload:/data/reload
@@ -131,8 +133,6 @@ services:
       - fdsnXML_data:/data/xml
       - ftp_data:/data/ftp # to allow creation of station folders
       - incron_reload:/data/reload
-      - seiscomp_data_archive:/usr/local/app/seiscomp/var/lib/archive # to preserve data independantly of container
-      - seiscomp_inventory:/usr/local/app/seiscomp/etc/inventory # to preserve inventory (seiscomp scxml files) independantly of container
     environment:
       UI_USER: ${UI_USER:-anonymous} # to use in station xml creation (source field)
 volumes:
