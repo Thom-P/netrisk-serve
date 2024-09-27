@@ -36,6 +36,23 @@ st.markdown("""
 </style>""",
 unsafe_allow_html=True)
 
+# test change style of some widgets label (the ids might change with new streamlit releases)
+st.markdown("""
+<style>
+    div[data-testid="stExpander"] details summary p{font-size: 1rem;}
+</style>
+""", unsafe_allow_html=True)
+
+# test change style of some widgets label
+st.markdown("""
+<style>
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {font-size: 1rem;}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+
 stat_and_traces = st.Page("app_pages/10_Stations_and_traces.py", title="Stations and traces", icon="📌")
 #add_xml = st.Page("app_pages/20_Add_station_XML.py", title="Create new station XML", icon="✏️")
 add_xml = st.Page("app_pages/20_Add_station_XML.py", title=" ")  # hacky way to make invisible

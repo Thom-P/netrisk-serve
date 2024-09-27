@@ -25,6 +25,20 @@ st.header('Stations and traces')
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 
+## CSS style var test (https://stackoverflow.com/questions/77377439/how-to-change-font-size-in-streamlit)
+# def change_label_style(label, font_size='12px', font_color='black', font_family='sans-serif'):
+#     html = f"""
+#     <script>
+#         var elems = window.parent.document.querySelectorAll('p');
+#         var elem = Array.from(elems).find(x => x.innerText == '{label}');
+#         elem.style.fontSize = '{font_size}';
+#         elem.style.color = '{font_color}';
+#         elem.style.fontFamily = '{font_family}';
+#     </script>
+#     """
+#     st.components.v1.html(html)
+
+
 #@st.cache_data  # use obspy client instead?
 def fetch_stations():
     url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
@@ -198,9 +212,10 @@ with tab1:
         )
         st.stop()
     net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
-   
+    
 
-    with st.expander("## Channels:"):
+    with st.expander('Channels'):
+        st.markdown(f'{net} - {sta}')
         channel_data = fetch_channels(net, sta)
         if channel_data is None:
             st.warning('No channel found', icon="⚠️")            
@@ -219,7 +234,8 @@ with tab1:
             key="channel_data",
         )
     
-    with st.expander('## Data availability'):
+    with st.expander('Data availability'):
+        st.markdown(f'{net} - {sta}')
         avail_data = fetch_availability(net, sta)
         if avail_data is None:
             st.warning('Data availability information not found', icon="⚠️")            
