@@ -17,6 +17,8 @@ from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.express as px
+
 
 #st.title('Stations and traces')
 st.header('Stations and traces')
@@ -53,6 +55,20 @@ def fetch_channels(net, sta):
     text = data.content.decode('utf-8')
     return text
 
+#@st.cache_data
+def fetch_availability(net, sta):
+    url = f'http://seiscomp:8080/fdsnws/availability/1/query?' \
+          f'starttime=2024-09-01T00%3A00%3A00' \
+          f'&endtime=2024-09-27T00%3A00%3A00' \
+          f'&network={net}' \
+          f'&station={sta}' \
+          f'&merge=overlap,samplerate,quality'
+    data = requests.get(url)
+    if data.status_code != 200:
+        st.write(data.reason)
+        return None
+    text = data.content.decode('utf-8')
+    return text
 
 #@st.cache_data(show_spinner=False)
 def get_trace(net, sta, loc, chans, start_date, end_date):
@@ -174,21 +190,20 @@ with tab1:
         selection_mode="single-row",
     )
 
+    # Station selection in dataframe
+    row_index = event.selection['rows']
+    if not row_index:
+        st.markdown(
+            'Select station by ticking box in the leftmost column.'
+        )
+        st.stop()
+    net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
+   
+
     with st.expander("## Channels:"):
-        # Station selection in dataframe
-        channel_data = None
-        row_index = event.selection['rows']
-        # st.markdown('## Channels')
-        if not row_index:
-            st.markdown(
-                'Select station by ticking box in the leftmost column.'
-                )
-            st.stop()
-
-        net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
         channel_data = fetch_channels(net, sta)
-
         if channel_data is None:
+            st.warning('No channel found', icon="⚠️")            
             st.stop()
 
         # Channel dataframe
@@ -197,13 +212,34 @@ with tab1:
             sep='|',
             dtype={'Location': str}
         )  # remove first char '#' (header line included as comment)
+        
         st.dataframe(
             channel_df,
             hide_index=True,
             key="channel_data",
         )
-    with st.expander('## Todo: graph of data availability'):
-        st.write('todo')
+    
+    with st.expander('## Data availability'):
+        avail_data = fetch_availability(net, sta)
+        if avail_data is None:
+            st.warning('Data availability information not found', icon="⚠️")            
+            st.stop()
+        # Availability dataframe
+        avail_df = pd.read_csv(
+            io.StringIO(avail_data[1:]),
+            sep='\s+',
+            dtype=str,
+            parse_dates=['Earliest', 'Latest']  
+        )  # remove first char '#' (header line included as comment)
+        #st.dataframe(avail_df)
+
+        fig = px.timeline(avail_df[['C', 'Earliest', 'Latest']], x_start="Earliest", x_end="Latest", y="C") #use channel code as task name
+        fig.update_yaxes(autorange="reversed") # otherwise listed from the bottom up
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
+
 
 # Trace
 with tab2:
