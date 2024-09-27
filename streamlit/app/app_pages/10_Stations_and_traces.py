@@ -250,9 +250,9 @@ with tab1:
         avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
         # add quality and samplerate in hover?
         fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
-        fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}) # otherwise listed from the bottom up
-        fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16})
-        #fig.update_yaxes(title_font=dict(size=18, family='Courier', color='crimson'))
+        fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
+        fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
+        fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
         st.plotly_chart(fig, use_container_width=True)
 
 
