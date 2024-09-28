@@ -24,19 +24,6 @@ st.header('Stations and traces')
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 
-## CSS style var test (https://stackoverflow.com/questions/77377439/how-to-change-font-size-in-streamlit)
-# def change_label_style(label, font_size='12px', font_color='black', font_family='sans-serif'):
-#     html = f"""
-#     <script>
-#         var elems = window.parent.document.querySelectorAll('p');
-#         var elem = Array.from(elems).find(x => x.innerText == '{label}');
-#         elem.style.fontSize = '{font_size}';
-#         elem.style.color = '{font_color}';
-#         elem.style.fontFamily = '{font_family}';
-#     </script>
-#     """
-#     st.components.v1.html(html)
-
 
 #@st.cache_data  # use obspy client instead?
 def fetch_stations():
@@ -189,9 +176,37 @@ with col2:
 
 tab1, tab2, tab3 = col1.tabs(["Station info", "Trace", "Day plot"])
 
-with tab2:
-    c = st.empty()
-    c.write('Select a station in the previous tab.')
+#with tab2:
+#    c = st.empty()
+#    c.write('Select a station in the previous tab.')
+
+
+def display_channels(net, sta):
+    with st.expander('Channels'):
+        st.markdown(f'{net} - {sta}')
+        channel_data = fetch_channels(net, sta)
+        if channel_data is None:
+            st.warning('No channel found', icon="⚠️")            
+            return
+            # st.stop()
+
+        # Channel dataframe
+        st.session_state.channel_df = pd.read_csv(
+            io.StringIO(channel_data[1:]),
+            sep='|',
+            dtype={'Location': str}
+        )  # remove first char '#' (header line included as comment)
+        
+        st.dataframe(
+            st.session_state.channel_df,
+            hide_index=True,
+            key="channel_data",
+        )
+    return 
+
+
+
+net, sta = None, None
 
 # station info
 with tab1:
@@ -209,51 +224,32 @@ with tab1:
         st.markdown(
             'Select station by ticking box in the leftmost column.'
         )
-        st.stop()
-    net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
-    
-
-    with st.expander('Channels'):
-        st.markdown(f'{net} - {sta}')
-        channel_data = fetch_channels(net, sta)
-        if channel_data is None:
-            st.warning('No channel found', icon="⚠️")            
-            st.stop()
-
-        # Channel dataframe
-        channel_df = pd.read_csv(
-            io.StringIO(channel_data[1:]),
-            sep='|',
-            dtype={'Location': str}
-        )  # remove first char '#' (header line included as comment)
-        
-        st.dataframe(
-            channel_df,
-            hide_index=True,
-            key="channel_data",
-        )
-    
-    with st.expander('Data availability'):
-        st.markdown(f'{net} - {sta}')
-        avail_data = fetch_availability(net, sta)
-        if avail_data is None:
-            st.warning('Data availability information not found', icon="⚠️")            
-            st.stop()
-        # Availability dataframe
-        avail_df = pd.read_csv(
-            io.StringIO(avail_data[1:]),
-            sep='\s+',
-            dtype=str,
-            parse_dates=['Earliest', 'Latest']  
-        )  # remove first char '#' (header line included as comment)
-        #st.dataframe(avail_df)
-        avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
-        # add quality and samplerate in hover?
-        fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
-        fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
-        fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
-        fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
-        st.plotly_chart(fig, use_container_width=True)
+        #st.stop()
+    else:
+        net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
+        display_channels(net, sta)
+   
+        with st.expander('Data availability'):
+            st.markdown(f'{net} - {sta}')
+            avail_data = fetch_availability(net, sta)
+            if avail_data is None:
+                st.warning('Data availability information not found', icon="⚠️")            
+                st.stop()
+            # Availability dataframe
+            avail_df = pd.read_csv(
+                io.StringIO(avail_data[1:]),
+                sep='\s+',
+                dtype=str,
+                parse_dates=['Earliest', 'Latest']  
+            )  # remove first char '#' (header line included as comment)
+            #st.dataframe(avail_df)
+            avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
+            # add quality and samplerate in hover?
+            fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
+            fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
+            fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
+            fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
+            st.plotly_chart(fig, use_container_width=True)
 
 
 
@@ -261,15 +257,21 @@ with tab1:
 
 # Trace
 with tab2:
-    c.markdown(f'## {net}.{sta}')
+    #c.markdown(f'## {net}.{sta}')
+    
     # if channel_data is None: # doesnt work as exec was stopped in prev tab
     #    st.write('Select a station in the previous tab.')
     #    st.stop()
+    if net is None or sta is None: #could simplify
+        st.write('Select a station in the previous tab.')
+        st.stop()
+
+
 
     col21, col22 = st.columns(2)
-    loc_codes = sorted(channel_df['Location'].unique().tolist())
+    loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
     loc = col21.selectbox("Select location", loc_codes) # add 2 digit format
-    sub_df = channel_df.query('Location == @loc')
+    sub_df = st.session_state.channel_df.query('Location == @loc')
     chan_codes = sub_df['Channel'].unique().tolist()
     chans = col22.multiselect("Select channel(s)", chan_codes)
 
@@ -504,11 +506,16 @@ with tab2:
 ########### Day plot
 with tab3:  # need indep vars?
     # need to cleanup widget duplications
-    c.markdown(f'## {net}.{sta}')
+    #c.markdown(f'## {net}.{sta}')
+    
+    if sta is None: 
+        st.write('Select a station in the previous tab.')
+        st.stop()
+    
     col31, col32 = st.columns(2)
-    loc_codes = sorted(channel_df['Location'].unique().tolist())
+    loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
     loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
-    chan_codes = channel_df.query('Location == @loc')['Channel'].unique(
+    chan_codes = st.session_state.channel_df.query('Location == @loc')['Channel'].unique(
     ).tolist()
     chan = col32.selectbox("Select channel", chan_codes)
     # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
