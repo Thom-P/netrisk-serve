@@ -28,11 +28,12 @@ seiscomp/bin/seiscomp --asroot enable fdsnws
 
 # signal trap function inspired by https://github.com/panubo/docker-vsftpd/blob/main/entry.sh
 seiscomp_stop() {
-  echo "Received SIGINT or SIGTERM: shutting down Seiscomp and Incron..."
+  echo "Received SIGINT or SIGTERM: shutting down Seiscomp, Cron, and Incron..."
 
   seiscomp/bin/seiscomp --asroot stop fdsnws
   seiscomp/bin/seiscomp --asroot stop scmaster
   service incron stop
+  service cron stop
   echo Done
   exit
 }
@@ -42,6 +43,7 @@ trap seiscomp_stop SIGINT SIGTERM
 
 # Start all necessary processes
 service incron start # Daemon to trigger myo to mseed conversion and SDS archiving routines
+service cron start # For data availability updates
 seiscomp/bin/seiscomp --asroot start scmaster # Run Seiscomp master as background process
 seiscomp/bin/seiscomp --asroot start fdsnws # Run Web services as background to allow reload when inventory updates
 #pid_incron=$(cat /var/run/incrond.pid)
@@ -60,13 +62,15 @@ seiscomp/bin/seiscomp --asroot start fdsnws # Run Web services as background to 
 # need to understand why these child processes cannot be waited for directly
 pidwait --pidfile /var/run/incrond.pid &
 incron_waiter=$!
+pidwait --pidfile /var/run/crond.pid &
+cron_waiter=$!
 pidwait --pidfile seiscomp/var/run/scmaster.pid &
 scmaster_waiter=$!
 pidwait --pidfile seiscomp/var/run/fdsnws.pid &
 fdsnws_waiter=$!
 
 # if any of the process finishes, call the stop sequence
-wait -n $incron_waiter $scmaster_waiter $fdsnws_waiter && seiscomp_stop
+wait -n $incron_waiter $cron_waiter $scmaster_waiter $fdsnws_waiter && seiscomp_stop
 
 
 

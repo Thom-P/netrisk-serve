@@ -12,6 +12,7 @@ RUN <<EOF
         python3.11-venv \
         mariadb-client \
         incron \
+        cron \
         curl \
         procps
 EOF
@@ -45,6 +46,11 @@ EOF
 # first line to reload incron table at every new station dir creation (need to touch file within reload folder)
 # need to add sync on xml removal
 #/data/xml/ IN_CLOSE_WRITE /usr/local/app/seiscomp/bin/seiscomp exec import_inv fdsnxml $@/$# /usr/local/app/seiscomp/etc/inventory/$#
+
+# Cron tab for running data availability update every hour
+RUN cat <<'EOF' | crontab -
+0 * * * * seiscomp/bin/seiscomp exec scardac
+EOF
 
 # Prepare venv for file conversion routine ( . is sh equiv of bash source)
 RUN mkdir mseed_segments \
