@@ -49,7 +49,7 @@ EOF
 
 # Cron tab for running data availability update every hour
 RUN cat <<'EOF' | crontab -
-0 * * * * seiscomp/bin/seiscomp exec scardac
+0 * * * * /usr/local/app/seiscomp/bin/seiscomp exec scardac
 EOF
 
 # Prepare venv for file conversion routine ( . is sh equiv of bash source)

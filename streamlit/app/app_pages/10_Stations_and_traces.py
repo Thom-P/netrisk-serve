@@ -230,6 +230,7 @@ with tab1:
         display_channels(net, sta)
    
         with st.expander('Data availability'):
+            #st.markdown(f'(updated every hour)')
             st.markdown(f'{net} - {sta}')
             avail_data = fetch_availability(net, sta)
             if avail_data is None:
@@ -250,6 +251,7 @@ with tab1:
             fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
             fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
             st.plotly_chart(fig, use_container_width=True)
+            st.info('Data availability is updated every hour', icon="ℹ️")
 
 
 
