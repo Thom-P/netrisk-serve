@@ -18,6 +18,7 @@ from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 
 #st.title('Stations and traces')
 st.header('Stations and traces')
@@ -399,11 +400,21 @@ with tab2:
             #traces.plot(fig=fig) # todo: add size to stretch to container size
             #fig = traces.plot(handle=True, size=(800, 250))
 
-        fig = st.session_state.traces.plot(handle=True)
-        fig.axes[-1].set_xlabel('Time')
-        fig.axes[-1].set_ylabel('Counts')
-            #st.pyplot(fig, use_container_width=False)
-        st.pyplot(fig)
+
+        # fig = st.session_state.traces.plot(handle=True)
+        # fig.axes[-1].set_xlabel('Time')
+        # fig.axes[-1].set_ylabel('Counts')
+        #     #st.pyplot(fig, use_container_width=False)
+        # st.pyplot(fig)
+        
+        #test plotly instead
+        #fig_trace = px.line(st.session_state.traces[0].data, x="time", y="amp", title='test') # this needs df
+        fig_trace = go.Figure(data=go.Scatter(x=st.session_state.traces[0].times(), y=st.session_state.traces[0].data))
+        st.plotly_chart(fig_trace)
+
+
+
+
 
             # approach below freezes on large traces
             # (obspy uses special minmax method for large traces)
@@ -491,18 +502,6 @@ with tab2:
     #    trace.write(file_buff, format="MSEED") # select appropriate encoding? nb: filehandle instead of filename also works!
     #    # need a unique key otherwise error
     #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
-
-
-# import plotly.express as px
-# im = np.random.random((200, 200))
-# labels = {
-#        'x':"X Axis Title",
-#        'y':"X Axis Title" ,
-#        'color':'Z Label'
-#        }
-# fig = px.imshow(im,aspect='equal',labels = labels)
-# fig = px.imshow(im, labels = labels)
-# st.plotly_chart(fig)
 
 
 ########### Day plot

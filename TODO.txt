@@ -7,6 +7,7 @@
 - verify that sensitive infos do not end up in docker images thru env
 - define a log file for each process/app, and make it accessible to UI; on each action started from UI, catch respective log and display
 - integrate python converter within streamlit container instead of seiscomp? to avoid double python install
+- catch all errors and warning and add a report bug form
 
 ## Nginx
 
@@ -36,6 +37,8 @@
 - add auto processings
 - add explicit option to merge traces in MSEED?
 #- handle trace length error in SEGY writing
+- could add an obspy section plot tab, for seeing an event on different sections at the same time
+- add a dashboard as home page where stations are listed, with a green/yellow/red stoplight depending on last data reception (channels details with hover?)  
 
 ## End
 - documentation/readme
