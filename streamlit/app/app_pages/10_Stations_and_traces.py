@@ -388,60 +388,38 @@ with tab2:
 
     if st.session_state.traces is not None:
 
-            #fig = plt.figure()
-            #traces.plot(fig=fig) # todo: add size to stretch to container size
-            #fig.axes[-1].set_xlabel('Time')
-            #fig.axes[-1].set_ylabel('Counts')
-            # This below causes logic issue (radio button not showing in fragment, why?)
-            #fig_html = mpld3.fig_to_html(fig)
-            #components.html(fig_html, height=600)
+        #fig = plt.figure()
+        #traces.plot(fig=fig) # todo: add size to stretch to container size
+        #fig.axes[-1].set_xlabel('Time')
+        #fig.axes[-1].set_ylabel('Counts')
+        # This below causes logic issue (radio button not showing in fragment, why?)
+        #fig_html = mpld3.fig_to_html(fig)
+        #components.html(fig_html, height=600)
 
-            # fig is non-interactive with this approach
-            # issue seems to happen when plot is bigger than container size...
-            #fig = traces.plot(handle=True)
+        # fig is non-interactive with this approach
+        # issue seems to happen when plot is bigger than container size...
+        #fig = traces.plot(handle=True)
 
-            #fig = plt.figure()
-            #traces.plot(fig=fig) # todo: add size to stretch to container size
-            #fig = traces.plot(handle=True, size=(800, 250))
+        #fig = plt.figure()
+        #traces.plot(fig=fig) # todo: add size to stretch to container size
+        #fig = traces.plot(handle=True, size=(800, 250))
 
 
-        # fig = st.session_state.traces.plot(handle=True)
-        # fig.axes[-1].set_xlabel('Time')
-        # fig.axes[-1].set_ylabel('Counts')
+        #fig = st.session_state.traces.plot(handle=True)
+        #fig.axes[-1].set_xlabel('Time')
+        #fig.axes[-1].set_ylabel('Counts')
         #     #st.pyplot(fig, use_container_width=False)
-        # st.pyplot(fig)
+        #st.pyplot(fig)
         
         #test plotly instead
-        #fig_trace = go.Figure(data=go.Scatter(x=st.session_state.traces[0].times(), y=st.session_state.traces[0].data))
-        #st.plotly_chart(fig_trace)
-        #st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
-
-        st.write(len(st.session_state.traces))            
         fig = plot_traces(st.session_state.traces)
-         
         st.plotly_chart(fig)
+        #st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
 
         # test obspy plot lib replacement
         #waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True)
         #fig = waveform.plot_waveform(handle=True)
         #st.pyplot(fig)
-
-
-
-        # approach below freezes on large traces
-        # (obspy uses special minmax method for large traces)
-        # fig, ax = plt.subplots()
-        # tr = traces[0]
-        # ax.plot(tr.times("matplotlib"), tr.data, "k-")
-        # ax.xaxis_date()
-        # fig.autofmt_xdate()
-        # ax.set_xlabel('Time')
-        # ax.set_ylabel('Counts')
-        
-        #with st.expander("Visualize response removal steps"):
-        #    with st.spinner('Loading plot...'):
-        #        st.pyplot(fig_deconv)
-        #        #st.image(resp_plot_buffer, use_column_width=True)
 
 
         @st.fragment

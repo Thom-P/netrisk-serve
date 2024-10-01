@@ -50,7 +50,7 @@ def plot_traces(traces):
     starttime = min([trace.stats.starttime for trace in traces])
     endtime = max([trace.stats.endtime for trace in traces])
 
-    fig = make_subplots(rows=len(stream_new), cols=1)
+    fig = make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, vertical_spacing=0.001)
     # Create helper variable to track ids and min/max/mean values.
     ids = []
     # Loop over each Trace and call the appropriate plotting method.
@@ -90,6 +90,9 @@ def plot_traces(traces):
     #xmax = self._time_to_xvalue(self.endtime)
     #ax.set_xlim(xmin, xmax)
     #self._draw_overlap_axvspan_legend()
+    
+    fig.update_xaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
+    fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
     return fig
 
 
@@ -124,8 +127,11 @@ def __plot_straight(fig, trace, i):
             trace.data = np.require(trace.data, np.float64) * trace.stats.calib
             # convert seconds of relative sample times to days and add
             # start time of trace.
-            x_values = ((trace.times() / SECONDS_PER_DAY) +
-                        date2num(trace.stats.starttime.datetime))
+            #x_values = ((trace.times() / SECONDS_PER_DAY) +
+            #            date2num(trace.stats.starttime.datetime))
+            # Tho: this below should be double checked
+            x_values = np.array(trace.stats.starttime.ns + trace.times() * 1_000_000_000, dtype='datetime64[ns]')
+            #x_values = np.array(trace.times(type="timestamp"), dtype='datetime64[s]')
             fig.add_scatter(x=x_values, y=trace.data, row=i + 1, col=1)
         # Write to self.ids
         #trace = st[0]
