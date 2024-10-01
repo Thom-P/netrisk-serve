@@ -20,6 +20,9 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
+from utils.obspy_plot_mod import ModifiedWaveformPlotting
+
+
 #st.title('Stations and traces')
 st.header('Stations and traces')
 
@@ -408,23 +411,27 @@ with tab2:
         # st.pyplot(fig)
         
         #test plotly instead
-        #fig_trace = px.line(st.session_state.traces[0].data, x="time", y="amp", title='test') # this needs df
-        fig_trace = go.Figure(data=go.Scatter(x=st.session_state.traces[0].times(), y=st.session_state.traces[0].data))
-        st.plotly_chart(fig_trace)
+        #fig_trace = go.Figure(data=go.Scatter(x=st.session_state.traces[0].times(), y=st.session_state.traces[0].data))
+        #st.plotly_chart(fig_trace)
+        #st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
+
+
+        # test obspy plot lib replacement
+        waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True)
+        fig = waveform.plot_waveform(handle=True)
+        st.pyplot(fig)
 
 
 
-
-
-            # approach below freezes on large traces
-            # (obspy uses special minmax method for large traces)
-            # fig, ax = plt.subplots()
-            # tr = traces[0]
-            # ax.plot(tr.times("matplotlib"), tr.data, "k-")
-            # ax.xaxis_date()
-            # fig.autofmt_xdate()
-            # ax.set_xlabel('Time')
-            # ax.set_ylabel('Counts')
+        # approach below freezes on large traces
+        # (obspy uses special minmax method for large traces)
+        # fig, ax = plt.subplots()
+        # tr = traces[0]
+        # ax.plot(tr.times("matplotlib"), tr.data, "k-")
+        # ax.xaxis_date()
+        # fig.autofmt_xdate()
+        # ax.set_xlabel('Time')
+        # ax.set_ylabel('Counts')
         
         #with st.expander("Visualize response removal steps"):
         #    with st.spinner('Loading plot...'):
