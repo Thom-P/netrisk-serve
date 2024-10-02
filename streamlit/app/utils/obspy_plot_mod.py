@@ -1,7 +1,6 @@
 ## Try to copy and mod obspy waveform plotting functions to use plotly instead of matplotlib
 # This would allow enhanced interactivity in streamlit
 
-
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------
 # Filename: waveform.py
@@ -41,6 +40,8 @@ from obspy.core.util import create_empty_data_chunk
 from obspy.geodetics import FlinnEngdahl, kilometer2degrees, locations2degrees
 from obspy.imaging.util import (_set_xaxis_obspy_dates, _id_key, _timestring)
 
+import plotly.graph_objects as go
+from plotly.tools import make_subplots
 
 MINMAX_ZOOMLEVEL_WARNING_TEXT = "Warning: Zooming into MinMax Plot!"
 SECONDS_PER_DAY = 3600.0 * 24.0
@@ -288,7 +289,7 @@ class ModifiedWaveformPlotting(object):
         'm' = magenta, 'y' = yellow, 'k' = black, 'w' = white) and gray shades
         can be given as a string encoding a float in the 0-1 range.
         """
-        import matplotlib.pyplot as plt
+        #import matplotlib.pyplot as plt
         # Setup the figure if not passed explicitly.
         if not self.fig_obj:
             self.__setup_figure()
@@ -302,57 +303,61 @@ class ModifiedWaveformPlotting(object):
         else:
             self.plot(*args, **kwargs)
         # Adjust the subplot so there is always a fixed margin on every side
-        if self.type != 'dayplot':
-            fract_y = 60.0 / self.height
-            fract_y2 = 40.0 / self.height
-            fract_x = 80.0 / self.width
-            self.fig.subplots_adjust(top=1.0 - fract_y, bottom=fract_y2,
-                                     left=fract_x, right=1.0 - fract_x / 2)
-        if self.type == 'section':
-            self.fig.subplots_adjust(bottom=0.12)
-        with warnings.catch_warnings(record=True):
-            warnings.filterwarnings("ignore", DATELOCATOR_WARNING_MSG,
-                                    UserWarning, "matplotlib.dates")
-            if self.draw:
-                self.fig.canvas.draw()
-            # The following just serves as a unified way of saving and
-            # displaying the plots.
-            if not self.transparent:
-                extra_args = {'dpi': self.dpi,
-                              'facecolor': self.face_color,
-                              'edgecolor': self.face_color}
-            else:
-                extra_args = {'dpi': self.dpi,
-                              'transparent': self.transparent,
-                              'facecolor': 'k'}
-            if self.outfile:
-                # If format is set use it.
-                if self.format:
-                    self.fig.savefig(self.outfile, format=self.format,
-                                     **extra_args)
-                # Otherwise use format from self.outfile or default to PNG.
-                else:
-                    self.fig.savefig(self.outfile, **extra_args)
-            else:
-                # Return a binary image string if not self.outfile but
-                # self.format.
-                if self.format:
-                    imgdata = io.BytesIO()
-                    self.fig.savefig(imgdata, format=self.format,
-                                     **extra_args)
-                    imgdata.seek(0)
-                    return imgdata.read()
-                elif self.handle:
-                    return self.fig
-                else:
-                    if not self.fig_obj and self.show:
-                        try:
-                            plt.show(block=self.block)
-                        except Exception:
-                            plt.show()
-                    # Also return the figure to make it work the jupyter
-                    # notebooks.
-                    return self.fig
+        #if self.type != 'dayplot':
+        #    fract_y = 60.0 / self.height
+        #    fract_y2 = 40.0 / self.height
+        #    fract_x = 80.0 / self.width
+        #    self.fig.subplots_adjust(top=1.0 - fract_y, bottom=fract_y2,
+        #                             left=fract_x, right=1.0 - fract_x / 2)
+        #if self.type == 'section':
+        #    self.fig.subplots_adjust(bottom=0.12)
+       
+        self.fig.update_xaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
+        self.fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
+        return self.fig
+        # with warnings.catch_warnings(record=True):
+        #     warnings.filterwarnings("ignore", DATELOCATOR_WARNING_MSG,
+        #                             UserWarning, "matplotlib.dates")
+        #     if self.draw:
+        #         self.fig.canvas.draw()
+        #     # The following just serves as a unified way of saving and
+        #     # displaying the plots.
+        #     if not self.transparent:
+        #         extra_args = {'dpi': self.dpi,
+        #                       'facecolor': self.face_color,
+        #                       'edgecolor': self.face_color}
+        #     else:
+        #         extra_args = {'dpi': self.dpi,
+        #                       'transparent': self.transparent,
+        #                       'facecolor': 'k'}
+        #     if self.outfile:
+        #         # If format is set use it.
+        #         if self.format:
+        #             self.fig.savefig(self.outfile, format=self.format,
+        #                              **extra_args)
+        #         # Otherwise use format from self.outfile or default to PNG.
+        #         else:
+        #             self.fig.savefig(self.outfile, **extra_args)
+        #     else:
+        #         # Return a binary image string if not self.outfile but
+        #         # self.format.
+        #         if self.format:
+        #             imgdata = io.BytesIO()
+        #             self.fig.savefig(imgdata, format=self.format,
+        #                              **extra_args)
+        #             imgdata.seek(0)
+        #             return imgdata.read()
+        #         elif self.handle:
+        #             return self.fig
+        #         else:
+        #             if not self.fig_obj and self.show:
+        #                 try:
+        #                     plt.show(block=self.block)
+        #                 except Exception:
+        #                     plt.show()
+        #             # Also return the figure to make it work the jupyter
+        #             # notebooks.
+        #             return self.fig
 
 
 
@@ -393,6 +398,9 @@ class ModifiedWaveformPlotting(object):
         # If everything is lost in the process raise an Exception.
         if not len(stream_new):
             raise Exception("Nothing to plot")
+        
+        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, figure=self.fig)
+        
         # Create helper variable to track ids and min/max/mean values.
         self.ids = []
         # Loop over each Trace and call the appropriate plotting method.
@@ -405,14 +413,15 @@ class ModifiedWaveformPlotting(object):
                       "sampling rate."
                 raise Exception(msg)
             sampling_rate = sampling_rates.pop()
-            if _i == 0:
-                sharex = None
-            else:
-                sharex = self.axis[0]
+            #if _i == 0:
+            #    sharex = None
+            #else:
+            #    sharex = self.axis[0]
             axis_facecolor_kwargs = dict(facecolor=self.background_color)
-            ax = self.fig.add_subplot(len(stream_new), 1, _i + 1,
-                                      sharex=sharex, **axis_facecolor_kwargs)
-            self.axis.append(ax)
+            #ax = self.fig.add_subplot(len(stream_new), 1, _i + 1,
+            #                          sharex=sharex, **axis_facecolor_kwargs)
+            ax = _i + 1
+            #self.axis.append(ax)
             # XXX: Also enable the minmax plotting for previews.
             method_ = self.plotting_method
             if method_ is None:
@@ -430,12 +439,12 @@ class ModifiedWaveformPlotting(object):
                 msg = "Invalid plot method: '%s'" % method_
                 raise ValueError(msg)
         # Set ticks.
-        self.__plot_set_x_ticks()
-        self.__plot_set_y_ticks()
-        xmin = self._time_to_xvalue(self.starttime)
-        xmax = self._time_to_xvalue(self.endtime)
-        ax.set_xlim(xmin, xmax)
-        self._draw_overlap_axvspan_legend()
+        #self.__plot_set_x_ticks()
+        #self.__plot_set_y_ticks()
+        #xmin = self._time_to_xvalue(self.starttime)
+        #xmax = self._time_to_xvalue(self.endtime)
+        #ax.set_xlim(xmin, xmax)
+        #self._draw_overlap_axvspan_legend()
 
 
 
@@ -721,7 +730,7 @@ class ModifiedWaveformPlotting(object):
         """
         # trace argument seems to actually be a list of traces..
         st = Stream(trace)
-        self._draw_overlap_axvspans(st, ax)
+        #self._draw_overlap_axvspans(st, ax)
         for trace in st:
             # Check if it is a preview file and adjust accordingly.
             # XXX: Will look weird if the preview file is too small.
@@ -748,10 +757,13 @@ class ModifiedWaveformPlotting(object):
             else:
                 # convert seconds of relative sample times to days and add
                 # start time of trace.
-                x_values = ((trace.times() / SECONDS_PER_DAY) +
-                            date2num(trace.stats.starttime.datetime))
-            ax.plot(x_values, trace.data, color=self.color,
-                    linewidth=self.linewidth, linestyle=self.linestyle)
+                #x_values = ((trace.times() / SECONDS_PER_DAY) +
+                #            date2num(trace.stats.starttime.datetime))
+                # Tho: this below should be double checked
+                x_values = np.array(trace.stats.starttime.ns + trace.times() * 1_000_000_000, dtype='datetime64[ns]')
+            #ax.plot(x_values, trace.data, color=self.color,
+            #        linewidth=self.linewidth, linestyle=self.linestyle)
+            self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False)
         # Write to self.ids
         trace = st[0]
         if trace.stats.get('preview'):
@@ -1475,17 +1487,10 @@ class ModifiedWaveformPlotting(object):
         The design and look of the whole plot to be produced.
         """
         #import matplotlib.pyplot as plt
-        import plotly.graph_objects as go
         # Setup figure and axes
         #self.fig = plt.figure(num=None, dpi=self.dpi,
         #                      figsize=(float(self.width) / self.dpi,
         #                               float(self.height) / self.dpi))
-        self.fig = go.figure()
-        # XXX: Figure out why this is needed sometimes.
-        # Set size and dpi.
-        #self.fig.set_dpi(self.dpi)
-        #self.fig.set_figwidth(float(self.width) / self.dpi)
-        #self.fig.set_figheight(float(self.height) / self.dpi)
 
         if hasattr(self.stream, 'label'):
             suptitle = self.stream.label
@@ -1503,9 +1508,18 @@ class ModifiedWaveformPlotting(object):
             suptitle = '%s  -  %s' % (_timestring(self.starttime),
                                       _timestring(self.endtime))
         # add suptitle
-        y = (self.height - 15.0) / self.height
+        #y = (self.height - 15.0) / self.height
         #self.fig.suptitle(suptitle, y=y, fontsize='small',
-                          horizontalalignment='center')
+        #                  horizontalalignment='center')
+
+        layout = go.Layout(height=self.height, width=self.width, title=suptitle) 
+        self.fig = go.Figure(layout=layout)
+        # XXX: Figure out why this is needed sometimes.
+        # Set size and dpi.
+        #self.fig.set_dpi(self.dpi)
+        #self.fig.set_figwidth(float(self.width) / self.dpi)
+        #self.fig.set_figheight(float(self.height) / self.dpi)
+
 
 
 

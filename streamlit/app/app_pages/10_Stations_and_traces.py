@@ -20,8 +20,8 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
-#from utils.obspy_plot_mod import ModifiedWaveformPlotting
-from utils.trace_plot import plot_traces
+from utils.obspy_plot_mod import ModifiedWaveformPlotting
+#from utils.trace_plot import plot_traces
 
 
 #st.title('Stations and traces')
@@ -226,9 +226,10 @@ with tab1:
     # Station selection in dataframe
     row_index = event.selection['rows']
     if not row_index:
-        st.markdown(
-            'Select station by ticking box in the leftmost column.'
-        )
+        st.info("Select station by ticking box in the leftmost column.", icon="ℹ️")
+        #st.markdown(
+        #    'Select station by ticking box in the leftmost column.'
+        #)
         #st.stop()
     else:
         net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
@@ -412,14 +413,18 @@ with tab2:
         #st.pyplot(fig)
         
         #test plotly instead
-        fig = plot_traces(st.session_state.traces)
-        st.plotly_chart(fig)
+        
+       
+        # test1
+        #fig = plot_traces(st.session_state.traces)
+        #st.plotly_chart(fig)
         #st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
 
         # test obspy plot lib replacement
-        #waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True)
-        #fig = waveform.plot_waveform(handle=True)
-        #st.pyplot(fig)
+        #test2
+        waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True)
+        fig = waveform.plot_waveform(handle=True)
+        st.plotly_chart(fig)
 
 
         @st.fragment
