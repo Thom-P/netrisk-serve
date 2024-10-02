@@ -39,6 +39,7 @@
 #- handle trace length error in SEGY writing
 - could add an obspy section plot tab, for seeing an event on different sections at the same time
 - add a dashboard as home page where stations are listed, with a green/yellow/red stoplight depending on last data reception (channels details with hover?)  
+- could propose large trace as an image (pyplot), and small trace as an interactive plotly object
 
 ## End
 - documentation/readme

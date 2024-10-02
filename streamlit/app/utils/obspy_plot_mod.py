@@ -1474,16 +1474,18 @@ class ModifiedWaveformPlotting(object):
         """
         The design and look of the whole plot to be produced.
         """
-        import matplotlib.pyplot as plt
+        #import matplotlib.pyplot as plt
+        import plotly.graph_objects as go
         # Setup figure and axes
-        self.fig = plt.figure(num=None, dpi=self.dpi,
-                              figsize=(float(self.width) / self.dpi,
-                                       float(self.height) / self.dpi))
+        #self.fig = plt.figure(num=None, dpi=self.dpi,
+        #                      figsize=(float(self.width) / self.dpi,
+        #                               float(self.height) / self.dpi))
+        self.fig = go.figure()
         # XXX: Figure out why this is needed sometimes.
         # Set size and dpi.
-        self.fig.set_dpi(self.dpi)
-        self.fig.set_figwidth(float(self.width) / self.dpi)
-        self.fig.set_figheight(float(self.height) / self.dpi)
+        #self.fig.set_dpi(self.dpi)
+        #self.fig.set_figwidth(float(self.width) / self.dpi)
+        #self.fig.set_figheight(float(self.height) / self.dpi)
 
         if hasattr(self.stream, 'label'):
             suptitle = self.stream.label
@@ -1502,7 +1504,7 @@ class ModifiedWaveformPlotting(object):
                                       _timestring(self.endtime))
         # add suptitle
         y = (self.height - 15.0) / self.height
-        self.fig.suptitle(suptitle, y=y, fontsize='small',
+        #self.fig.suptitle(suptitle, y=y, fontsize='small',
                           horizontalalignment='center')
 
 
