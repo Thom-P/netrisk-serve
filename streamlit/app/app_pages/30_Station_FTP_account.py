@@ -6,6 +6,8 @@ import streamlit as st
 import pandas as pd
 import berkeleydb.db as db
 
+from utils.dataframe import dataframe_with_selections
+
 
 #st.title('Station FTP accounts')
 st.header('Station FTP accounts')
@@ -17,7 +19,10 @@ if 'user_db' not in st.session_state:
 users = st.session_state.user_db.items()
 
 df = pd.DataFrame(users, columns=('Login', 'Password hash'),  dtype=str)
-event = st.dataframe(data=df, hide_index=True, on_select='rerun')
+#event = st.dataframe(data=df, hide_index=True, on_select='rerun')
+
+selection = dataframe_with_selections(df)
+
 
 @st.dialog("Confirmation required")
 def delete_accounts(rows):
@@ -51,11 +56,13 @@ def create_account():
         Path('/data/reload/RELOAD').touch() # does not work reliably, need to check why
         st.rerun()
 
-selected_rows = event.selection['rows']
+
+selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
 
-if users:
-    st.info('Tick boxes in the leftmost column to select FTP accounts.', icon="ℹ️")
+
+#if users:
+#    st.info('Tick boxes in the leftmost column to select FTP accounts.', icon="ℹ️")
 
 cols = st.columns([1, 1, 6]) # hack to have buttons side by side without big gap
 if cols[0].button("Delete selected account(s)", disabled=is_disabled):
