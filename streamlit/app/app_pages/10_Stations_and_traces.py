@@ -393,17 +393,10 @@ with tab2:
         #traces.plot(fig=fig) # todo: add size to stretch to container size
         #fig.axes[-1].set_xlabel('Time')
         #fig.axes[-1].set_ylabel('Counts')
+        
         # This below causes logic issue (radio button not showing in fragment, why?)
         #fig_html = mpld3.fig_to_html(fig)
         #components.html(fig_html, height=600)
-
-        # fig is non-interactive with this approach
-        # issue seems to happen when plot is bigger than container size...
-        #fig = traces.plot(handle=True)
-
-        #fig = plt.figure()
-        #traces.plot(fig=fig) # todo: add size to stretch to container size
-        #fig = traces.plot(handle=True, size=(800, 250))
 
 
         #fig = st.session_state.traces.plot(handle=True)
@@ -413,8 +406,6 @@ with tab2:
         #st.pyplot(fig)
         
         #test plotly instead
-        
-       
         # test1
         #fig = plot_traces(st.session_state.traces)
         #st.plotly_chart(fig)
@@ -422,9 +413,12 @@ with tab2:
 
         # test obspy plot lib replacement
         #test2
-        waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True)
+        # nb: size (width, height), width will be adjusted to fit column container
+        height = 250 * len(chans)
+        width = height
+        waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
         fig = waveform.plot_waveform(handle=True)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
 
 
         @st.fragment

@@ -399,8 +399,7 @@ class ModifiedWaveformPlotting(object):
         if not len(stream_new):
             raise Exception("Nothing to plot")
         
-        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, figure=self.fig)
-        
+        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, vertical_spacing=0.1, figure=self.fig)
         # Create helper variable to track ids and min/max/mean values.
         self.ids = []
         # Loop over each Trace and call the appropriate plotting method.
@@ -438,6 +437,13 @@ class ModifiedWaveformPlotting(object):
             else:
                 msg = "Invalid plot method: '%s'" % method_
                 raise ValueError(msg)
+        
+        #for _i in range(len(stream_new)):
+            #ax.text(0.02, 0.95, self.ids[_i], transform=ax.transAxes,
+            #        fontdict=dict(fontsize="small", ha='left', va='top'),
+            #        bbox=dict(boxstyle="round", fc="w", alpha=0.8))
+            self.fig.add_annotation(text=self.ids[_i], xref='x domain', x=0, yref='y domain', y=1, row=_i + 1, col=1, showarrow=False, bgcolor='white', bordercolor='black')
+        
         # Set ticks.
         #self.__plot_set_x_ticks()
         #self.__plot_set_y_ticks()
@@ -1505,15 +1511,29 @@ class ModifiedWaveformPlotting(object):
                 (self.stream[-1].stats.network, self.stream[-1].stats.channel,
                  len(self.stream), _timestring(self.starttime))
         else:
-            suptitle = '%s  -  %s' % (_timestring(self.starttime),
-                                      _timestring(self.endtime))
+            #suptitle = '%s  -  %s' % (_timestring(self.starttime),
+            #                          _timestring(self.endtime))
+            suptitle=f"{self.starttime.ctime()} - {self.endtime.ctime()}"
         # add suptitle
         #y = (self.height - 15.0) / self.height
         #self.fig.suptitle(suptitle, y=y, fontsize='small',
         #                  horizontalalignment='center')
 
-        layout = go.Layout(height=self.height, width=self.width, title=suptitle) 
+        title={
+            'text': suptitle,
+            'x': 0.5,
+            'xanchor': 'center'
+        }
+        layout = go.Layout(height=self.height, width=self.width, title=title) 
         self.fig = go.Figure(layout=layout)
+        
+        # fig.update_layout(
+        #     title={
+        #     'text' : title,
+        #     'x':0.5,
+        #     'xanchor': 'center'
+        # })
+        
         # XXX: Figure out why this is needed sometimes.
         # Set size and dpi.
         #self.fig.set_dpi(self.dpi)
