@@ -312,8 +312,13 @@ class ModifiedWaveformPlotting(object):
         #if self.type == 'section':
         #    self.fig.subplots_adjust(bottom=0.12)
        
-        self.fig.update_xaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
+        self.fig.update_xaxes(showline=True, linewidth=1, showgrid=True)
+        self.fig.update_xaxes(mirror=True, row=1, col=1)
+        self.fig.update_xaxes(title_text='Time', row=len(self.axis), col=1)
         self.fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
+        #self.fig.update_yaxes(title_text='Amplitude (counts)', title_standoff=100, row=len(self.axis), col=1)
+        self.fig.add_annotation(text="Amplitude (counts)", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
+         
         return self.fig
         # with warnings.catch_warnings(record=True):
         #     warnings.filterwarnings("ignore", DATELOCATOR_WARNING_MSG,
@@ -399,7 +404,7 @@ class ModifiedWaveformPlotting(object):
         if not len(stream_new):
             raise Exception("Nothing to plot")
         
-        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, vertical_spacing=0.1, figure=self.fig)
+        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, vertical_spacing=0, figure=self.fig)
         # Create helper variable to track ids and min/max/mean values.
         self.ids = []
         # Loop over each Trace and call the appropriate plotting method.
@@ -420,7 +425,7 @@ class ModifiedWaveformPlotting(object):
             #ax = self.fig.add_subplot(len(stream_new), 1, _i + 1,
             #                          sharex=sharex, **axis_facecolor_kwargs)
             ax = _i + 1
-            #self.axis.append(ax)
+            self.axis.append(ax)
             # XXX: Also enable the minmax plotting for previews.
             method_ = self.plotting_method
             if method_ is None:
@@ -442,7 +447,7 @@ class ModifiedWaveformPlotting(object):
             #ax.text(0.02, 0.95, self.ids[_i], transform=ax.transAxes,
             #        fontdict=dict(fontsize="small", ha='left', va='top'),
             #        bbox=dict(boxstyle="round", fc="w", alpha=0.8))
-            self.fig.add_annotation(text=self.ids[_i], xref='x domain', x=0, yref='y domain', y=1, row=_i + 1, col=1, showarrow=False, bgcolor='white', bordercolor='black')
+            self.fig.add_annotation(text=self.ids[_i], xref='x domain', x=0.004, yref='y domain', y=0.98, row=_i + 1, col=1, showarrow=False, bgcolor='white', bordercolor='black')
         
         # Set ticks.
         #self.__plot_set_x_ticks()
@@ -1522,18 +1527,14 @@ class ModifiedWaveformPlotting(object):
         title={
             'text': suptitle,
             'x': 0.5,
-            'xanchor': 'center'
+            'xanchor': 'center',
+            'font_size': 24
         }
-        layout = go.Layout(height=self.height, width=self.width, title=title) 
+        #layout = go.Layout(height=self.height, width=self.width, title=title) 
+        layout = go.Layout(height=self.height, width=self.width, title=title, font_color="black", font_size=20, margin=dict(l=120))
         self.fig = go.Figure(layout=layout)
         
-        # fig.update_layout(
-        #     title={
-        #     'text' : title,
-        #     'x':0.5,
-        #     'xanchor': 'center'
-        # })
-        
+       
         # XXX: Figure out why this is needed sometimes.
         # Set size and dpi.
         #self.fig.set_dpi(self.dpi)

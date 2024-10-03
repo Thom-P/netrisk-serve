@@ -390,35 +390,26 @@ with tab2:
     if st.session_state.traces is not None:
 
         #fig = plt.figure()
-        #traces.plot(fig=fig) # todo: add size to stretch to container size
+        #traces.plot(fig=fig)
+        
+        #fig = st.session_state.traces.plot(handle=True)
         #fig.axes[-1].set_xlabel('Time')
         #fig.axes[-1].set_ylabel('Counts')
+        #st.pyplot(fig)
         
         # This below causes logic issue (radio button not showing in fragment, why?)
         #fig_html = mpld3.fig_to_html(fig)
         #components.html(fig_html, height=600)
-
-
-        #fig = st.session_state.traces.plot(handle=True)
-        #fig.axes[-1].set_xlabel('Time')
-        #fig.axes[-1].set_ylabel('Counts')
-        #     #st.pyplot(fig, use_container_width=False)
-        #st.pyplot(fig)
         
-        #test plotly instead
-        # test1
-        #fig = plot_traces(st.session_state.traces)
-        #st.plotly_chart(fig)
-        #st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
 
         # test obspy plot lib replacement
-        #test2
         # nb: size (width, height), width will be adjusted to fit column container
-        height = 250 * len(chans)
+        height = 300 * len(chans)
         width = height
         waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
         fig = waveform.plot_waveform(handle=True)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, theme=None)
+        st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
 
 
         @st.fragment
