@@ -68,8 +68,8 @@ m = create_map()
 col1, col2 = st.columns([0.6, 0.4])
 with col2:
     st.text("") # hack for pseudo alignment of map
-    st.write('test')
-    #map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
+    #st.write('test')
+    map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
@@ -255,7 +255,7 @@ with tab2:
 
             # test obspy plot lib replacement
             # nb: size (width, height), width will be adjusted to fit column container
-            height = 300 * len(chans)
+            height = 100 * len(chans)
             width = height
             waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
             fig = waveform.plot_waveform(handle=True)
