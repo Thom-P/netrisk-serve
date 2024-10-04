@@ -14,13 +14,13 @@ from streamlit_dimensions import st_dimensions
 from obspy.clients.fdsn import Client
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
 #from utils.trace_plot import plot_traces
-from utils.data_fetch import fetch_stations, fetch_channels, fetch_availability, get_trace
+from utils.data_fetch import fetch_stations, get_trace
 from utils.station_map import create_map
+from utils.station_infos import display_channels, display_availabilty
 
 #st.title('Stations and traces')
 st.header('Stations and traces')
@@ -37,8 +37,8 @@ if "df_stations" not in st.session_state:
     st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
     # remove first char '#' (header line included as comment)
 
-inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
-net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty
+#inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
+#net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty
 
 #st.session_state['net'] = None
 #st.session_state['sta'] = None
@@ -68,7 +68,8 @@ m = create_map()
 col1, col2 = st.columns([0.6, 0.4])
 with col2:
     st.text("") # hack for pseudo alignment of map
-    map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
+    st.write('test')
+    #map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
@@ -78,57 +79,9 @@ with col2:
 tab1, tab2, tab3 = col1.tabs(["Station info", "Trace", "Day plot"])
 
 
-def display_channels(net, sta):
-    with st.expander('Channels'):
-        st.markdown(f'{net} - {sta}')
-        channel_data = fetch_channels(net, sta)
-        if channel_data is None:
-            st.warning('No channel found', icon="⚠️")            
-            return
-            # st.stop()
-
-        # Channel dataframe
-        st.session_state.channel_df = pd.read_csv(
-            io.StringIO(channel_data[1:]),
-            sep='|',
-            dtype={'Location': str}
-        )  # remove first char '#' (header line included as comment)
-        
-        st.dataframe(
-            st.session_state.channel_df,
-            hide_index=True,
-            key="channel_data",
-        )
-    return 
-
-def display_availabilty(net, sta):
-    with st.expander('Data availability'):
-        st.markdown(f'{net} - {sta}')
-        avail_data = fetch_availability(net, sta)
-        if avail_data is None:
-            st.warning('Data availability information not found', icon="⚠️")            
-            return
-        # Availability dataframe
-        avail_df = pd.read_csv(
-            io.StringIO(avail_data[1:]),
-            sep='\s+',
-            dtype=str,
-            parse_dates=['Earliest', 'Latest']  
-        )  # remove first char '#' (header line included as comment)
-        #st.dataframe(avail_df)
-        avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
-        # add quality and samplerate in hover?
-        fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
-        fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
-        fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
-        fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
-        st.plotly_chart(fig, use_container_width=True)
-        st.info('Data availability is updated every hour', icon="ℹ️")
-
-
 net, sta = None, None
 
-# station info
+#### Station info
 with tab1:
     event = st.dataframe(
         st.session_state.df_stations,
@@ -144,41 +97,29 @@ with tab1:
         st.info("Select station by ticking box in the leftmost column.", icon="ℹ️")
     else:
         net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
-        display_channels(net, sta)
-        display_availabilty(net, sta)
+        with st.expander('Channels'):
+            display_channels(net, sta)
+        with st.expander('Data availability'):
+            display_availabilty(net, sta)
         
+###
 
-
-
-
-# Trace
-with tab2:
-    #c.markdown(f'## {net}.{sta}')
-    
-    # if channel_data is None: # doesnt work as exec was stopped in prev tab
-    #    st.write('Select a station in the previous tab.')
-    #    st.stop()
-    if net is None or sta is None: #could simplify
-        st.write('Select a station in the previous tab.')
-        st.stop()
-
-
-
-    col21, col22 = st.columns(2)
+def select_channels_and_dates():
+    col1, col2 = st.columns(2)
     loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
-    loc = col21.selectbox("Select location", loc_codes) # add 2 digit format
+    loc = col1.selectbox("Select location", loc_codes) # add 2 digit format
     sub_df = st.session_state.channel_df.query('Location == @loc')
     chan_codes = sub_df['Channel'].unique().tolist()
-    chans = col22.multiselect("Select channel(s)", chan_codes)
+    chans = col2.multiselect("Select channel(s)", chan_codes)
 
-    col23, col24, col25, col26 = st.columns(4)
-    start_day = col23.date_input('Start Date', value="default_value_today")
-    start_time = col24.time_input(
+    col3, col4, col5, col6 = st.columns(4)
+    start_day = col3.date_input('Start Date', value="default_value_today")
+    start_time = col4.time_input(
         'Start Time',
         value=datetime.time(0, 0),
         step=3600
     )
-    end_day = col25.date_input(
+    end_day = col5.date_input(
         'End Date',
         value="default_value_today",
         min_value=None,
@@ -190,7 +131,7 @@ with tab2:
         disabled=False,
         label_visibility="visible"
     )
-    end_time = col26.time_input(
+    end_time = col6.time_input(
         'End Time',
         value=datetime.time(0, 0),
         step=3600
@@ -198,49 +139,67 @@ with tab2:
 
     start_date = datetime.datetime.combine(start_day, start_time)
     end_date = datetime.datetime.combine(end_day, end_time)
+    return loc, chans, start_date, end_date 
+
+def select_filter_params():
+    # get min fs from all selected channels
+    sub_df = st.session_state.channel_df.query('Location == @loc')
+    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
+    unit = st.radio(
+        "Units",
+        ["Frequency", "Period"],
+        label_visibility="collapsed",
+        horizontal = True
+    )
+
+    col27, col28 = st.columns(2)
+    if unit == "Frequency":
+        fmin = col27.number_input(
+                    'Lower Freq. (Hz)',
+                    min_value=0.,
+                    max_value=min_fs * 0.45,
+                )
+        fmax = col28.number_input(
+                    'Higher Freq. (Hz)',
+                    min_value=fmin,
+                    max_value=min_fs * 0.45,
+                )
+    else:
+        tmin = col27.number_input(
+                    'Lower Period (s)',
+                    min_value=1. / (0.45 * min_fs),
+                    max_value=100000.,
+        )
+
+        tmax = col28.number_input(
+            'Upper Period (s)',
+            min_value=tmin,
+            max_value=100000.,
+        )
+        fmax = 1./ tmin
+        fmin = 1. / tmax
+
+    # todo: add validity check vs fs
+    return fmin, fmax
+
+ 
+#### Trace viewer
+with tab2:
+    #c.markdown(f'## {net}.{sta}')
+    
+    if sta is None:
+        st.write('Select a station in the previous tab.')
+        st.stop()
+
+   
+    loc, chans, start_date, end_date = select_channels_and_dates()
 
     fmin, fmax = None, None
     filt_msg = "Applies a linear detrend and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
-        # get min fs from all selected channels
-        min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
-        unit = st.radio(
-              "Units",
-              ["Frequency", "Period"],
-              label_visibility="collapsed",
-              horizontal = True
-        )
-
-        col27, col28 = st.columns(2)
-        if unit == "Frequency":
-            fmin = col27.number_input(
-                           'Lower Freq. (Hz)',
-                           min_value=0.,
-                           max_value=min_fs * 0.45,
-                    )
-            fmax = col28.number_input(
-                        'Higher Freq. (Hz)',
-                        min_value=fmin,
-                        max_value=min_fs * 0.45,
-                    )
-        else:
-            tmin = col27.number_input(
-                        'Lower Period (s)',
-                        min_value=1. / (0.45 * min_fs),
-                        max_value=100000.,
-            )
-
-            tmax = col28.number_input(
-                'Upper Period (s)',
-                min_value=tmin,
-                max_value=100000.,
-            )
-            fmax = 1./ tmin
-            fmin = 1. / tmax
-
-    # add validity check vs fs
-    
+        fmin, fmax = select_filter_params()
+            
     resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
         "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
     resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
@@ -275,83 +234,86 @@ with tab2:
                     st.error(err, icon="🚨")
                     st.stop()
         st.session_state.traces = traces
+        st.write("test2")
+        if st.session_state.traces is not None:
 
-    if st.session_state.traces is not None:
+            # fig = plt.figure()
+            # plt.plot([1, 2, 3], [4, 5, 6])
+            # st.pyplot(fig)
+            # #traces.plot(fig=fig)
+            # st.write('testend')
 
-        #fig = plt.figure()
-        #traces.plot(fig=fig)
-        
-        #fig = st.session_state.traces.plot(handle=True)
-        #fig.axes[-1].set_xlabel('Time')
-        #fig.axes[-1].set_ylabel('Counts')
-        #st.pyplot(fig)
-        
-        # This below causes logic issue (radio button not showing in fragment, why?)
-        #fig_html = mpld3.fig_to_html(fig)
-        #components.html(fig_html, height=600)
-        
+            #fig = st.session_state.traces.plot(handle=True)
+            #fig.axes[-1].set_xlabel('Time')
+            #fig.axes[-1].set_ylabel('Counts')
+            #st.pyplot(fig)
+            
+            # This below causes logic issue (radio button not showing in fragment, why?)
+            #fig_html = mpld3.fig_to_html(fig)
+            #components.html(fig_html, height=600)
+            
 
-        # test obspy plot lib replacement
-        # nb: size (width, height), width will be adjusted to fit column container
-        height = 300 * len(chans)
-        width = height
-        waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
-        fig = waveform.plot_waveform(handle=True)
-        st.plotly_chart(fig, use_container_width=True, theme=None)
-        st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
+            # test obspy plot lib replacement
+            # nb: size (width, height), width will be adjusted to fit column container
+            height = 300 * len(chans)
+            width = height
+            waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
+            fig = waveform.plot_waveform(handle=True)
+            st.plotly_chart(fig, use_container_width=True, theme=None)
+            st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
 
 
-        @st.fragment
-        def download_trace():
-            #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-            file_format = st.radio("Select file format", ["MSEED", "SAC"])
-            if file_format == "SAC":
-                # should only be one trace, and with gap value filled
-                if len(chans) > 1:
-                    st.info("SAC files can only contain single component data.", icon="ℹ️")
-                    st.stop()
-                
-                st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
-                trace_merged = copy.deepcopy(st.session_state.traces)
-                trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
-            # Save all Traces into 1 file?
-            # should get actual earliest start and latest end times
-            chans_str = '_'.join(chans)
-            stream_id = f'{net}.{sta}.{loc}.{chans_str}'
-            if fmin is not None and fmax is not None:
-                fname = f'{stream_id}_{start_date.isoformat()}_' \
-                    f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-                    f'{fmax}Hz'  # replace with actual dates
-            else:
-                fname = f'{stream_id}_{start_date.isoformat()}_' \
-                    f'{end_date.isoformat()}'
-                # replace with actual dates
-            file_buff = io.BytesIO()
+            @st.fragment
+            def download_trace():
+                #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+                file_format = st.radio("Select file format", ["MSEED", "SAC"])
+                if file_format == "SAC":
+                    # should only be one trace, and with gap value filled
+                    if len(chans) > 1:
+                        st.info("SAC files can only contain single component data.", icon="ℹ️")
+                        st.stop()
+                    
+                    st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
+                    trace_merged = copy.deepcopy(st.session_state.traces)
+                    trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
+                # Save all Traces into 1 file?
+                # should get actual earliest start and latest end times
+                chans_str = '_'.join(chans)
+                stream_id = f'{net}.{sta}.{loc}.{chans_str}'
+                if fmin is not None and fmax is not None:
+                    fname = f'{stream_id}_{start_date.isoformat()}_' \
+                        f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
+                        f'{fmax}Hz'  # replace with actual dates
+                else:
+                    fname = f'{stream_id}_{start_date.isoformat()}_' \
+                        f'{end_date.isoformat()}'
+                    # replace with actual dates
+                file_buff = io.BytesIO()
 
-            if file_format == "MSEED":
-                st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-            elif file_format == "SAC":
-                trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-            #elif file_format == "SEGY":
-            #    try:
-            #        st.session_state.traces.write(file_buff, format=file_format) 
-            #    except Exception as err:
-            #        st.error(f"{err}", icon="🚨")
-            #        st.stop()
-            #    #raise
+                if file_format == "MSEED":
+                    st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+                elif file_format == "SAC":
+                    trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+                #elif file_format == "SEGY":
+                #    try:
+                #        st.session_state.traces.write(file_buff, format=file_format) 
+                #    except Exception as err:
+                #        st.error(f"{err}", icon="🚨")
+                #        st.stop()
+                #    #raise
 
-            # select appropriate encoding?
-            dl_msg = 'Note that filtered traces are much larger than their ' \
-                'unfiltered counterparts (compressed digital counts).'
-            st.download_button(
-                label='Download trace(s)',
-                data=file_buff,
-                file_name=".".join([fname, file_format.lower()]),
-                type="secondary",
-                help=dl_msg
-            )
+                # select appropriate encoding?
+                dl_msg = 'Note that filtered traces are much larger than their ' \
+                    'unfiltered counterparts (compressed digital counts).'
+                st.download_button(
+                    label='Download trace(s)',
+                    data=file_buff,
+                    file_name=".".join([fname, file_format.lower()]),
+                    type="secondary",
+                    help=dl_msg
+                )
 
-        download_trace()
+            download_trace()
 
 
 
@@ -373,7 +335,7 @@ with tab2:
     #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
 
 
-########### Day plot
+# ########### Day plot
 with tab3:  # need indep vars?
     # need to cleanup widget duplications
     #c.markdown(f'## {net}.{sta}')
