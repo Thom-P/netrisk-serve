@@ -1,20 +1,17 @@
-import requests
 import io
 import datetime
-import math
+#import math
 import copy
 
 import streamlit as st
 import streamlit.components.v1 as components
 import folium
 import pandas as pd
-import mpld3
+#import mpld3
 from streamlit_folium import st_folium
 from streamlit_dimensions import st_dimensions
 # from obspy import read
 from obspy.clients.fdsn import Client
-from obspy.core import UTCDateTime
-from obspy.clients.fdsn.header import FDSNNoDataException
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
@@ -22,90 +19,14 @@ import plotly.graph_objects as go
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
 #from utils.trace_plot import plot_traces
-
+from utils.data_fetch import fetch_stations, fetch_channels, fetch_availability, get_trace
+from utils.station_map import create_map
 
 #st.title('Stations and traces')
 st.header('Stations and traces')
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 
-
-#@st.cache_data  # use obspy client instead?
-def fetch_stations():
-    url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
-        'network=*&format=text&level=station'
-    try:
-        data = requests.get(url)
-    except FDSNNoDataException:
-        st.warning('No station found.', icon="⚠️")
-        return None
-    if data.status_code != 200:
-        st.warning(data.reason, icon="⚠️")
-        return None
-    text = data.content.decode('utf-8')
-    return text
-
-
-#@st.cache_data
-def fetch_channels(net, sta):
-    url = f'http://seiscomp:8080/fdsnws/station/1/query?' \
-        f'network={net}' \
-        f'&station={sta}' \
-        f'&format=text' \
-        f'&level=channel'
-    data = requests.get(url)
-    if data.status_code != 200:
-        st.write(data.reason)
-        return None
-    text = data.content.decode('utf-8')
-    return text
-
-#@st.cache_data
-def fetch_availability(net, sta):
-    url = f'http://seiscomp:8080/fdsnws/availability/1/query?' \
-          f'starttime=2024-09-01T00%3A00%3A00' \
-          f'&endtime=2024-09-27T00%3A00%3A00' \
-          f'&network={net}' \
-          f'&station={sta}' \
-          f'&merge=overlap,samplerate,quality'
-    data = requests.get(url)
-    if data.status_code != 200:
-        st.write(data.reason)
-        return None
-    text = data.content.decode('utf-8')
-    return text
-
-#@st.cache_data(show_spinner=False)
-def get_trace(net, sta, loc, chans, start_date, end_date):
-    try:
-        waveform_stream = client.get_waveforms(
-            net,
-            sta,
-            loc,
-            chans,
-            UTCDateTime(start_date),
-            UTCDateTime(end_date),
-            attach_response=True
-            )
-    except FDSNNoDataException:
-        st.warning('No data found for the requested period.', icon="⚠️")
-        return None
-    except Exception as e:
-        st.exception(e)
-        # print(f"Unexpected {err=}, {type(err)=}")
-        return None
-    return waveform_stream
-
-
-def get_icon_div(label):
-    div = folium.DivIcon(html=(
-        '<svg height="50" width="50">'
-        '<polygon points="5,5 45,5 25,45" fill="red" stroke="black" />'
-        '<text x="11" y="15" font-size="10px" font-weight="bold"'
-        'fill="black">' + label + '</text>' # need to sanitize label?
-        '</svg>'
-    ))
-    return div
 
 if "df_stations" not in st.session_state:
     stations_txt = fetch_stations()
@@ -142,48 +63,19 @@ net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to t
 #    chans = st.session_state['chans']
 
 # Map
-map_center = st.session_state.df_stations[['Latitude', 'Longitude']].mean(
-    ).values.tolist()
-m = folium.Map(map_center)  # create map centered on network
-for _, row in st.session_state.df_stations.iterrows():
-    info = row['Network'] + ' ' + row['Station'] + '\n' + row['SiteName']
-    icon = get_icon_div(row['Station'])
-    folium.Marker(
-        [row['Latitude'], row['Longitude']],
-        icon=icon,
-        popup=info,
-        tooltip='.'.join((row['Network'],row['Station']))
-        ).add_to(m)
-sw = st.session_state.df_stations[['Latitude', 'Longitude']].min().values.tolist()
-ne = st.session_state.df_stations[['Latitude', 'Longitude']].max().values.tolist()
-m.fit_bounds([sw, ne]) # interferes with width...
-# keys = ('Network', 'Station', 'Latitude', 'Longitude', 'Elevation', 'SiteName', 'StartTime', 'EndTime')
-# m = folium.Map(location=(stations[0]['Latitude'], stations[0]['Longitude']), tiles='OpenTopoMap')
-# to add text, see https://github.com/python-visualization/folium/issues/340
-
-##########################
+m = create_map()
 
 col1, col2 = st.columns([0.6, 0.4])
-# call to render Folium map in Streamlit, but don't get any data back
-# from the map (so that it won't rerun the app when the user interacts)
 with col2:
     st.text("") # hack for pseudo alignment of map
-    #st.text("")
-    #map_data = st_folium(m, width=800, returned_objects=[])
     map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
-
-    # width of container should be checked using add-on
-    # (https://github.com/avsolatorio/streamlit-dimensions), other wise messes
-    # with bounding box when doesnt fit on screen
+    # call to render Folium map in Streamlit, but don't get any data back
+    # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
     # with df very convoluted (could try with updating keys to refresh map
     # select and df select)
 
 tab1, tab2, tab3 = col1.tabs(["Station info", "Trace", "Day plot"])
-
-#with tab2:
-#    c = st.empty()
-#    c.write('Select a station in the previous tab.')
 
 
 def display_channels(net, sta):
@@ -209,6 +101,29 @@ def display_channels(net, sta):
         )
     return 
 
+def display_availabilty(net, sta):
+    with st.expander('Data availability'):
+        st.markdown(f'{net} - {sta}')
+        avail_data = fetch_availability(net, sta)
+        if avail_data is None:
+            st.warning('Data availability information not found', icon="⚠️")            
+            return
+        # Availability dataframe
+        avail_df = pd.read_csv(
+            io.StringIO(avail_data[1:]),
+            sep='\s+',
+            dtype=str,
+            parse_dates=['Earliest', 'Latest']  
+        )  # remove first char '#' (header line included as comment)
+        #st.dataframe(avail_df)
+        avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
+        # add quality and samplerate in hover?
+        fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
+        fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
+        fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
+        fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
+        st.plotly_chart(fig, use_container_width=True)
+        st.info('Data availability is updated every hour', icon="ℹ️")
 
 
 net, sta = None, None
@@ -227,38 +142,11 @@ with tab1:
     row_index = event.selection['rows']
     if not row_index:
         st.info("Select station by ticking box in the leftmost column.", icon="ℹ️")
-        #st.markdown(
-        #    'Select station by ticking box in the leftmost column.'
-        #)
-        #st.stop()
     else:
         net, sta = st.session_state.df_stations.iloc[row_index[0]][['Network', 'Station']]
         display_channels(net, sta)
-   
-        with st.expander('Data availability'):
-            #st.markdown(f'(updated every hour)')
-            st.markdown(f'{net} - {sta}')
-            avail_data = fetch_availability(net, sta)
-            if avail_data is None:
-                st.warning('Data availability information not found', icon="⚠️")            
-                st.stop()
-            # Availability dataframe
-            avail_df = pd.read_csv(
-                io.StringIO(avail_data[1:]),
-                sep='\s+',
-                dtype=str,
-                parse_dates=['Earliest', 'Latest']  
-            )  # remove first char '#' (header line included as comment)
-            #st.dataframe(avail_df)
-            avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
-            # add quality and samplerate in hover?
-            fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
-            fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
-            fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
-            fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
-            st.plotly_chart(fig, use_container_width=True)
-            st.info('Data availability is updated every hour', icon="ℹ️")
-
+        display_availabilty(net, sta)
+        
 
 
 
@@ -364,6 +252,7 @@ with tab2:
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Fetching traces...'):
             traces = get_trace(
+                client,
                 net, sta, loc,
                 ','.join(chans),
                 start_date, end_date
