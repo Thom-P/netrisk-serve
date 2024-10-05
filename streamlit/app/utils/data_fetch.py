@@ -70,13 +70,3 @@ def get_trace(client, net, sta, loc, chans, start_date, end_date):
         return None
     return waveform_stream
 
-
-def get_icon_div(label):
-    div = folium.DivIcon(html=(
-        '<svg height="50" width="50">'
-        '<polygon points="5,5 45,5 25,45" fill="red" stroke="black" />'
-        '<text x="11" y="15" font-size="10px" font-weight="bold"'
-        'fill="black">' + label + '</text>' # need to sanitize label?
-        '</svg>'
-    ))
-    return div

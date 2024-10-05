@@ -65,11 +65,16 @@ if "df_stations" not in st.session_state:
 # Map
 m = create_map()
 
+@st.fragment
+def get_map_col_width():
+    width=st_dimensions(key="map_col")
+    return width
+
 col1, col2 = st.columns([0.6, 0.4])
 with col2:
     st.text("") # hack for pseudo alignment of map
     #st.write('test')
-    map_data = st_folium(m, width=st_dimensions(key="map_col"), returned_objects=[])
+    map_data = st_folium(m, width=get_map_col_width(), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
@@ -182,7 +187,8 @@ def select_filter_params():
     # todo: add validity check vs fs
     return fmin, fmax
 
- 
+        
+
 #### Trace viewer
 with tab2:
     #c.markdown(f'## {net}.{sta}')
@@ -255,7 +261,7 @@ with tab2:
 
             # test obspy plot lib replacement
             # nb: size (width, height), width will be adjusted to fit column container
-            height = 100 * len(chans)
+            height = 300 * len(chans)
             width = height
             waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
             fig = waveform.plot_waveform(handle=True)
