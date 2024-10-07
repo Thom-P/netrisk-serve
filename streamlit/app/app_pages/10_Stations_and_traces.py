@@ -109,6 +109,7 @@ with tab1:
         
 ###
 
+#@st.fragment # this only work if output stored in session state: need to rethink how to handle fragment logic
 def select_channels_and_dates():
     col1, col2 = st.columns(2)
     loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
@@ -240,7 +241,6 @@ with tab2:
                     st.error(err, icon="🚨")
                     st.stop()
         st.session_state.traces = traces
-        st.write("test2")
         if st.session_state.traces is not None:
 
             # fig = plt.figure()
