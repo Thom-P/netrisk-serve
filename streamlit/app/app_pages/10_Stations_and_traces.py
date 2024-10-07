@@ -266,7 +266,7 @@ with tab2:
             waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
             fig = waveform.plot_waveform(handle=True)
             st.plotly_chart(fig, use_container_width=True, theme=None)
-            st.info("Traces including more than xx samples (yy mins at 100Hz) are plotted in a simplified way min/max fashion (link). To interact with the fully resolved data, restrict teh time window.. ")
+            st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
 
 
             @st.fragment
