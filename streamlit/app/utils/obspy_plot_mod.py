@@ -791,7 +791,7 @@ class ModifiedWaveformPlotting(object):
         maximum values of each "pixel" and then plots only these values. Works
         much faster with large data sets.
         """
-        self._draw_overlap_axvspans(Stream(trace), ax)
+        #self._draw_overlap_axvspans(Stream(trace), ax)
         # Some variables to help calculate the values.
         starttime = self._time_to_xvalue(self.starttime)
         endtime = self._time_to_xvalue(self.endtime)
@@ -848,12 +848,16 @@ class ModifiedWaveformPlotting(object):
                 x_values = np.linspace(start, end, num=extreme_values.shape[0])
             x_values = np.repeat(x_values, 2)
             y_values = extreme_values.flatten()
-            ax.plot(x_values, y_values, color=self.color)
+            #ax.plot(x_values, y_values, color=self.color)
+            
+            x_values_plotly = np.array(x_values * SECONDS_PER_DAY, dtype='datetime64[s]')
+            self.fig.add_scatter(x=x_values_plotly, y=y_values, row=ax, col=1, showlegend=False, hoverinfo='skip')
+        
         # remember xlim state and add callback to warn when zooming in
         self._initial_xrange = (self._time_to_xvalue(self.endtime) -
                                 self._time_to_xvalue(self.starttime))
         self._minmax_plot_xrange_dangerous = False
-        ax.callbacks.connect("xlim_changed", self._warn_on_xaxis_zoom)
+        #ax.callbacks.connect("xlim_changed", self._warn_on_xaxis_zoom)
         # set label, write to self.ids
         if hasattr(trace[0], 'label'):
             tr_id = trace[0].label
