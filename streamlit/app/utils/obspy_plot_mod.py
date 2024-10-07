@@ -317,7 +317,7 @@ class ModifiedWaveformPlotting(object):
         self.fig.update_xaxes(title_text='Time', row=len(self.axis), col=1)
         self.fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
         #self.fig.update_yaxes(title_text='Amplitude (counts)', title_standoff=100, row=len(self.axis), col=1)
-        self.fig.add_annotation(text="Amplitude (counts)", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
+        self.fig.add_annotation(text="Amplitude (todo: units)", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
          
         return self.fig
         # with warnings.catch_warnings(record=True):
@@ -774,7 +774,8 @@ class ModifiedWaveformPlotting(object):
                 x_values = np.array(trace.stats.starttime.ns + trace.times() * 1_000_000_000, dtype='datetime64[ns]')
             #ax.plot(x_values, trace.data, color=self.color,
             #        linewidth=self.linewidth, linestyle=self.linestyle)
-            self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False, line_color='blue', hoverinfo='skip')
+            #self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False, line_color='blue', hoverinfo='skip')
+            self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False, hoverinfo='skip')
         # Write to self.ids
         trace = st[0]
         if trace.stats.get('preview'):

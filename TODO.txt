@@ -41,6 +41,12 @@
 - plot min max and day for plotly?
 - preventing rerun of trace view if button view trace not pressed
 - fix plotly full screen reset view issue
+- plotly for daily plot: or rescale option
+- add filter for daily plots
+- put progress bars instead of spinner on remove resp when long?
+- fix error: could not broadcast input array from shape (2,) into shape (1,) in remove resp on OGSM data
+- unit in counts or physical to fetch in trace plot
+- add units in resp plot
 
 ## End
 - documentation/readme

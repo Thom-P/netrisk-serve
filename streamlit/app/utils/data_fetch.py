@@ -36,9 +36,9 @@ def fetch_channels(net, sta):
 
 #@st.cache_data
 def fetch_availability(net, sta):
+    #f'starttime=2024-09-01T00%3A00%3A00' \
+    #f'&endtime=2024-09-27T00%3A00%3A00' \
     url = f'http://seiscomp:8080/fdsnws/availability/1/query?' \
-          f'starttime=2024-09-01T00%3A00%3A00' \
-          f'&endtime=2024-09-27T00%3A00%3A00' \
           f'&network={net}' \
           f'&station={sta}' \
           f'&merge=overlap,samplerate,quality'
