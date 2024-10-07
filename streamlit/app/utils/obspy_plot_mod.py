@@ -774,7 +774,7 @@ class ModifiedWaveformPlotting(object):
                 x_values = np.array(trace.stats.starttime.ns + trace.times() * 1_000_000_000, dtype='datetime64[ns]')
             #ax.plot(x_values, trace.data, color=self.color,
             #        linewidth=self.linewidth, linestyle=self.linestyle)
-            self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False, hoverinfo='skip')
+            self.fig.add_scatter(x=x_values, y=trace.data, row=ax, col=1, showlegend=False, line_color='blue', hoverinfo='skip')
         # Write to self.ids
         trace = st[0]
         if trace.stats.get('preview'):

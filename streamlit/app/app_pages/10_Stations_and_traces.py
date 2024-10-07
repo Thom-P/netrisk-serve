@@ -261,12 +261,13 @@ with tab2:
 
             # test obspy plot lib replacement
             # nb: size (width, height), width will be adjusted to fit column container
-            height = 300 * len(chans)
-            width = height
-            waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
-            fig = waveform.plot_waveform(handle=True)
-            st.plotly_chart(fig, use_container_width=True, theme=None)
-            st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
+            with st.spinner('Loading plot...'):
+                height = 300 * len(chans)
+                width = height
+                waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
+                fig = waveform.plot_waveform(handle=True)
+                st.plotly_chart(fig, use_container_width=True, theme=None)
+                st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
 
 
             @st.fragment
@@ -374,7 +375,7 @@ with tab3:  # need indep vars?
         st.session_state.day_traces = None
     if st.button('View day plot', disabled=True if chan is None else False):
         with st.spinner('Fetching traces...'):
-            traces = get_trace(net, sta, loc, chan, start_date, end_date)
+            traces = get_trace(client, net, sta, loc, chan, start_date, end_date)
             if traces is None:
                 st.session_state.day_traces = None
                 st.stop()
@@ -386,12 +387,12 @@ with tab3:  # need indep vars?
         st.session_state.day_traces.merge(method=1)
         # add info about these preprocesses 
     if st.session_state.day_traces is not None:
-        
-        fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
+        with st.spinner('Loading plot...'): 
+            fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
             #traces.filter("bandpass", freqmin=0.5, freqmax=30)
             # fig.axes[-1].set_xlabel('Time')
             # fig.axes[-1].set_ylabel('Counts')
 
-        st.pyplot(fig)
+            st.pyplot(fig)
             #fig_html = mpld3.fig_to_html(fig)
             #components.html(fig_html, height=600)
