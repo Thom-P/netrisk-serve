@@ -43,6 +43,11 @@ def display_availabilty(net, sta):
     )  # remove first char '#' (header line included as comment)
     #st.dataframe(avail_df)
     avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
+    
+    # need to simplify todo
+    avail_df['Start'] = pd.to_datetime(avail_df['Start'], format='mixed')
+    avail_df['End'] = pd.to_datetime(avail_df['End'], format='mixed')
+
     # add quality and samplerate in hover?
     #st.write(avail_df.info)
     #st.dataframe(avail_df)
