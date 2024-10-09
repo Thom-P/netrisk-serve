@@ -1,6 +1,7 @@
 import io
 
 import streamlit as st
+import numpy as np
 import pandas as pd
 import plotly.express as px
 
@@ -42,23 +43,30 @@ def display_availabilty(net, sta):
         #date_format="ISO8601"  
     )  # remove first char '#' (header line included as comment)
     #st.dataframe(avail_df)
-    avail_df.rename(columns={"C": "Channel", "Earliest": "Start", "Latest": "End"}, inplace=True)
+    avail_df.rename(columns={"C": "Channel", "Earliest": "Trace Start", "Latest": "Trace End"}, inplace=True)
     
     # need to simplify todo
-    avail_df['Start'] = pd.to_datetime(avail_df['Start'], format='mixed')
-    avail_df['End'] = pd.to_datetime(avail_df['End'], format='mixed')
+    avail_df['Trace Start'] = pd.to_datetime(avail_df['Trace Start'], format='mixed')
+    avail_df['Trace End'] = pd.to_datetime(avail_df['Trace End'], format='mixed')
+
+    # gaps: add new coloumn
+    avail_df['Gap End'] = avail_df.groupby('Channel')['Trace Start'].shift(-1, fill_value=pd.NaT)
 
     # add quality and samplerate in hover?
-    #st.write(avail_df.info)
-    #st.dataframe(avail_df)
-
     try: 
-        fig = px.timeline(avail_df[['Channel', 'Start', 'End']], x_start="Start", x_end="End", y="Channel") #use channel code as task name
+        fig = px.timeline(avail_df[['Channel', 'Trace Start', 'Trace End']], x_start="Trace Start", x_end="Trace End", y="Channel") #use channel code as task name
+        fig.update_traces(name='Data', showlegend=True)
+
+        fig_gaps = px.timeline(avail_df, x_start='Trace End', x_end='Gap End', y='Channel') # could use color for quality
+        fig_gaps.update_traces(marker=dict(color='red'), width=0.5, name='Gaps', showlegend=True)
+        fig.add_trace(fig_gaps.data[0])
+        
         fig.update_yaxes(autorange="reversed", title_text="Channel", title_font={'size': 18}, tickfont={'size': 16}, ticklabelstandoff=10) # otherwise listed from the bottom up
         fig.update_xaxes(title_text='Date', title_font={'size': 18}, tickfont={'size': 16}, showgrid=True, gridcolor='white', gridwidth=1)
         fig.update_layout(plot_bgcolor='rgb(240, 240, 240)')
         st.plotly_chart(fig, use_container_width=True)
         st.info('Data availability is updated every hour', icon="ℹ️")
-    except:
+    except Exception as err:
+        st.error(err)
         return
     return
