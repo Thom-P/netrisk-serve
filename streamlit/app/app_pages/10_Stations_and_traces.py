@@ -1,28 +1,18 @@
 import io
 import datetime
-#import math
 import copy
 
 import streamlit as st
-import streamlit.components.v1 as components
-import folium
 import pandas as pd
-#import mpld3
 from streamlit_folium import st_folium
-from streamlit_dimensions import st_dimensions
-# from obspy import read
 from obspy.clients.fdsn import Client
-import matplotlib.pyplot as plt
-import numpy as np
-import plotly.graph_objects as go
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
-#from utils.trace_plot import plot_traces
 from utils.data_fetch import fetch_stations, get_trace
-from utils.station_map import create_map
+from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
+from utils.trace_view import select_channels_and_dates, select_filter_params
 
-#st.title('Stations and traces')
 st.header('Stations and traces')
 
 client = Client("http://seiscomp:8080")  # todo connection test here
@@ -40,40 +30,13 @@ if "df_stations" not in st.session_state:
 #inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
 #net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty
 
-#st.session_state['net'] = None
-#st.session_state['sta'] = None
-#st.session_state['chans'] = set()
-
-#with st.sidebar:
-#    #index_preselect = net_codes[st.session_state['net']] if st.session_state['net'] is not None else None
-#    # widget should handle session state
-#    st.session_state['net'] = st.selectbox('Network', net_codes.keys(), placeholder="Choose a Network")
-#    net = st.session_state['net']
-#    inv_stations = []
-#    if net is not None:
-#        inv_stations = inv.networks[net_codes[net]].stations
-#    sta_codes = (sta.code for sta in inv_stations)
-#    st.session_state['sta'] = st.selectbox('Station', sta_codes, placeholder="Choose a Station")
-#    sta = st.session_state['sta']
-#    inv_detailed = None
-#    if sta is not None:
-#        inv_detailed = client.get_stations(network=net, station=sta, level="channel")
-#    chan_codes = set(chan.code for chan in inv_detailed.networks[0].stations[0]) if inv_detailed is not None else set()
-#    st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
-#    chans = st.session_state['chans']
 
 # Map
 m = create_map()
 
-@st.fragment
-def get_map_col_width():
-    width=st_dimensions(key="map_col")
-    return width
-
 col1, col2 = st.columns([0.6, 0.4])
 with col2:
     st.text("") # hack for pseudo alignment of map
-    #st.write('test')
     map_data = st_folium(m, width=get_map_col_width(), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
@@ -82,7 +45,6 @@ with col2:
     # select and df select)
 
 tab1, tab2, tab3 = col1.tabs(["Station info", "Trace", "Day plot"])
-
 
 net, sta = None, None
 
@@ -107,92 +69,10 @@ with tab1:
         with st.expander('Data availability'):
             display_availabilty(net, sta)
         
-###
-
-#@st.fragment # this only work if output stored in session state: need to rethink how to handle fragment logic
-def select_channels_and_dates():
-    col1, col2 = st.columns(2)
-    loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
-    loc = col1.selectbox("Select location", loc_codes) # add 2 digit format
-    sub_df = st.session_state.channel_df.query('Location == @loc')
-    chan_codes = sub_df['Channel'].unique().tolist()
-    chans = col2.multiselect("Select channel(s)", chan_codes)
-
-    col3, col4, col5, col6 = st.columns(4)
-    start_day = col3.date_input('Start Date', value="default_value_today")
-    start_time = col4.time_input(
-        'Start Time',
-        value=datetime.time(0, 0),
-        step=3600
-    )
-    end_day = col5.date_input(
-        'End Date',
-        value="default_value_today",
-        min_value=None,
-        max_value=None,
-        key=None,
-        help=None,
-        on_change=None,
-        format="YYYY/MM/DD",
-        disabled=False,
-        label_visibility="visible"
-    )
-    end_time = col6.time_input(
-        'End Time',
-        value=datetime.time(0, 0),
-        step=3600
-    )
-
-    start_date = datetime.datetime.combine(start_day, start_time)
-    end_date = datetime.datetime.combine(end_day, end_time)
-    return loc, chans, start_date, end_date 
-
-def select_filter_params():
-    # get min fs from all selected channels
-    sub_df = st.session_state.channel_df.query('Location == @loc')
-    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
-    unit = st.radio(
-        "Units",
-        ["Frequency", "Period"],
-        label_visibility="collapsed",
-        horizontal = True
-    )
-
-    col27, col28 = st.columns(2)
-    if unit == "Frequency":
-        fmin = col27.number_input(
-                    'Lower Freq. (Hz)',
-                    min_value=0.,
-                    max_value=min_fs * 0.45,
-                )
-        fmax = col28.number_input(
-                    'Higher Freq. (Hz)',
-                    min_value=fmin,
-                    max_value=min_fs * 0.45,
-                )
-    else:
-        tmin = col27.number_input(
-                    'Lower Period (s)',
-                    min_value=1. / (0.45 * min_fs),
-                    max_value=100000.,
-        )
-
-        tmax = col28.number_input(
-            'Upper Period (s)',
-            min_value=tmin,
-            max_value=100000.,
-        )
-        fmax = 1./ tmin
-        fmin = 1. / tmax
-
-    # todo: add validity check vs fs
-    return fmin, fmax
-
-        
 
 #### Trace viewer
 with tab2:
-    #c.markdown(f'## {net}.{sta}')
+    st.markdown(f'## {net}.{sta}')
     
     if sta is None:
         st.write('Select a station in the previous tab.')
@@ -205,7 +85,7 @@ with tab2:
     filt_msg = "Applies a linear detrend and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
-        fmin, fmax = select_filter_params()
+        fmin, fmax = select_filter_params(loc, chans)
             
     resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
         "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
@@ -213,8 +93,8 @@ with tab2:
     #fig_deconv = plt.figure()
     #resp_plot_buffer = io.BytesIO()
     
-    if "traces" not in st.session_state:
-        st.session_state.traces = None
+    #if "traces" not in st.session_state:
+    #    st.session_state.traces = None
     if st.button('View Trace', disabled=False if chans else True):
         with st.spinner('Fetching traces...'):
             traces = get_trace(
@@ -241,28 +121,12 @@ with tab2:
                     st.error(err, icon="🚨")
                     st.stop()
         st.session_state.traces = traces
+        
         if st.session_state.traces is not None:
-
-            # fig = plt.figure()
-            # plt.plot([1, 2, 3], [4, 5, 6])
-            # st.pyplot(fig)
-            # #traces.plot(fig=fig)
-            # st.write('testend')
-
-            #fig = st.session_state.traces.plot(handle=True)
-            #fig.axes[-1].set_xlabel('Time')
-            #fig.axes[-1].set_ylabel('Counts')
-            #st.pyplot(fig)
-            
-            # This below causes logic issue (radio button not showing in fragment, why?)
-            #fig_html = mpld3.fig_to_html(fig)
-            #components.html(fig_html, height=600)
-            
-
-            # test obspy plot lib replacement
-            # nb: size (width, height), width will be adjusted to fit column container
             with st.spinner('Loading plot...'):
-                height = 300 * len(chans)
+                
+                # nb: size (width, height), width will be adjusted to fit column container
+                height = 200 + 300 * len(chans)
                 width = height
                 waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
                 fig = waveform.plot_waveform(handle=True)
@@ -342,11 +206,13 @@ with tab2:
     #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
 
 
+
+
+
 # ########### Day plot
 with tab3:  # need indep vars?
-    # need to cleanup widget duplications
-    #c.markdown(f'## {net}.{sta}')
-    
+    st.markdown(f'## {net}.{sta}')
+
     if sta is None: 
         st.write('Select a station in the previous tab.')
         st.stop()
@@ -394,5 +260,44 @@ with tab3:  # need indep vars?
             # fig.axes[-1].set_ylabel('Counts')
 
             st.pyplot(fig)
-            #fig_html = mpld3.fig_to_html(fig)
-            #components.html(fig_html, height=600)
+
+
+
+## Side bar selections
+#st.session_state['net'] = None
+#st.session_state['sta'] = None
+#st.session_state['chans'] = set()
+
+#with st.sidebar:
+#    #index_preselect = net_codes[st.session_state['net']] if st.session_state['net'] is not None else None
+#    # widget should handle session state
+#    st.session_state['net'] = st.selectbox('Network', net_codes.keys(), placeholder="Choose a Network")
+#    net = st.session_state['net']
+#    inv_stations = []
+#    if net is not None:
+#        inv_stations = inv.networks[net_codes[net]].stations
+#    sta_codes = (sta.code for sta in inv_stations)
+#    st.session_state['sta'] = st.selectbox('Station', sta_codes, placeholder="Choose a Station")
+#    sta = st.session_state['sta']
+#    inv_detailed = None
+#    if sta is not None:
+#        inv_detailed = client.get_stations(network=net, station=sta, level="channel")
+#    chan_codes = set(chan.code for chan in inv_detailed.networks[0].stations[0]) if inv_detailed is not None else set()
+#    st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
+#    chans = st.session_state['chans']
+
+## Matplot lib plots
+# fig = plt.figure()
+# plt.plot([1, 2, 3], [4, 5, 6])
+# st.pyplot(fig)
+# #traces.plot(fig=fig)
+
+#fig = st.session_state.traces.plot(handle=True)
+#fig.axes[-1].set_xlabel('Time')
+#fig.axes[-1].set_ylabel('Counts')
+#st.pyplot(fig)
+
+# This below causes logic issue (radio button not showing in fragment, why?)
+#fig_html = mpld3.fig_to_html(fig)
+#components.html(fig_html, height=600)
+ 

@@ -1,5 +1,6 @@
 import streamlit as st
 import folium
+from streamlit_dimensions import st_dimensions
 
 def create_map():
     map_center = st.session_state.df_stations[['Latitude', 'Longitude']].mean(
@@ -31,3 +32,9 @@ def get_icon_div(label):
         '</svg>'
     ))
     return div
+
+@st.fragment
+def get_map_col_width():
+    width=st_dimensions(key="map_col")
+    return width
+
