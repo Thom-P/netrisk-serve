@@ -1,6 +1,5 @@
 import io
 import datetime
-import copy
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +11,7 @@ from utils.data_fetch import fetch_stations, get_trace
 from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import select_channels_and_dates, select_filter_params
+from utils.trace_view import download_trace
 
 st.header('Stations and traces')
 
@@ -85,7 +85,7 @@ with tab2:
     filt_msg = "Applies a linear detrend and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
-        fmin, fmax = select_filter_params(loc, chans)
+        fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
             
     resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
         "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
@@ -132,59 +132,8 @@ with tab2:
                 fig = waveform.plot_waveform(handle=True)
                 st.plotly_chart(fig, use_container_width=True, theme=None)
                 st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
-
-
-            @st.fragment
-            def download_trace():
-                #file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
-                file_format = st.radio("Select file format", ["MSEED", "SAC"])
-                if file_format == "SAC":
-                    # should only be one trace, and with gap value filled
-                    if len(chans) > 1:
-                        st.info("SAC files can only contain single component data.", icon="ℹ️")
-                        st.stop()
-                    
-                    st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
-                    trace_merged = copy.deepcopy(st.session_state.traces)
-                    trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
-                # Save all Traces into 1 file?
-                # should get actual earliest start and latest end times
-                chans_str = '_'.join(chans)
-                stream_id = f'{net}.{sta}.{loc}.{chans_str}'
-                if fmin is not None and fmax is not None:
-                    fname = f'{stream_id}_{start_date.isoformat()}_' \
-                        f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
-                        f'{fmax}Hz'  # replace with actual dates
-                else:
-                    fname = f'{stream_id}_{start_date.isoformat()}_' \
-                        f'{end_date.isoformat()}'
-                    # replace with actual dates
-                file_buff = io.BytesIO()
-
-                if file_format == "MSEED":
-                    st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-                elif file_format == "SAC":
-                    trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
-                #elif file_format == "SEGY":
-                #    try:
-                #        st.session_state.traces.write(file_buff, format=file_format) 
-                #    except Exception as err:
-                #        st.error(f"{err}", icon="🚨")
-                #        st.stop()
-                #    #raise
-
-                # select appropriate encoding?
-                dl_msg = 'Note that filtered traces are much larger than their ' \
-                    'unfiltered counterparts (compressed digital counts).'
-                st.download_button(
-                    label='Download trace(s)',
-                    data=file_buff,
-                    file_name=".".join([fname, file_format.lower()]),
-                    type="secondary",
-                    help=dl_msg
-                )
-
-            download_trace()
+            
+            download_trace(net, sta, loc, chans, start_date, end_date, fmin, fmax)
 
 
 
@@ -229,12 +178,13 @@ with tab3:  # need indep vars?
     day = st.date_input('Day', value="default_value_today")
     start_date = datetime.datetime(day.year, day.month, day.day)
     end_date = start_date + datetime.timedelta(hours=24)
-    # fmin, fmax = None, None
-    # if st.checkbox('Apply filter', help="Applies a linear detrend and a 4th order Butterworth bandpass filter."):
-    #    col27, col28 = st.columns(2)
-    #    fmin = col27.number_input('Lower Freq. (Hz)', min_value=0, max_value=50, value=0)
-    #    fmax = col28.number_input('Higher Freq. (Hz)', min_value=fmin, max_value=50)
-    #    # add validity check vs fs
+    
+    fmin, fmax = None, None
+    filt_msg = "Applies a linear detrend and a 4th order " \
+        "Butterworth bandpass filter."
+    if st.checkbox('Apply day filter', help=filt_msg):
+        fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
+    #   # add validity check vs fs
 
 
     if "day_traces" not in st.session_state:
@@ -245,21 +195,24 @@ with tab3:  # need indep vars?
             if traces is None:
                 st.session_state.day_traces = None
                 st.stop()
+        
+        traces.merge(method=1)
+        #traces.detrend("linear")
+        
+        if fmin is not None and fmax is not None:
+            with st.spinner('Filtering...'):
+                traces.detrend("linear")
+                traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+        
         st.session_state.day_traces = traces
-            # if fmin is not None and fmax is not None:
-            #    traces.detrend("linear")
-            #    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-        st.session_state.day_traces.detrend("linear")
-        st.session_state.day_traces.merge(method=1)
         # add info about these preprocesses 
-    if st.session_state.day_traces is not None:
-        with st.spinner('Loading plot...'): 
-            fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
-            #traces.filter("bandpass", freqmin=0.5, freqmax=30)
-            # fig.axes[-1].set_xlabel('Time')
-            # fig.axes[-1].set_ylabel('Counts')
+        if st.session_state.day_traces is not None:
+            with st.spinner('Loading plot...'): 
+                fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
+                # fig.axes[-1].set_xlabel('Time')
+                # fig.axes[-1].set_ylabel('Counts')
 
-            st.pyplot(fig)
+                st.pyplot(fig)
 
 
 

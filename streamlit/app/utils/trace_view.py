@@ -1,6 +1,8 @@
-import streamlit as st
 import datetime
+import copy
+import io
 
+import streamlit as st
 
 #@st.fragment # this only work if output stored in session state: need to rethink how to handle fragment logic
 def select_channels_and_dates():
@@ -40,7 +42,7 @@ def select_channels_and_dates():
     end_date = datetime.datetime.combine(end_day, end_time)
     return loc, chans, start_date, end_date 
 
-def select_filter_params(loc, chans):
+def select_filter_params(loc, chans, key):
     # get min fs from all selected channels
     sub_df = st.session_state.channel_df.query('Location == @loc')
     min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
@@ -48,7 +50,8 @@ def select_filter_params(loc, chans):
         "Units",
         ["Frequency", "Period"],
         label_visibility="collapsed",
-        horizontal = True
+        horizontal = True,
+        key=key + '_units'
     )
 
     col27, col28 = st.columns(2)
@@ -57,23 +60,27 @@ def select_filter_params(loc, chans):
                     'Lower Freq. (Hz)',
                     min_value=0.,
                     max_value=min_fs * 0.45,
+                    key=key + '_fmin'
                 )
         fmax = col28.number_input(
                     'Higher Freq. (Hz)',
                     min_value=fmin,
                     max_value=min_fs * 0.45,
+                    key=key + '_fmax'
                 )
     else:
         tmin = col27.number_input(
                     'Lower Period (s)',
                     min_value=1. / (0.45 * min_fs),
                     max_value=100000.,
+                    key=key + '_tmin'
         )
 
         tmax = col28.number_input(
             'Upper Period (s)',
             min_value=tmin,
             max_value=100000.,
+            key=key + '_tmax'
         )
         fmax = 1./ tmin
         fmin = 1. / tmax
@@ -81,3 +88,51 @@ def select_filter_params(loc, chans):
     # todo: add validity check vs fs
     return fmin, fmax
 
+@st.fragment
+def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=None):
+    file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+    if file_format == "SAC":
+        # should only be one trace, and with gap value filled
+        if len(chans) > 1:
+            st.info("SAC files can only contain single component data.", icon="ℹ️")
+            return
+        
+        st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
+        trace_merged = copy.deepcopy(st.session_state.traces)
+        trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
+    # Save all Traces into 1 file?
+    # should get actual earliest start and latest end times
+    chans_str = '_'.join(chans)
+    stream_id = f'{net}.{sta}.{loc}.{chans_str}'
+    if fmin is not None and fmax is not None:
+        fname = f'{stream_id}_{start_date.isoformat()}_' \
+            f'{end_date.isoformat()}_bandpassed_{fmin}Hz_' \
+            f'{fmax}Hz'  # replace with actual dates
+    else:
+        fname = f'{stream_id}_{start_date.isoformat()}_' \
+            f'{end_date.isoformat()}'
+        # replace with actual dates
+    file_buff = io.BytesIO()
+
+    if file_format == "MSEED":
+        st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+    elif file_format == "SAC":
+        trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+    elif file_format == "SEGY":
+        try:
+            st.session_state.traces.write(file_buff, format=file_format) 
+        except Exception as err:
+            st.error(f"{err}", icon="🚨")
+            st.stop()
+        #raise
+
+    # select appropriate encoding?
+    dl_msg = 'Note that filtered traces are much larger than their ' \
+        'unfiltered counterparts (compressed digital counts).'
+    st.download_button(
+        label='Download trace(s)',
+        data=file_buff,
+        file_name=".".join([fname, file_format.lower()]),
+        type="secondary",
+        help=dl_msg
+    )

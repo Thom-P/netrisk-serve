@@ -41,7 +41,7 @@ from obspy.geodetics import FlinnEngdahl, kilometer2degrees, locations2degrees
 from obspy.imaging.util import (_set_xaxis_obspy_dates, _id_key, _timestring)
 
 import plotly.graph_objects as go
-from plotly.tools import make_subplots
+from plotly.subplots import make_subplots
 
 MINMAX_ZOOMLEVEL_WARNING_TEXT = "Warning: Zooming into MinMax Plot!"
 SECONDS_PER_DAY = 3600.0 * 24.0
