@@ -10,7 +10,7 @@ from utils.obspy_plot_mod import ModifiedWaveformPlotting
 from utils.data_fetch import fetch_stations, get_trace
 from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
-from utils.trace_view import select_channels_and_dates, select_filter_params
+from utils.trace_view import select_channels_and_dates, select_filter_params, fetch_units
 from utils.trace_view import download_trace
 
 st.header('Stations and traces')
@@ -121,15 +121,15 @@ with tab2:
                     st.error(err, icon="🚨")
                     st.stop()
         st.session_state.traces = traces
-        
         if st.session_state.traces is not None:
             with st.spinner('Loading plot...'):
-                
                 # nb: size (width, height), width will be adjusted to fit column container
                 height = 200 + 300 * len(chans)
                 width = height
                 waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
                 fig = waveform.plot_waveform(handle=True)
+                units = fetch_units(st.session_state.traces[0], resp_remove)
+                fig.add_annotation(text=f"Amplitude ({units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
                 st.plotly_chart(fig, use_container_width=True, theme=None)
                 st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
             

@@ -316,8 +316,9 @@ class ModifiedWaveformPlotting(object):
         self.fig.update_xaxes(mirror=True, row=1, col=1)
         self.fig.update_xaxes(title_text='Time', row=len(self.axis), col=1)
         self.fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
-        #self.fig.update_yaxes(title_text='Amplitude (counts)', title_standoff=100, row=len(self.axis), col=1)
-        self.fig.add_annotation(text="Amplitude (todo: units)", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
+        
+        # amplitude units fetched in caling script
+        #self.fig.add_annotation(text="Amplitude ({y_units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
          
         return self.fig
         # with warnings.catch_warnings(record=True):
