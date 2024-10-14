@@ -8,10 +8,11 @@ def create_map():
     m = folium.Map(map_center)  # create map centered on network
     for _, row in st.session_state.df_stations.iterrows():
         info = row['Network'] + ' ' + row['Station'] + '\n' + row['SiteName']
-        icon = get_icon_div(row['Station'])
+        #icon = get_icon_div(row['Station'])
         folium.Marker(
             [row['Latitude'], row['Longitude']],
-            icon=icon,
+            #icon=icon,
+            icon=folium.Icon(color='darkblue', prefix='fa',icon='rss'),
             popup=info,
             tooltip='.'.join((row['Network'],row['Station']))
             ).add_to(m)
