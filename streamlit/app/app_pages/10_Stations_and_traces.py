@@ -82,7 +82,7 @@ with tab2:
     loc, chans, start_date, end_date = select_channels_and_dates()
 
     fmin, fmax = None, None
-    filt_msg = "Applies a linear detrend and a 4th order " \
+    filt_msg = "Applies linear detrend, taper, and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply filter', help=filt_msg):
         fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
@@ -109,6 +109,7 @@ with tab2:
         if fmin is not None and fmax is not None:
             with st.spinner('Filtering...'):
                 traces.detrend("linear")
+                traces.taper(max_percentage=0.05)
                 traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
         if resp_remove:
             with st.spinner('Removing instrument response...'):
@@ -180,7 +181,7 @@ with tab3:  # need indep vars?
     end_date = start_date + datetime.timedelta(hours=24)
     
     fmin, fmax = None, None
-    filt_msg = "Applies a linear detrend and a 4th order " \
+    filt_msg = "Applies linear detrend, taper, and a 4th order " \
         "Butterworth bandpass filter."
     if st.checkbox('Apply day filter', help=filt_msg):
         fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
@@ -196,14 +197,15 @@ with tab3:  # need indep vars?
                 st.session_state.day_traces = None
                 st.stop()
         
-        traces.merge(method=1)
-        #traces.detrend("linear")
+        traces.detrend("linear") # otherwise cannot see anything
         
         if fmin is not None and fmax is not None:
             with st.spinner('Filtering...'):
-                traces.detrend("linear")
+                traces.taper(max_percentage=0.05)
                 traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
         
+        #traces.merge(method=1)
+
         st.session_state.day_traces = traces
         # add info about these preprocesses 
         if st.session_state.day_traces is not None:
