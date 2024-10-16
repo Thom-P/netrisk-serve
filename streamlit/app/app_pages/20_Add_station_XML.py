@@ -11,7 +11,7 @@ from obspy.core.inventory.util import Equipment
 import pandas as pd
 
 from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates
-
+from utils.dataframe import dataframe_with_selections
 
 #st.title('Add station')
 st.header('Create station XML')
@@ -110,7 +110,8 @@ for i, cha in enumerate(st.session_state.saved_channels):
     channels_data.append((cha.code, cha.location_code, cha.start_date, cha.end_date, cha.latitude, cha.longitude, cha.elevation, cha.depth, sensor_str, datalogger_str))
     #st.write(chan_info)
 df = pd.DataFrame(channels_data, columns=['Channel code', 'Location code', 'Start date (UTC)', 'End date (UTC)', 'Latitude (°)', 'Longitude (°)', 'Elevation (m)', 'Depth (m)', 'Sensor', 'Datalogger'])
-event = st.dataframe(df, hide_index=True, on_select='rerun',
+#event = st.dataframe(df, hide_index=True, on_select='rerun',
+selection = dataframe_with_selections(df,
     column_config={
         'Latitude (°)': st.column_config.NumberColumn(format="%.4f"),
         'Longitude (°)': st.column_config.NumberColumn(format="%.4f"),
@@ -129,8 +130,9 @@ def delete_rows(rows):
     for row in reversed(rows):  # reverse so that delete doesnt change remaining indices
         del st.session_state.saved_channels[row]
 
-selected_rows = event.selection['rows']
-if len(selected_rows) > 0 and st.button("Delete selected rows", on_click=delete_rows, args=[selected_rows]):
+selected_rows = selection['selected_rows']
+is_disabled = len(selected_rows) == 0
+if st.button("Delete selected row(s)", disabled=is_disabled, on_click=delete_rows, args=[selection['selected_rows_indices']]):
     pass
 
 ############################

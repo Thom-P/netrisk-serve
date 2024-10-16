@@ -2,13 +2,15 @@ import streamlit as st
 import numpy as np
 
 # workaround to keep tickbox visible (https://github.com/streamlit/streamlit/issues/688)
-def dataframe_with_selections(df):
+def dataframe_with_selections(df, column_config={}):
     df_with_selections = df.copy()
     df_with_selections.insert(0, "Select", False)
+    column_config["Select"] = st.column_config.CheckboxColumn(required=True)
     edited_df = st.data_editor(
         df_with_selections,
         hide_index=True,
-        column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+        column_config=column_config,
+        #column_config={"Select": st.column_config.CheckboxColumn(required=True)},
         disabled=df.columns,
     )
     selected_indices = list(np.where(edited_df.Select)[0])
