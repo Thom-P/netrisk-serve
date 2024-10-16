@@ -3,7 +3,6 @@ import io
 
 import streamlit as st
 import streamlit.components.v1 as components
-import mpld3
 import matplotlib.pyplot as plt
 from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
@@ -11,7 +10,7 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
 import pandas as pd
 
-from utils.XML_build import get_station_parameters, is_valid_code, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop
+from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates
 
 
 #st.title('Add station')
@@ -77,10 +76,11 @@ placeholder = st.empty() # for cleaning widgets
 curr_channels = build_channel_objects(band_code, source_code, subsource_code, use_old_format, start_datetime, end_datetime, response, sensor, datalogger, sta, placeholder)
 
 if st.button("Add channel(s)", type='primary'):
-    st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead
-    # could add here a way to prevent double channels
-    for chan in curr_channels:
-        st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
+    #st.session_state.saved_channels.extend(curr_channels)  # add to onclick callback instead
+    add_channels_without_duplicates(curr_channels)
+
+    #for chan in curr_channels:
+    #    st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
     #placeholder.empty()
     # keep curr resp inst/dl in seesion state
 

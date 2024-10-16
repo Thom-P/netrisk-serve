@@ -193,6 +193,18 @@ def get_channel_start_stop():
     return start_date, stop_date
 
 
+def add_channels_without_duplicates(new_channels):
+    unique_chans = set()
+    for chan in st.session_state.saved_channels:
+        unique_chans.add((chan.code, chan.location_code))
+    for new_chan in new_channels:
+        if (new_chan.code, new_chan.location_code) not in unique_chans:
+            unique_chans.add((new_chan.code, new_chan.location_code))
+            st.session_state.saved_channels.append(new_chan)
+            st.toast(f"Channel {new_chan.location_code}_{new_chan.code} added successfully!", icon="✅")
+        else:
+            st.toast(f"Channel {new_chan.location_code}_{new_chan.code} not added because it already exists!", icon="⚠️")
+    return
 
 ##################################################
 #class Instrument:
