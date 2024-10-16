@@ -27,7 +27,6 @@
 - possibility to download and upload stationXML directly
 - handle XML validity with obspy?
 - interactive xml edit system ? using st df data editor
-- prevent double identical channels in xml create
 - check/debug illegal resp error on some datalog choices
 - revert to offline NRL
 - add auto processings
@@ -39,7 +38,6 @@
 - mod trace colors
 - plot day with plotly?
 - put progress bars instead of spinner on remove resp when long?
-- fix error: could not broadcast input array from shape (2,) into shape (1,) in remove resp on OGSM data
 - add units in resp plot
 - should test timeline when avauilability differs by channel
 
