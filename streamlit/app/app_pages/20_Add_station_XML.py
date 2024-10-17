@@ -10,7 +10,7 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
 import pandas as pd
 
-from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates
+from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates, fetch_resp_units
 from utils.dataframe import dataframe_with_selections
 
 #st.title('Add station')
@@ -69,7 +69,11 @@ if attach_response:
         with cols[1]:
             with st.spinner('Loading plot...'):
                 plot_buffer = io.BytesIO()
-                response.plot(1e-3, outfile=plot_buffer)
+                #fig = response.plot(1e-3, output='DEF', outfile=plot_buffer)
+                fig = response.plot(1e-3, output='DEF', show=False)
+                unit_str = fetch_resp_units(response)
+                fig.axes[0].set_ylabel(f'Amplitude [{unit_str}]')  # Add proper units
+                fig.savefig(plot_buffer)
                 st.image(plot_buffer, use_column_width=True)
 
 placeholder = st.empty() # for cleaning widgets

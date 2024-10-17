@@ -206,6 +206,16 @@ def add_channels_without_duplicates(new_channels):
             st.toast(f"Channel {new_chan.location_code}_{new_chan.code} not added because it already exists!", icon="⚠️")
     return
 
+def fetch_resp_units(response):
+    input_units = "UNKNOWN"
+    output_units = "UNKNOWN"
+    i_s = response.instrument_sensitivity
+    if i_s and i_s.input_units:
+        input_units = i_s.input_units
+    if i_s and i_s.output_units:
+        output_units = i_s.output_units
+    return f"{output_units} / ({input_units})"
+
 ##################################################
 #class Instrument:
 #    def __init__(self):

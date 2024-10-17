@@ -137,7 +137,7 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
         help=dl_msg
     )
 
-def fetch_units(trace, is_resp_removed):
+def fetch_trace_units(trace, is_resp_removed):
     instr_sens = trace._get_response(None).instrument_sensitivity
     if instr_sens is None:
         return "Unknown"
