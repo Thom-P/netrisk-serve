@@ -2,7 +2,8 @@ import string
 import datetime
 
 import streamlit as st
-from obspy.core.inventory import Inventory, Network, Station, Channel, Site
+from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site
+from obspy.signal.invsim import corn_freq_2_paz
 from obspy.core import UTCDateTime
 
 from utils.FDSN_codes import band_codes, source_codes, subsource_codes, valid_chars
@@ -80,10 +81,9 @@ def get_channel_codes():
     band_code, source_code, subsource_code = code_choices
     return band_code, source_code, subsource_code
 
-def choose_device(device_dict, device_type: str):
+def choose_device(device_dict):
     ## Device choice (sensor or datalogger)
     # todo make sure max depth is not greater than 6
-    st.markdown(f"### {device_type}")
     #cols = st.columns(6, vertical_alignment="bottom")
     n_cols = 6  # todo: solve wrap if goes beyond 6
     cols = st.columns(n_cols, vertical_alignment="bottom")
@@ -105,6 +105,27 @@ def create_selectbox(choices: dict, col):
     label = choices.__str__().partition('(')[0]
     choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
     return choice
+
+def build_custom_geophone_response():
+    cols = st.columns(4)
+    corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0)
+    damping_ratio = cols[1].number_input("Damping ratio", value=0.707, format="%.3f")
+    sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0)
+    freq_sensitivity = cols[3].number_input("Frequency of sensitivity (Hz)", value=10.0, help="Frequency at which the sensitivity is defined (should be in the flat response band)")
+    paz = corn_freq_2_paz(corner_freq, damping_ratio)
+    sensor_resp = Response.from_paz(
+        zeros=paz['zeros'],
+        poles=paz['poles'],
+        stage_gain=sensitivity,
+        stage_gain_frequency=freq_sensitivity,
+        input_units='M/S',
+        output_units='V',
+        normalization_frequency=freq_sensitivity,
+        pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
+        normalization_factor=1.0
+    )
+    description = f'Corner frequency = {corner_freq} Hz; Damping ratio = {damping_ratio}, Sensitivity = {sensitivity} V/(m/s) @ {freq_sensitivity} Hz'
+    return sensor_resp, description
 
 def build_channel_objects(band_code, source_code, subsource_code, use_old_format, start_date, end_date, response, sensor, datalogger, sta, ph):
     channel_objs = []

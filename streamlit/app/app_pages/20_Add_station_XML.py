@@ -6,12 +6,11 @@ import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 from obspy import UTCDateTime
 from obspy.clients.nrl import NRL
-from obspy.core.inventory import Response, Inventory, Network, Station, Channel, Site
+from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
 import pandas as pd
-from obspy.signal.invsim import corn_freq_2_paz
 
-from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates, fetch_resp_units
+from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates, fetch_resp_units, build_custom_geophone_response
 from utils.dataframe import dataframe_with_selections
 
 #st.title('Add station')
@@ -49,43 +48,29 @@ start_datetime, end_datetime = get_channel_start_stop()
 # todo: add response params to session_state?
 response = None
 sensor = None
+sensor_resp = None
 datalogger = None
 attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = False)
 if attach_response:
-    is_custom = st.toggle("Create custom geophone", value = False, help="Create a custom geophone response from corner frequency, damping ratio, and sensitivity")
-    sensor_resp = None
-    sensor_keys = None
+    st.markdown(f"### Sensor")
+    is_custom = st.toggle("Create custom geophone", value = False, help="Create a custom geophone response from corner frequency, damping ratio, and sensitivity.")
     if is_custom:
-        corner_freq = st.number_input("Corner frequency (Hz)", value=1.0)
-        damping_ratio = st.number_input("Damping ratio", value=0.707)
-        sensitivity = st.number_input("Sensitivity (V /(m/s))", value=1.0)
-        freq_sensitivity = st.number_input("Frequency of sensitivity (Hz)", value=1.0, help="Frequency at which the sensitivity is defined (should be in the flat response band)")
-        paz = corn_freq_2_paz(corner_freq, damping_ratio)
-        sensor_resp = Response.from_paz(
-            zeros=paz['zeros'],
-            poles=paz['poles'],
-            stage_gain=sensitivity,
-            stage_gain_frequency=freq_sensitivity,
-            input_units='M/S',
-            output_units='V',
-            normalization_frequency=freq_sensitivity,
-            pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
-            normalization_factor=1.0
-        )
+        sensor_resp, description = build_custom_geophone_response()
+        sensor = Equipment(manufacturer='Unknown/Custom', type='Geophone', description=description) 
     else:
-        sensor_keys = choose_device(nrl.sensors, 'Sensor')
+        sensor_keys = choose_device(nrl.sensors)
         sensor = Equipment(manufacturer=sensor_keys[0], type=sensor_keys[1], description='; '.join(sensor_keys[2:]))
-    datalogger_keys = choose_device(nrl.dataloggers, 'Datalogger')
+        sensor_resp, _ = nrl._get_response("sensors", keys=sensor_keys)  
+    
+    st.markdown("### Datalogger")
+    datalogger_keys = choose_device(nrl.dataloggers)
     datalogger = Equipment(manufacturer=datalogger_keys[0], type=datalogger_keys[1], description='; '.join(datalogger_keys[2:]))
     with st.spinner('Loading response file...'):
-        if is_custom:
-            dl_resp, dl_resp_type = nrl._get_response("dataloggers", keys=datalogger_keys)
-            response = nrl._combine_sensor_datalogger(sensor_resp, dl_resp, dl_resp_type, dl_resp_type)
-        else:
-            response = nrl.get_response(
-                sensor_keys=sensor_keys,
-                datalogger_keys=datalogger_keys
-        )
+        dl_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)
+        response = nrl._combine_sensor_datalogger(sensor_resp, dl_resp, '', '')
+    #        response = nrl.get_response(
+    #            sensor_keys=sensor_keys,
+    #            datalogger_keys=datalogger_keys)
     with st.expander("Visualize instrument response"):
         #st.info(response, icon="ℹ️") # messes format
         cols = st.columns(2, vertical_alignment="center")
