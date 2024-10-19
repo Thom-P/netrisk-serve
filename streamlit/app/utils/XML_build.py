@@ -124,6 +124,12 @@ def build_custom_geophone_response():
         pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
         normalization_factor=1.0
     )
+    input_units_description = 'Meters per second'
+    output_units_description = 'Volts'
+    sensor_resp.response_stages[0].input_units_description = input_units_description
+    sensor_resp.response_stages[0].output_units_description = output_units_description
+    sensor_resp.instrument_sensitivity.input_units_description = input_units_description
+    sensor_resp.instrument_sensitivity.output_units_description = output_units_description
     description = f'Corner frequency = {corner_freq} Hz; Damping ratio = {damping_ratio}, Sensitivity = {sensitivity} V/(m/s) @ {freq_sensitivity} Hz'
     return sensor_resp, description
 

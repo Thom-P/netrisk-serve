@@ -38,7 +38,6 @@
 - mod trace colors
 - plot day with plotly?
 - put progress bars instead of spinner on remove resp when long?
-- add units in resp plot
 - should test timeline when avauilability differs by channel
 
 ## End
@@ -48,9 +47,5 @@
 
 
 ## Custom sensor and digitizer in stationXML
-- for sensor, user can choose freq (eg corner freq), sensitivity, damping, input units (m/s), output units (volts)
-- create obspy.core.inventory.response.ResponseStage from those parameters
 - for digitizer, user can choose gain, range?, input units (volts), output units (counts)
-- create other ResponseStage
-- need obspy.signal.invsim.corn_freq_2_paz somewhere? or obspy.core.inventory.response.Response.from_paz
 
