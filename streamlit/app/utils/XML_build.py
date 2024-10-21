@@ -108,10 +108,10 @@ def create_selectbox(choices: dict, col):
 
 def build_custom_geophone_response():
     cols = st.columns(4)
-    corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0)
-    damping_ratio = cols[1].number_input("Damping ratio", value=0.707, format="%.3f")
-    sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0)
-    freq_sensitivity = cols[3].number_input("Frequency of sensitivity (Hz)", value=10.0, help="Frequency at which the sensitivity is defined (should be in the flat response band)")
+    corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0, min_value=0.1, max_value=1000.0)
+    damping_ratio = cols[1].number_input("Damping ratio", value=0.707, min_value=0.01, max_value=1.0, format="%.3f")
+    sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0, min_value=0.1)
+    freq_sensitivity = cols[3].number_input("Frequency of sensitivity (Hz)", value=10.0, min_value=corner_freq, help="Frequency at which the sensitivity is defined (should be in the flat response band)")
     paz = corn_freq_2_paz(corner_freq, damping_ratio)
     sensor_resp = Response.from_paz(
         zeros=paz['zeros'],
