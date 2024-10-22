@@ -2,7 +2,7 @@ import string
 import datetime
 
 import streamlit as st
-from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site, PolesZerosResponseStage, FIRResponseStage, InstrumentSensitivity
+from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site, PolesZerosResponseStage, FIRResponseStage, InstrumentSensitivity, ResponseStage
 from obspy.signal.invsim import corn_freq_2_paz
 from obspy.core import UTCDateTime
 
@@ -138,13 +138,15 @@ def build_custom_datalogger_response():
     # http://docs.fdsn.org/projects/stationxml/en/latest/reference.html#stage
     preamp_gain = cols[0].number_input("Preamp gain factor", value=1.0, min_value=0.1, max_value=10000.0, help='Modeled as an analog gain-only stage (ref).')
     bit_resolution = cols[1].number_input("Bit resolution", value=24, min_value=8, max_value=128, help='Number of bits over which the input voltage is digitized.')
-    input_range = cols[2].number_input("Input voltage range (Vpp)", value=1.0, min_value=0.1, max_value=128.0, help='Peak-to-peak voltage input range of the digitizer.')
+    input_range = cols[2].number_input("Input voltage range (Vpp)", value=1.0, format="%.3f" ,min_value=0.1, max_value=128.0, help='Peak-to-peak voltage input range of the digitizer.')
     voltage_resolution = input_range / (2 ** bit_resolution - 1)
     adc_gain=1.0 / voltage_resolution
     sampling_rate = cols[3].number_input("Sampling rate (Hz)", value=100.0, min_value=0.1, max_value=100000.0)
-    st.write(f"Voltage resolution = {voltage_resolution:.3e} Volts per count")
+    st.write(f"Voltage resolution = {voltage_resolution:.3e} V/count")
+    dummy_stage = ResponseStage(stage_sequence_number=1, stage_gain=1.0,
+        stage_gain_frequency=1.0, input_units='M/S', output_units='V') # dummy stage that will be removed by nrl combine sensor-datalogger function
     preamp_stage = PolesZerosResponseStage(
-        stage_sequence_number=1,
+        stage_sequence_number=2,
         stage_gain=preamp_gain,
         stage_gain_frequency=1.0,
         input_units='V',
@@ -157,19 +159,20 @@ def build_custom_datalogger_response():
         normalization_factor=1.0,
     )
     ADC_stage = FIRResponseStage(
-        stage_sequence_number=2, stage_gain=adc_gain,
+        stage_sequence_number=3, stage_gain=adc_gain,
         stage_gain_frequency=1.0, input_units='V', output_units='COUNTS',
         symmetry="NONE",
         coefficients=[1.0], input_units_description='Volts',
         output_units_description='Digital counts',
         decimation_input_sample_rate=sampling_rate,
+        decimation_factor=1, decimation_offset=0, decimation_delay=0, decimation_correction=0,
     )
     instrument_sensitivity = InstrumentSensitivity(
-        value=preamp_gain * adc_gain, frequency=min(1.0, sampling_rate / 2.0),
+        value=preamp_gain * adc_gain, frequency=min(1.0, sampling_rate / 4.0),
         input_units='V', output_units='COUNTS',
         input_units_description='Volts', output_units_description='Digital counts',
     )
-    datalogger_resp = Response(response_stages=(preamp_stage, ADC_stage), instrument_sensitivity=instrument_sensitivity)
+    datalogger_resp = Response(response_stages=[dummy_stage, preamp_stage, ADC_stage], instrument_sensitivity=instrument_sensitivity)
     #datalogger_resp.recalculate_overall_sensitivity()
     description = f'Preamp gain = {preamp_gain}, Bit resolution = {bit_resolution} bits, Input range = {input_range} Vpp, Sampling rate = {sampling_rate} Hz'
     return datalogger_resp, description
