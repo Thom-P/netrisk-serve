@@ -10,7 +10,9 @@ from obspy.core.inventory import Inventory, Network, Station, Channel, Site
 from obspy.core.inventory.util import Equipment
 import pandas as pd
 
-from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates, fetch_resp_units, build_custom_geophone_response
+from utils.XML_build import get_station_parameters, build_station_and_network_objects, get_channel_codes, \
+    choose_device, build_channel_objects, get_channel_start_stop, add_channels_without_duplicates, \
+    fetch_resp_units, build_custom_geophone_response, build_custom_datalogger_response
 from utils.dataframe import dataframe_with_selections
 
 #st.title('Add station')
@@ -53,8 +55,8 @@ datalogger = None
 attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = False)
 if attach_response:
     st.markdown(f"### Sensor")
-    is_custom = st.toggle("Create custom geophone", value = False, help="Create a custom geophone response from corner frequency, damping ratio, and sensitivity.")
-    if is_custom:
+    is_custom_sensor = st.toggle("Create custom geophone", value = False, help="Create a custom geophone response from corner frequency, damping ratio, and sensitivity.")
+    if is_custom_sensor:
         sensor_resp, description = build_custom_geophone_response()
         sensor = Equipment(manufacturer='Unknown/Custom', type='Geophone', description=description) 
     else:
@@ -63,11 +65,17 @@ if attach_response:
         sensor_resp, _ = nrl._get_response("sensors", keys=sensor_keys)  
     
     st.markdown("### Datalogger")
-    datalogger_keys = choose_device(nrl.dataloggers)
-    datalogger = Equipment(manufacturer=datalogger_keys[0], type=datalogger_keys[1], description='; '.join(datalogger_keys[2:]))
+    is_custom_datalogger = st.toggle("Create custom datalogger", value = False, help="Create a custom datalogger response from preamp factor, bit resolution, and input voltage range.")
+    if is_custom_datalogger:
+        datalogger_resp, description = build_custom_datalogger_response()
+        datalogger = Equipment(manufacturer='Unknown/Custom', type='Datalogger', description=description)
+    else:
+        datalogger_keys = choose_device(nrl.dataloggers)
+        datalogger = Equipment(manufacturer=datalogger_keys[0], type=datalogger_keys[1], description='; '.join(datalogger_keys[2:]))
+        datalogger_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)  
     with st.spinner('Loading response file...'):
-        dl_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)
-        response = nrl._combine_sensor_datalogger(sensor_resp, dl_resp, '', '')
+        #dl_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)
+        response = nrl._combine_sensor_datalogger(sensor_resp, datalogger_resp, '', '')
     #        response = nrl.get_response(
     #            sensor_keys=sensor_keys,
     #            datalogger_keys=datalogger_keys)

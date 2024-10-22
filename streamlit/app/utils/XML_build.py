@@ -2,7 +2,7 @@ import string
 import datetime
 
 import streamlit as st
-from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site
+from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site, PolesZerosResponseStage, FIRResponseStage, InstrumentSensitivity
 from obspy.signal.invsim import corn_freq_2_paz
 from obspy.core import UTCDateTime
 
@@ -132,6 +132,47 @@ def build_custom_geophone_response():
     sensor_resp.instrument_sensitivity.output_units_description = output_units_description
     description = f'Corner frequency = {corner_freq} Hz; Damping ratio = {damping_ratio}, Sensitivity = {sensitivity} V/(m/s) @ {freq_sensitivity} Hz'
     return sensor_resp, description
+
+def build_custom_datalogger_response():
+    cols = st.columns(4)
+    # http://docs.fdsn.org/projects/stationxml/en/latest/reference.html#stage
+    preamp_gain = cols[0].number_input("Preamp gain factor", value=1.0, min_value=0.1, max_value=10000.0, help='Modeled as an analog gain-only stage (ref).')
+    bit_resolution = cols[1].number_input("Bit resolution", value=24, min_value=8, max_value=128, help='Number of bits over which the input voltage is digitized.')
+    input_range = cols[2].number_input("Input voltage range (Vpp)", value=1.0, min_value=0.1, max_value=128.0, help='Peak-to-peak voltage input range of the digitizer.')
+    voltage_resolution = input_range / (2 ** bit_resolution - 1)
+    adc_gain=1.0 / voltage_resolution
+    sampling_rate = cols[3].number_input("Sampling rate (Hz)", value=100.0, min_value=0.1, max_value=100000.0)
+    st.write(f"Voltage resolution = {voltage_resolution:.3e} Volts per count")
+    preamp_stage = PolesZerosResponseStage(
+        stage_sequence_number=1,
+        stage_gain=preamp_gain,
+        stage_gain_frequency=1.0,
+        input_units='V',
+        output_units='V',
+        input_units_description='Volts',
+        output_units_description='Volts',
+        pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
+        normalization_frequency=0,
+        zeros=[], poles=[],
+        normalization_factor=1.0,
+    )
+    ADC_stage = FIRResponseStage(
+        stage_sequence_number=2, stage_gain=adc_gain,
+        stage_gain_frequency=1.0, input_units='V', output_units='COUNTS',
+        symmetry="NONE",
+        coefficients=[1.0], input_units_description='Volts',
+        output_units_description='Digital counts',
+        decimation_input_sample_rate=sampling_rate,
+    )
+    instrument_sensitivity = InstrumentSensitivity(
+        value=preamp_gain * adc_gain, frequency=min(1.0, sampling_rate / 2.0),
+        input_units='V', output_units='COUNTS',
+        input_units_description='Volts', output_units_description='Digital counts',
+    )
+    datalogger_resp = Response(response_stages=(preamp_stage, ADC_stage), instrument_sensitivity=instrument_sensitivity)
+    #datalogger_resp.recalculate_overall_sensitivity()
+    description = f'Preamp gain = {preamp_gain}, Bit resolution = {bit_resolution} bits, Input range = {input_range} Vpp, Sampling rate = {sampling_rate} Hz'
+    return datalogger_resp, description
 
 def build_channel_objects(band_code, source_code, subsource_code, use_old_format, start_date, end_date, response, sensor, datalogger, sta, ph):
     channel_objs = []
