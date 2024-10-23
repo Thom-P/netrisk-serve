@@ -143,6 +143,7 @@ def build_custom_datalogger_response():
     adc_gain=1.0 / voltage_resolution
     sampling_rate = cols[3].number_input("Sampling rate (Hz)", value=100.0, min_value=0.1, max_value=100000.0)
     st.write(f"Voltage resolution = {voltage_resolution:.3e} V/count")
+    st.info("The anti-aliasing filter is not modeled in this response. Make sure its effect is negligible in your frequency range of interest.", icon="ℹ️")
     dummy_stage = ResponseStage(stage_sequence_number=1, stage_gain=1.0,
         stage_gain_frequency=1.0, input_units='M/S', output_units='V') # dummy stage that will be removed by nrl combine sensor-datalogger function
     preamp_stage = PolesZerosResponseStage(

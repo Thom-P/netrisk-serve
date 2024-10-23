@@ -52,10 +52,15 @@ response = None
 sensor = None
 sensor_resp = None
 datalogger = None
-attach_response = st.toggle("Choose sensor and digitizer to include instrument response", value = False)
-if attach_response:
+attach_response = st.radio("Do you want to include the instrument response?", ("Yes", "No"), horizontal=True, index = None)
+if attach_response is None:
+    st.stop()
+if attach_response == "Yes":
     st.markdown(f"### Sensor")
-    is_custom_sensor = st.toggle("Create custom geophone", value = False, help="Create a custom geophone response from corner frequency, damping ratio, and sensitivity.")
+    sensor_type = st.radio("", ("Choose from the IRIS Nominal Response Library", "Create a custom geophone"), index=None, label_visibility="collapsed")
+    if sensor_type is None:
+        st.stop()
+    is_custom_sensor = sensor_type == "Create a custom geophone"
     if is_custom_sensor:
         sensor_resp, description = build_custom_geophone_response()
         sensor = Equipment(manufacturer='Unknown/Custom', type='Geophone', description=description) 
@@ -65,7 +70,11 @@ if attach_response:
         sensor_resp, _ = nrl._get_response("sensors", keys=sensor_keys)  
     
     st.markdown("### Datalogger")
-    is_custom_datalogger = st.toggle("Create custom datalogger", value = False, help="Create a custom datalogger response from preamp factor, bit resolution, and input voltage range.")
+    #is_custom_datalogger = st.toggle("Create custom datalogger", value = False, help="Create a custom datalogger response from preamp factor, bit resolution, and input voltage range.")
+    datalogger_type = st.radio("", ("Choose from the IRIS Nominal Response Library", "Create a custom datalogger"), index=None, label_visibility="collapsed")
+    if datalogger_type is None:
+        st.stop()
+    is_custom_datalogger = datalogger_type == "Create a custom datalogger"
     if is_custom_datalogger:
         datalogger_resp, description = build_custom_datalogger_response()
         datalogger = Equipment(manufacturer='Unknown/Custom', type='Datalogger', description=description)
@@ -74,11 +83,8 @@ if attach_response:
         datalogger = Equipment(manufacturer=datalogger_keys[0], type=datalogger_keys[1], description='; '.join(datalogger_keys[2:]))
         datalogger_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)  
     with st.spinner('Loading response file...'):
-        #dl_resp, _ = nrl._get_response("dataloggers", keys=datalogger_keys)
         response = nrl._combine_sensor_datalogger(sensor_resp, datalogger_resp, '', '')
-    #        response = nrl.get_response(
-    #            sensor_keys=sensor_keys,
-    #            datalogger_keys=datalogger_keys)
+    
     with st.expander("Visualize instrument response"):
         #st.info(response, icon="ℹ️") # messes format
         cols = st.columns(2, vertical_alignment="center")
