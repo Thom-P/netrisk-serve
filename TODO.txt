@@ -24,7 +24,7 @@
 - allow special account to be able to manage  myo/mseed_segments/archive?
 
 ## Streamlit
-- possibility to download and upload stationXML directly
+- possibility to upload stationXML directly?
 - handle XML validity with obspy?
 - interactive xml edit system ? using st df data editor
 - check/debug illegal resp error on some datalog choices
@@ -39,12 +39,9 @@
 - plot day with plotly?
 - put progress bars instead of spinner on remove resp when long?
 - should test timeline when avauilability differs by channel
+- add possibility of lowpass or highpass filter only
 
 ## End
 - documentation/readme
 - error handling
 - freeze versions
-
-
-## Custom sensor and digitizer in stationXML
-- add warning about no filter stage...work away from nyquist

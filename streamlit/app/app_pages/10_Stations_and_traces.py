@@ -25,6 +25,10 @@ if "df_stations" not in st.session_state:
         st.stop()
     resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
     st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
+    # should fetch here last time data was received for each station
+    # insert extra column with stoplight icons for last data received (red over a day, yellow over an hour, green under an hour)
+    # use all red icons for the moment
+    st.session_state.df_stations['Last data received'] = ['🔴: X hours/days ago'] * len(st.session_state.df_stations)
     # remove first char '#' (header line included as comment)
 
 #inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
@@ -72,11 +76,11 @@ with tab1:
 
 #### Trace viewer
 with tab2:
-    st.markdown(f'## {net}.{sta}')
-    
     if sta is None:
         st.write('Select a station in the previous tab.')
         st.stop()
+    
+    st.markdown(f'## {net}.{sta}')
 
    
     loc, chans, start_date, end_date = select_channels_and_dates()
@@ -161,11 +165,10 @@ with tab2:
 
 # ########### Day plot
 with tab3:  # need indep vars?
-    st.markdown(f'## {net}.{sta}')
-
     if sta is None: 
         st.write('Select a station in the previous tab.')
         st.stop()
+    st.markdown(f'## {net}.{sta}')
     
     col31, col32 = st.columns(2)
     loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())

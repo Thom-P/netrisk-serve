@@ -64,9 +64,9 @@ is_disabled = len(selected_rows) == 0
 #if users:
 #    st.info('Tick boxes in the leftmost column to select FTP accounts.', icon="ℹ️")
 
-cols = st.columns([1, 1, 6]) # hack to have buttons side by side without big gap
-if cols[0].button("Delete selected account(s)", disabled=is_disabled):
+cols = st.columns([1, 1, 5]) # hack to have buttons side by side without big gap
+if cols[0].button("Delete", disabled=is_disabled):
     delete_accounts(selected_rows)
 
-if cols[1].button("Create new account"):
+if cols[1].button("Create new"):
     create_account()

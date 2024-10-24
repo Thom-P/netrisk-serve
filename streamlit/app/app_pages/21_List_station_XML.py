@@ -90,15 +90,15 @@ is_disabled = len(selected_rows) == 0
 #if xml_files:
 #    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
 
-cols = st.columns([1, 1, 1, 5]) # hack to have buttons side by side without big gap
-if cols[0].button("Delete file(s)", disabled=is_disabled):
+cols = st.columns([1, 1, 1, 4]) # hack to have buttons side by side without big gap
+if cols[0].button("Delete", disabled=is_disabled):
     delete_files(selected_rows)
 
-if cols[1].button("Download file(s)", disabled=is_disabled):
+if cols[1].button("Download", disabled=is_disabled):
     if len(selected_rows) > 1:
         download_xml_archive(df['File name'].iloc[selected_rows].tolist())
     else:
         download_xml_file(df['File name'].iloc[selected_rows[0]])
 
-if cols[2].button("Create new file"):
+if cols[2].button("Create new"):
     st.switch_page("app_pages/20_Add_station_XML.py")
