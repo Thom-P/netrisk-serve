@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 from obspy.clients.fdsn import Client
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
-from utils.data_fetch import fetch_stations, get_trace
+from utils.data_fetch import fetch_stations, get_trace, fetch_most_recent_data_times
 from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import select_channels_and_dates, select_filter_params, fetch_trace_units
@@ -28,6 +28,9 @@ if "df_stations" not in st.session_state:
     # should fetch here last time data was received for each station
     # insert extra column with stoplight icons for last data received (red over a day, yellow over an hour, green under an hour)
     # use all red icons for the moment
+    
+    df_extents = fetch_most_recent_data_times()
+    st.dataframe(df_extents)
     st.session_state.df_stations['Last data received'] = ['🔴: X hours/days ago'] * len(st.session_state.df_stations)
     # remove first char '#' (header line included as comment)
 
