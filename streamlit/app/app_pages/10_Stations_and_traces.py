@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 from obspy.clients.fdsn import Client
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
-from utils.data_fetch import fetch_stations, get_trace, fetch_most_recent_data_times
+from utils.data_fetch import fetch_stations, get_trace, fetch_latest_data_times
 from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import select_channels_and_dates, select_filter_params, fetch_trace_units
@@ -24,15 +24,17 @@ if "df_stations" not in st.session_state:
         st.info("You first need to create a station XML file and an FTP account for each of your stations.", icon="ℹ️")
         st.stop()
     resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
-    st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
-    # should fetch here last time data was received for each station
-    # insert extra column with stoplight icons for last data received (red over a day, yellow over an hour, green under an hour)
-    # use all red icons for the moment
-    
-    df_extents = fetch_most_recent_data_times()
-    st.dataframe(df_extents)
-    st.session_state.df_stations['Last data received'] = ['🔴: X hours/days ago'] * len(st.session_state.df_stations)
     # remove first char '#' (header line included as comment)
+    st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
+    # insert extra column with stoplight icons for last data received (red over a day, yellow over an hour, green under an hour)
+    st.session_state.df_stations['Last data received'] = ['🔴: no data'] * len(st.session_state.df_stations)
+    # should fetch here last time data was received for each station
+    df_latest = fetch_latest_data_times()
+    df_latest['Last data received'] = df_latest['Last data received'].apply(lambda x: '🟢: under an hour' if (datetime.datetime.now(datetime.timezone.utc) - x).seconds < 3600 else '🟡: under a day' if (datetime.datetime.now(datetime.timezone.utc) - x).days < 1 else '🔴: over a day')
+    #insert df_latest last data received in df_stations
+    st.session_state.df_stations = st.session_state.df_stations.merge(df_latest, how='left', on=['Network', 'Station'])
+    st.session_state.df_stations['Last data received'] = st.session_state.df_stations['Last data received_y'].fillna(st.session_state.df_stations['Last data received_x'])
+    st.session_state.df_stations.drop(columns=['Last data received_x', 'Last data received_y'], inplace=True)
 
 #inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
 #net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty

@@ -52,7 +52,7 @@ def fetch_availability(net, sta):
     return text
 
 
-def fetch_most_recent_data_times():
+def fetch_latest_data_times():
     url = 'http://seiscomp:8080/fdsnws/availability/1/extent?' \
           'network=*&station=*&merge=samplerate,quality'
     data = requests.get(url)
@@ -63,11 +63,14 @@ def fetch_most_recent_data_times():
     if text is None:
         st.info("Data availability not available", icon="ℹ️")
         return None
-    #resp_types = {'Network': str, 'Station': str, 'Location': str, 'Channel': str} # to prevent auto conversion to int when num only names
-    df_extents = pd.read_csv(io.StringIO(text[1:]), sep='\s+', dtype=str, parse_dates=['Earliest', 'Latest', 'Updated'])
-    # Merge channels and retain only the most recent data
-    df_extents = df_extents.sort_values('Latest').drop_duplicates(['N', 'S', 'L', 'C'], keep='last')
-    return df_extents
+    df_latest = pd.read_csv(io.StringIO(text[1:]), sep='\s+', dtype=str, usecols=['N', 'S', 'Latest'], parse_dates=['Latest'])
+    # need to simplify todo
+    df_latest['Latest'] = pd.to_datetime(df_latest['Latest'], format='mixed', utc=True)
+    #st.dataframe(df_latest)
+    # Only the most recent data (disregard loc and chans)
+    df_latest = df_latest.sort_values('Latest').drop_duplicates(['N', 'S'], keep='last')
+    df_latest.rename(columns={"N": "Network", "S": "Station", "Latest": "Last data received"}, inplace=True)
+    return df_latest
 
 
 #@st.cache_data(show_spinner=False)
