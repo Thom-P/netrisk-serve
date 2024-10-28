@@ -1,10 +1,13 @@
 import requests
+import io
+import datetime
+
 from obspy.core import UTCDateTime
 from obspy.clients.fdsn.header import FDSNNoDataException
 import streamlit as st
 import folium
 import pandas as pd
-import io
+
 
 #@st.cache_data  # use obspy client instead?
 def fetch_stations():
@@ -66,10 +69,16 @@ def fetch_latest_data_times():
     df_latest = pd.read_csv(io.StringIO(text[1:]), sep='\s+', dtype=str, usecols=['N', 'S', 'Latest'], parse_dates=['Latest'])
     # need to simplify todo
     df_latest['Latest'] = pd.to_datetime(df_latest['Latest'], format='mixed', utc=True)
-    #st.dataframe(df_latest)
     # Only the most recent data (disregard loc and chans)
     df_latest = df_latest.sort_values('Latest').drop_duplicates(['N', 'S'], keep='last')
-    df_latest.rename(columns={"N": "Network", "S": "Station", "Latest": "Last data received"}, inplace=True)
+    time_now = datetime.datetime.now(datetime.timezone.utc)
+    # color code based on time of last data received:
+    # green: < 1 hour, yellow: < 1 day, red: > 1 day
+    df_latest['Status'] = df_latest['Latest'].apply(lambda x: '🟢' if (time_now - x).seconds < 3600 else '🟡' if (time_now - x).days < 1 else '🔴')
+    #df_latest.rename(columns={"N": "Network", "S": "Station", "Latest": "Last data received"}, inplace=True)
+    # remove Latest column (not used anymore)
+    df_latest.drop(columns=['Latest'], inplace=True)
+    df_latest.rename(columns={"N": "Network", "S": "Station"}, inplace=True)
     return df_latest
 
 

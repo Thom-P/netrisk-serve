@@ -26,15 +26,16 @@ if "df_stations" not in st.session_state:
     resp_types = {'Network': str, 'Station': str, 'SiteName': str} # to prevent auto conversion to int when num only names
     # remove first char '#' (header line included as comment)
     st.session_state.df_stations = pd.read_csv(io.StringIO(stations_txt[1:]), sep='|', dtype=resp_types)
-    # insert extra column with stoplight icons for last data received (red over a day, yellow over an hour, green under an hour)
-    st.session_state.df_stations['Last data received'] = ['🔴: no data'] * len(st.session_state.df_stations)
+    st.session_state.df_stations["EndTime"].fillna("Running", inplace=True)
     # should fetch here last time data was received for each station
     df_latest = fetch_latest_data_times()
-    df_latest['Last data received'] = df_latest['Last data received'].apply(lambda x: '🟢: under an hour' if (datetime.datetime.now(datetime.timezone.utc) - x).seconds < 3600 else '🟡: under a day' if (datetime.datetime.now(datetime.timezone.utc) - x).days < 1 else '🔴: over a day')
     #insert df_latest last data received in df_stations
     st.session_state.df_stations = st.session_state.df_stations.merge(df_latest, how='left', on=['Network', 'Station'])
-    st.session_state.df_stations['Last data received'] = st.session_state.df_stations['Last data received_y'].fillna(st.session_state.df_stations['Last data received_x'])
-    st.session_state.df_stations.drop(columns=['Last data received_x', 'Last data received_y'], inplace=True)
+    st.session_state.df_stations['Status'].fillna('⚫', inplace=True)
+    # put status first
+    cols = st.session_state.df_stations.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    st.session_state.df_stations = st.session_state.df_stations[cols]
 
 #inv = client.get_stations(level="station")  # can cache ? combine with previous fetch ?
 #net_codes = {net.code: ind for ind, net in enumerate(inv.networks)}  # need to test if empty
@@ -65,6 +66,15 @@ with tab1:
         key=None,
         on_select="rerun",
         selection_mode="single-row",
+        column_config={
+            "Status": st.column_config.TextColumn(
+                "Status ⓘ",
+                help="Last data received: 🟢 - under an hour ago; 🟡 - under a day ago; 🔴 - over a day ago; ⚫ - no data",
+                #default="st.",
+                #max_chars=50,
+                #validate=r"^st\.[a-z_]+$",
+            )
+        }    
     )
 
     # Station selection in dataframe
