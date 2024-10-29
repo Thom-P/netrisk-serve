@@ -93,70 +93,67 @@ with tab1:
 with tab2:
     if sta is None:
         st.write('Select a station in the previous tab.')
-        st.stop()
+    else:
     
-    st.markdown(f'## {net}.{sta}')
+        st.markdown(f'## {net}.{sta}')
 
-   
-    loc, chans, start_date, end_date = select_channels_and_dates()
-
-    fmin, fmax = None, None
-    filt_msg = "Applies linear detrend, taper, and a 4th order " \
-        "Butterworth bandpass filter."
-    if st.checkbox('Apply filter', help=filt_msg):
-        fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
-            
-    resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
-        "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
-    resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
-    #fig_deconv = plt.figure()
-    #resp_plot_buffer = io.BytesIO()
     
-    #if "traces" not in st.session_state:
-    #    st.session_state.traces = None
-    if st.button('View Trace', disabled=False if chans else True):
-        with st.spinner('Fetching traces...'):
-            traces = get_trace(
-                client,
-                net, sta, loc,
-                ','.join(chans),
-                start_date, end_date
-                )
-            if traces is None:
-                st.session_state.traces = None
-                st.stop()
-        if fmin is not None and fmax is not None:
-            with st.spinner('Filtering...'):
-                traces.detrend("linear")
-                traces.taper(max_percentage=0.05)
-                traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-        if resp_remove:
-            with st.spinner('Removing instrument response...'):
-                try:
-                    traces.detrend("linear")
-                    traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=False, fig=None)
-                    # plot bugs
-                    #traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=True, fig=fig_deconv)
-                except Exception as err:
-                    st.error(err, icon="🚨")
+        loc, chans, start_date, end_date = select_channels_and_dates()
+
+        fmin, fmax = None, None
+        filt_msg = "Applies linear detrend, taper, and a 4th order " \
+            "Butterworth bandpass filter."
+        if st.checkbox('Apply filter', help=filt_msg):
+            fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
+                
+        resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
+            "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
+        resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
+        #fig_deconv = plt.figure()
+        #resp_plot_buffer = io.BytesIO()
+        
+        #if "traces" not in st.session_state:
+        #    st.session_state.traces = None
+        if st.button('View Trace', disabled=False if chans else True):
+            with st.spinner('Fetching traces...'):
+                traces = get_trace(
+                    client,
+                    net, sta, loc,
+                    ','.join(chans),
+                    start_date, end_date
+                    )
+                if traces is None:
+                    st.session_state.traces = None
                     st.stop()
-        st.session_state.traces = traces
-        if st.session_state.traces is not None:
-            with st.spinner('Loading plot...'):
-                # nb: size (width, height), width will be adjusted to fit column container
-                height = 200 + 300 * len(chans)
-                width = height
-                waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
-                fig = waveform.plot_waveform(handle=True)
-                units = fetch_trace_units(st.session_state.traces[0], resp_remove)
-                fig.add_annotation(text=f"Amplitude ({units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
-                st.plotly_chart(fig, use_container_width=True, theme=None)
-                st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
-            
-            download_trace(net, sta, loc, chans, start_date, end_date, fmin, fmax)
-
-
-
+            if fmin is not None and fmax is not None:
+                with st.spinner('Filtering...'):
+                    traces.detrend("linear")
+                    traces.taper(max_percentage=0.05)
+                    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+            if resp_remove:
+                with st.spinner('Removing instrument response...'):
+                    try:
+                        traces.detrend("linear")
+                        traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=False, fig=None)
+                        # plot bugs
+                        #traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=True, fig=fig_deconv)
+                    except Exception as err:
+                        st.error(err, icon="🚨")
+                        st.stop()
+            st.session_state.traces = traces
+            if st.session_state.traces is not None:
+                with st.spinner('Loading plot...'):
+                    # nb: size (width, height), width will be adjusted to fit column container
+                    height = 200 + 300 * len(chans)
+                    width = height
+                    waveform = ModifiedWaveformPlotting(stream=st.session_state.traces, handle=True, size=(width, height))
+                    fig = waveform.plot_waveform(handle=True)
+                    units = fetch_trace_units(st.session_state.traces[0], resp_remove)
+                    fig.add_annotation(text=f"Amplitude ({units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
+                    st.plotly_chart(fig, use_container_width=True, theme=None)
+                    st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
+                
+                download_trace(net, sta, loc, chans, start_date, end_date, fmin, fmax)
 
 
 
@@ -182,57 +179,57 @@ with tab2:
 with tab3:  # need indep vars?
     if sta is None: 
         st.write('Select a station in the previous tab.')
-        st.stop()
-    st.markdown(f'## {net}.{sta}')
-    
-    col31, col32 = st.columns(2)
-    loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
-    loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
-    chan_codes = st.session_state.channel_df.query('Location == @loc')['Channel'].unique(
-    ).tolist()
-    chan = col32.selectbox("Select channel", chan_codes)
-    # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
-    # chans = st.session_state['chans']
-
-    day = st.date_input('Day', value="default_value_today")
-    start_date = datetime.datetime(day.year, day.month, day.day)
-    end_date = start_date + datetime.timedelta(hours=24)
-    
-    fmin, fmax = None, None
-    filt_msg = "Applies linear detrend, taper, and a 4th order " \
-        "Butterworth bandpass filter."
-    if st.checkbox('Apply day filter', help=filt_msg):
-        fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
-    #   # add validity check vs fs
-
-
-    if "day_traces" not in st.session_state:
-        st.session_state.day_traces = None
-    if st.button('View day plot', disabled=True if chan is None else False):
-        with st.spinner('Fetching traces...'):
-            traces = get_trace(client, net, sta, loc, chan, start_date, end_date)
-            if traces is None:
-                st.session_state.day_traces = None
-                st.stop()
+    else: 
+        st.markdown(f'## {net}.{sta}')
         
-        traces.detrend("linear") # otherwise cannot see anything
-        
-        if fmin is not None and fmax is not None:
-            with st.spinner('Filtering...'):
-                traces.taper(max_percentage=0.05)
-                traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-        
-        #traces.merge(method=1)
+        col31, col32 = st.columns(2)
+        loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
+        loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
+        chan_codes = st.session_state.channel_df.query('Location == @loc')['Channel'].unique(
+        ).tolist()
+        chan = col32.selectbox("Select channel", chan_codes)
+        # st.session_state['chans'] = st.multiselect("Select channel(s)", chan_codes)
+        # chans = st.session_state['chans']
 
-        st.session_state.day_traces = traces
-        # add info about these preprocesses 
-        if st.session_state.day_traces is not None:
-            with st.spinner('Loading plot...'): 
-                fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
-                # fig.axes[-1].set_xlabel('Time')
-                # fig.axes[-1].set_ylabel('Counts')
+        day = st.date_input('Day', value="default_value_today")
+        start_date = datetime.datetime(day.year, day.month, day.day)
+        end_date = start_date + datetime.timedelta(hours=24)
+        
+        fmin, fmax = None, None
+        filt_msg = "Applies linear detrend, taper, and a 4th order " \
+            "Butterworth bandpass filter."
+        if st.checkbox('Apply day filter', help=filt_msg):
+            fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
+        #   # add validity check vs fs
 
-                st.pyplot(fig)
+
+        if "day_traces" not in st.session_state:
+            st.session_state.day_traces = None
+        if st.button('View day plot', disabled=True if chan is None else False):
+            with st.spinner('Fetching traces...'):
+                traces = get_trace(client, net, sta, loc, chan, start_date, end_date)
+                if traces is None:
+                    st.session_state.day_traces = None
+                    st.stop()
+            
+            traces.detrend("linear") # otherwise cannot see anything
+            
+            if fmin is not None and fmax is not None:
+                with st.spinner('Filtering...'):
+                    traces.taper(max_percentage=0.05)
+                    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+            
+            #traces.merge(method=1)
+
+            st.session_state.day_traces = traces
+            # add info about these preprocesses 
+            if st.session_state.day_traces is not None:
+                with st.spinner('Loading plot...'): 
+                    fig = st.session_state.day_traces.plot(handle=True, type='dayplot')
+                    # fig.axes[-1].set_xlabel('Time')
+                    # fig.axes[-1].set_ylabel('Counts')
+
+                    st.pyplot(fig)
 
 
 
