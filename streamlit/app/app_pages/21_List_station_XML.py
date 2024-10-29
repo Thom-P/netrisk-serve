@@ -4,12 +4,11 @@ import io
 
 import zipfile
 import streamlit as st
-import numpy as np
 import pandas as pd
 
 from utils.dataframe import dataframe_with_selections
 
-#st.title('Station XML files')
+
 st.header('Station XML files')
 
 xml_files = []
@@ -27,32 +26,18 @@ df = pd.DataFrame(xml_files, columns=['File name', 'Last modified (UTC)', 'Size 
 #                     step=60,
 #                 ),
 #     })
-
-
-# workaround to keep tickbox visible (https://github.com/streamlit/streamlit/issues/688)
-# def dataframe_with_selections(df):
-#     df_with_selections = df.copy()
-#     df_with_selections.insert(0, "Select", False)
-#     edited_df = st.data_editor(
-#         df_with_selections,
-#         hide_index=True,
-#         column_config={"Select": st.column_config.CheckboxColumn(required=True)},
-#         disabled=df.columns,
-#     )
-#     selected_indices = list(np.where(edited_df.Select)[0])
-#     selected_rows = df[edited_df.Select]
-#     return {"selected_rows_indices": selected_indices, "selected_rows": selected_rows}
+#selected_rows = event.selection['rows']
+#if xml_files:
+#    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
 
 selection = dataframe_with_selections(df)
-
-
 
 
 @st.dialog("Confirmation required")
 def delete_files(rows):
     st.write("The following file(s) will be deleted on the server:")
     st.write(', '.join(df['File name'].iloc[rows].tolist()))
-    if st.button("Delete"):
+    if st.button("Delete", key='delete_xml'):
         for row in rows:
             os.remove('/data/xml/' + df['File name'].iloc[row])
         if 'stations_txt' in st.session_state:
@@ -69,6 +54,7 @@ def download_xml_archive(files):
             zip_file.write('/data/xml/' + file_name)
     st.download_button(
         label=f"Download",
+        key='download_xml_archive',
         data=zip_buffer,
         file_name='stationXML_files.zip',
     )
@@ -79,16 +65,13 @@ def download_xml_file(fname):
     with open('/data/xml/' + fname, 'rt') as file:
         st.download_button(
             label=f"Download",
+            key='download_xml',
             data=file,
             file_name=fname,
     )
 
-#selected_rows = event.selection['rows']
 selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
-
-#if xml_files:
-#    st.info('Tick boxes in the leftmost column to select station files.', icon="ℹ️")
 
 cols = st.columns([1, 1, 1, 4]) # hack to have buttons side by side without big gap
 if cols[0].button("Delete", disabled=is_disabled):

@@ -13,7 +13,8 @@ from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import select_channels_and_dates, select_filter_params, fetch_trace_units
 from utils.trace_view import download_trace
 
-st.header('Stations and traces')
+
+st.header('Stations and traces') # st.title too big
 
 client = Client("http://seiscomp:8080")  # todo connection test here
 
