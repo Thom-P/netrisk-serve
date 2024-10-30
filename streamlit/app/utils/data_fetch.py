@@ -74,7 +74,7 @@ def fetch_latest_data_times():
     time_now = datetime.datetime.now(datetime.timezone.utc)
     # color code based on time of last data received:
     # green: < 1 hour, yellow: < 1 day, red: > 1 day
-    df_latest['Status'] = df_latest['Latest'].apply(lambda x: '🟢' if (time_now - x).seconds < 3600 else '🟡' if (time_now - x).days < 1 else '🔴')
+    df_latest['Status'] = df_latest['Latest'].apply(lambda x: '🟢' if (time_now - x).total_seconds() < 3600 else '🟡' if (time_now - x).days < 1 else '🔴')
     #df_latest.rename(columns={"N": "Network", "S": "Station", "Latest": "Last data received"}, inplace=True)
     # remove Latest column (not used anymore)
     df_latest.drop(columns=['Latest'], inplace=True)
