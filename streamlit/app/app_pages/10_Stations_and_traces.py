@@ -103,7 +103,10 @@ with tab1:
     )
 
     # Station selection in dataframe
-    row_index = event.selection['rows']
+    row_index = None
+    if 'selection' in event and 'rows' in event['selection']:
+        row_index = event['selection']['rows']
+    # row_index = event.selection['rows']
     if not row_index:
         st.info(
             "Select station by ticking box in the leftmost column.",
@@ -124,10 +127,7 @@ with tab2:
     if sta is None:
         st.write('Select a station in the previous tab.')
     else:
-    
         st.markdown(f'## {net}.{sta}')
-
-    
         loc, chans, start_date, end_date = select_channels_and_dates()
 
         fmin, fmax = None, None
@@ -135,15 +135,13 @@ with tab2:
             "Butterworth bandpass filter."
         if st.checkbox('Apply filter', help=filt_msg):
             fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
-                
-        resp_msg = "The deconvolution involves mean removal, cosine tapering in time domain (5%), " \
-            "and the use of a water level (60 dB) to clip the inverse spectrum and prevent noise overamplification (see obspy)."
+        resp_msg = (
+            "The deconvolution involves mean removal, cosine tapering in time"
+            " domain (5%), and the use of a water level (60 dB) to clip the "
+            "inverse spectrum and prevent noise overamplification (see obspy)."
+        )
         resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
-        #fig_deconv = plt.figure()
-        #resp_plot_buffer = io.BytesIO()
         
-        #if "traces" not in sstate:
-        #    sstate.traces = None
         if st.button('View Trace', disabled=False if chans else True):
             with st.spinner('Fetching traces...'):
                 traces = get_trace(
@@ -164,26 +162,42 @@ with tab2:
                 with st.spinner('Removing instrument response...'):
                     try:
                         traces.detrend("linear")
-                        traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=False, fig=None)
-                        # plot bugs
-                        #traces.remove_response(output='DEF', water_level=60, pre_filt=None, zero_mean=True, taper=True, taper_fraction=0.05, plot=True, fig=fig_deconv)
+                        traces.remove_response(
+                            output='DEF', water_level=60, pre_filt=None, 
+                            zero_mean=True, taper=True, taper_fraction=0.05, 
+                            plot=False, fig=None
+                        )
                     except Exception as err:
                         st.error(err, icon="🚨")
                         st.stop()
             sstate.traces = traces
             if sstate.traces is not None:
                 with st.spinner('Loading plot...'):
-                    # nb: size (width, height), width will be adjusted to fit column container
+                    # nb: width will be adjusted to fit column container
                     height = 200 + 300 * len(chans)
                     width = height
-                    waveform = ModifiedWaveformPlotting(stream=sstate.traces, handle=True, size=(width, height))
+                    waveform = ModifiedWaveformPlotting(
+                        stream=sstate.traces, handle=True, size=(width, height)
+                    )
                     fig = waveform.plot_waveform(handle=True)
                     units = fetch_trace_units(sstate.traces[0], resp_remove)
-                    fig.add_annotation(text=f"Amplitude ({units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
+                    fig.add_annotation(
+                        text=f"Amplitude ({units})", textangle=-90,
+                        xref='paper', xanchor='right', xshift=-90,
+                        x=0, yref='paper', y=0.5, showarrow=False
+                    )
                     st.plotly_chart(fig, use_container_width=True, theme=None)
-                    st.info(f"Traces including more than {waveform.max_npts} samples ({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted using the low resolution min/max method (add ref). To interact with the fully resolved data, reduce the time window.", icon="ℹ️")
+                    st.info(
+                        f"Traces including more than {waveform.max_npts} samples "
+                        f"({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted "
+                        "using the low resolution min/max method (add ref). To interact "
+                        "with the fully resolved data, reduce the time window.",
+                        icon="ℹ️"
+                    )
                 
-                download_trace(net, sta, loc, chans, start_date, end_date, fmin, fmax)
+                download_trace(
+                    net, sta, loc, chans, start_date, end_date, fmin, fmax
+                )
 
 
 
