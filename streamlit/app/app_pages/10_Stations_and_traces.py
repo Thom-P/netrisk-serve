@@ -15,7 +15,8 @@ from utils.trace_view import (
     select_channels_and_dates,
     select_filter_params,
     fetch_trace_units,
-    download_trace
+    download_trace,
+    preprocess_traces,
 )
 
 
@@ -141,36 +142,18 @@ with tab2:
             "inverse spectrum and prevent noise overamplification (see obspy)."
         )
         resp_remove = st.checkbox('Remove instrument response', help=resp_msg)
-        
+
         if st.button('View Trace', disabled=False if chans else True):
             with st.spinner('Fetching traces...'):
                 traces = get_trace(
-                    client,
-                    net, sta, loc,
-                    ','.join(chans),
+                    client, net, sta, loc, ','.join(chans),
                     start_date, end_date
-                    )
+                )
                 if traces is None:
                     sstate.traces = None
                     st.stop()
-            if fmin is not None and fmax is not None:
-                with st.spinner('Filtering...'):
-                    traces.detrend("linear")
-                    traces.taper(max_percentage=0.05)
-                    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-            if resp_remove:
-                with st.spinner('Removing instrument response...'):
-                    try:
-                        traces.detrend("linear")
-                        traces.remove_response(
-                            output='DEF', water_level=60, pre_filt=None, 
-                            zero_mean=True, taper=True, taper_fraction=0.05, 
-                            plot=False, fig=None
-                        )
-                    except Exception as err:
-                        st.error(err, icon="🚨")
-                        st.stop()
-            sstate.traces = traces
+            sstate.traces = preprocess_traces(traces, fmin, fmax, resp_remove)
+
             if sstate.traces is not None:
                 with st.spinner('Loading plot...'):
                     # nb: width will be adjusted to fit column container
@@ -194,7 +177,7 @@ with tab2:
                         "with the fully resolved data, reduce the time window.",
                         icon="ℹ️"
                     )
-                
+
                 download_trace(
                     net, sta, loc, chans, start_date, end_date, fmin, fmax
                 )

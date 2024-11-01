@@ -4,11 +4,16 @@ import io
 
 import streamlit as st
 
-#@st.fragment # this only work if output stored in session state: need to rethink how to handle fragment logic
+# @st.fragment # this only work if output stored in session state: 
+# need to rethink how to handle fragment logic
+
+
 def select_channels_and_dates():
     col1, col2 = st.columns(2)
-    loc_codes = sorted(st.session_state.channel_df['Location'].unique().tolist())
-    loc = col1.selectbox("Select location", loc_codes) # add 2 digit format
+    loc_codes = sorted(
+        st.session_state.channel_df['Location'].unique().tolist()
+    )
+    loc = col1.selectbox("Select location", loc_codes)  # add 2 digit format
     sub_df = st.session_state.channel_df.query('Location == @loc')
     chan_codes = sub_df['Channel'].unique().tolist()
     chans = col2.multiselect("Select channel(s)", chan_codes)
@@ -40,17 +45,18 @@ def select_channels_and_dates():
 
     start_date = datetime.datetime.combine(start_day, start_time)
     end_date = datetime.datetime.combine(end_day, end_time)
-    return loc, chans, start_date, end_date 
+    return loc, chans, start_date, end_date
+
 
 def select_filter_params(loc, chans, key):
     # get min fs from all selected channels
     sub_df = st.session_state.channel_df.query('Location == @loc')
-    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min() # should test
+    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()  # should test
     unit = st.radio(
         "Units",
         ["Frequency", "Period"],
         label_visibility="collapsed",
-        horizontal = True,
+        horizontal=True,
         key=key + '_units'
     )
 
@@ -88,6 +94,7 @@ def select_filter_params(loc, chans, key):
     # todo: add validity check vs fs
     return fmin, fmax
 
+
 @st.fragment
 def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=None):
     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
@@ -96,10 +103,14 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
         if len(chans) > 1:
             st.info("SAC files can only contain single component data.", icon="ℹ️")
             return
-        
-        st.info("If present, overlapping traces are merged using the lastest of the redundant values, and gaps are filled with 0.", icon="ℹ️")
+
+        st.info(
+            "If present, overlapping traces are merged using the lastest "
+            "of the redundant values, and gaps are filled with 0.", icon="ℹ️"
+        )
         trace_merged = copy.deepcopy(st.session_state.traces)
-        trace_merged.merge(method=1, fill_value=0) # in place op, method use most recent value when overlap, and 0 as fill value
+        # in place op, method use most recent value when overlap, and 0 as fill value
+        trace_merged.merge(method=1, fill_value=0)
     # Save all Traces into 1 file?
     # should get actual earliest start and latest end times
     chans_str = '_'.join(chans)
@@ -115,16 +126,16 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
     file_buff = io.BytesIO()
 
     if file_format == "MSEED":
-        st.session_state.traces.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+        st.session_state.traces.write(file_buff, format=file_format)  # select appropriate encoding? nb: filehandle instead of filename also works!
     elif file_format == "SAC":
-        trace_merged.write(file_buff, format=file_format) # select appropriate encoding? nb: filehandle instead of filename also works!
+        trace_merged.write(file_buff, format=file_format)  # select appropriate encoding? nb: filehandle instead of filename also works!
     elif file_format == "SEGY":
         try:
-            st.session_state.traces.write(file_buff, format=file_format) 
+            st.session_state.traces.write(file_buff, format=file_format)
         except Exception as err:
             st.error(f"{err}", icon="🚨")
             st.stop()
-        #raise
+        # raise
 
     # select appropriate encoding?
     dl_msg = 'Note that filtered traces are much larger than their ' \
@@ -137,6 +148,7 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
         help=dl_msg
     )
 
+
 def fetch_trace_units(trace, is_resp_removed):
     instr_sens = trace._get_response(None).instrument_sensitivity
     if instr_sens is None:
@@ -145,3 +157,24 @@ def fetch_trace_units(trace, is_resp_removed):
         return instr_sens.input_units
     else:
         return instr_sens.output_units
+
+
+def preprocess_traces(traces, fmin, fmax, resp_remove):
+    if fmin is not None and fmax is not None:
+        with st.spinner('Filtering...'):
+            traces.detrend("linear")
+            traces.taper(max_percentage=0.05)
+            traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+    if resp_remove:
+        with st.spinner('Removing instrument response...'):
+            try:
+                traces.detrend("linear")
+                traces.remove_response(
+                    output='DEF', water_level=60, pre_filt=None,
+                    zero_mean=True, taper=True,
+                    taper_fraction=0.05, plot=False, fig=None
+                )
+            except Exception as err:
+                st.error(err, icon="🚨")
+                st.stop()
+    return traces
