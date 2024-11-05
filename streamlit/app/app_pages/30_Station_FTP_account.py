@@ -4,7 +4,7 @@ from pathlib import Path
 from passlib.hash import sha512_crypt
 import streamlit as st
 import pandas as pd
-import berkeleydb.db as db
+import berkeleydb
 
 from utils.dataframe import dataframe_with_selections
 
@@ -12,13 +12,13 @@ from utils.dataframe import dataframe_with_selections
 st.header('Station FTP accounts')
 
 if 'user_db' not in st.session_state:
-    user_db = db.DB()
+    user_db = berkeleydb.db.DB()
     user_db.open('/data/ftp_users/vsftpd-virtual-user.db')
     st.session_state['user_db'] = user_db
 users = st.session_state.user_db.items()
 
 df = pd.DataFrame(users, columns=('Login', 'Password hash'),  dtype=str)
-#event = st.dataframe(data=df, hide_index=True, on_select='rerun')
+# event = st.dataframe(data=df, hide_index=True, on_select='rerun')
 
 selection = dataframe_with_selections(df)
 
@@ -29,7 +29,9 @@ def delete_accounts(rows):
     st.write(', '.join(df['Login'].iloc[rows].tolist()))
     if st.button("Delete", key='confirm_delete_accounts'):
         for row in rows:
-            st.session_state.user_db.delete(df['Login'].iloc[row].encode('utf-8'))
+            st.session_state.user_db.delete(
+                df['Login'].iloc[row].encode('utf-8')
+            )
             st.session_state.user_db.sync()
         st.rerun()
 
@@ -48,11 +50,16 @@ def create_account():
         st.stop()
     if st.button("Create", key='confirm_create_ftp_account'):
         password_hash = sha512_crypt.hash(password)
-        st.session_state.user_db.put(login.encode('utf-8'), password_hash.encode('utf-8'))
+        st.session_state.user_db.put(login.encode('utf-8'),
+                                     password_hash.encode('utf-8'))
         st.session_state.user_db.sync()
-        os.mkdir(f"/data/ftp/{login}") # todo add char validation and verif if already exists
-        os.chmod(f"/data/ftp/{login}", 0o777) # need exec permission to write files into (could create vsftpd user in streamlit dockerfile as well instead)
-        Path('/data/reload/RELOAD').touch() # does not work reliably, need to check why
+        os.mkdir(f"/data/ftp/{login}")
+        # todo add char validation and verif if already exists
+        os.chmod(f"/data/ftp/{login}", 0o777)
+        # need exec permission to write files into
+        # (could create vsftpd user in streamlit dockerfile as well instead)
+        Path('/data/reload/RELOAD').touch()
+        # does not work reliably, need to check why
         st.rerun()
 
 
@@ -60,10 +67,12 @@ selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
 
 
-#if users:
-#    st.info('Tick boxes in the leftmost column to select FTP accounts.', icon="ℹ️")
+# if users:
+#    st.info('Tick boxes in the leftmost column to select FTP accounts.',
+# icon="ℹ️")
 
-cols = st.columns([1, 1, 5]) # hack to have buttons side by side without big gap
+# hack to have buttons side by side without big gap
+cols = st.columns([1, 1, 5])
 if cols[0].button("Delete", key='delete_ftp_accounts', disabled=is_disabled):
     delete_accounts(selected_rows)
 

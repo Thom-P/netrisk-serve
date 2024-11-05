@@ -170,11 +170,13 @@ with tab2:
                         x=0, yref='paper', y=0.5, showarrow=False
                     )
                     st.plotly_chart(fig, use_container_width=True, theme=None)
+                    max_npts = waveform.max_npts
                     st.info(
-                        f"Traces including more than {waveform.max_npts} samples "
-                        f"({int(waveform.max_npts / 100 / 60)} mins at 100Hz) are plotted "
-                        "using the low resolution min/max method (add ref). To interact "
-                        "with the fully resolved data, reduce the time window.",
+                        f"Traces including more than {max_npts} samples "
+                        f"({int(max_npts / 6000)} mins at 100Hz) are plotted "
+                        "using the low resolution min/max method (add ref). "
+                        "To interact with the fully resolved data, reduce the "
+                        "time window.",
                         icon="ℹ️"
                     )
 
@@ -182,46 +184,50 @@ with tab2:
                     net, sta, loc, chans, start_date, end_date, fmin, fmax
                 )
 
-
-
     # Easier to keep traces separated and download separately?,
     # could also use a zip archive
     # for trace in traces:
     #    id = trace.get_id()
     #    id
     #    if fmin is not None and fmax is not None:
-    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}_bandpassed_{fmin}Hz_{fmax}Hz.mseed' # replace with actual dates
+    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}
+    # _bandpassed_{fmin}Hz_{fmax}Hz.mseed' # replace with actual dates
     #    else:
-    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}.mseed' # replace with actual dates
+    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}
+    # .mseed' # replace with actual dates
     #    file_buff = io.BytesIO()
-    #    trace.write(file_buff, format="MSEED") # select appropriate encoding? nb: filehandle instead of filename also works!
+    #    trace.write(file_buff, format="MSEED") # select appropriate encoding?
+    # nb: filehandle instead of filename also works!
     #    # need a unique key otherwise error
-    #    st.download_button(label=f'Download {trace.meta.channel} trace', data=file_buff, file_name=fname, type="secondary", help='Note that filtered traces are much larger than their unfiltered counterparts (compressed digital counts).')
+    #    st.download_button(label=f'Download {trace.meta.channel} trace',
+    # data=file_buff, file_name=fname, type="secondary", help='Note that
+    # filtered traces are much larger than their unfiltered counterparts
+    # (compressed digital counts).')
 
-
-
-
-
-# ########### Day plot
+# ###### Day plot
 with tab3:  # need indep vars?
-    if sta is None: 
+    if sta is None:
         st.write('Select a station in the previous tab.')
-    else: 
+    else:
         st.markdown(f'## {net}.{sta}')
-        
+
         col31, col32 = st.columns(2)
         loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
         loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
-        chan_codes = sstate.channel_df.query('Location == @loc')['Channel'].unique(
-        ).tolist()
+        chan_codes = sstate.channel_df.query(
+            'Location == @loc'
+        )['Channel'].unique().tolist()
         chan = col32.selectbox("Select channel", chan_codes)
         # sstate['chans'] = st.multiselect("Select channel(s)", chan_codes)
         # chans = sstate['chans']
 
-        day = st.date_input('Day', value="default_value_today")
+        day = st.date_input('Day', value="today")
+        if not isinstance(day, datetime.date):
+            st.error("Please select a valid date.")
+            st.stop()
         start_date = datetime.datetime(day.year, day.month, day.day)
         end_date = start_date + datetime.timedelta(hours=24)
-        
+
         fmin, fmax = None, None
         filt_msg = "Applies linear detrend, taper, and a 4th order " \
             "Butterworth bandpass filter."
@@ -229,72 +235,75 @@ with tab3:  # need indep vars?
             fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
         #   # add validity check vs fs
 
-
         if "day_traces" not in sstate:
             sstate.day_traces = None
-        if st.button('View day plot', disabled=True if chan is None else False):
+        disable_day_plot = True if chan is None else False
+        if st.button('View day plot', disabled=disable_day_plot):
             with st.spinner('Fetching traces...'):
-                traces = get_trace(client, net, sta, loc, chan, start_date, end_date)
+                traces = get_trace(
+                    client, net, sta, loc, chan, start_date, end_date
+                )
                 if traces is None:
                     sstate.day_traces = None
                     st.stop()
-            
-            traces.detrend("linear") # otherwise cannot see anything
-            
+
+            traces.detrend("linear")  # otherwise cannot see anything
             if fmin is not None and fmax is not None:
                 with st.spinner('Filtering...'):
                     traces.taper(max_percentage=0.05)
                     traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
-            
-            #traces.merge(method=1)
-
+            # traces.merge(method=1)
             sstate.day_traces = traces
-            # add info about these preprocesses 
+            # add info about these preprocesses
             if sstate.day_traces is not None:
-                with st.spinner('Loading plot...'): 
+                with st.spinner('Loading plot...'):
                     fig = sstate.day_traces.plot(handle=True, type='dayplot')
                     # fig.axes[-1].set_xlabel('Time')
                     # fig.axes[-1].set_ylabel('Counts')
-
                     st.pyplot(fig)
 
 
+# Side bar selections
+# sstate['net'] = None
+# sstate['sta'] = None
+# sstate['chans'] = set()
 
-## Side bar selections
-#sstate['net'] = None
-#sstate['sta'] = None
-#sstate['chans'] = set()
-
-#with st.sidebar:
-#    #index_preselect = net_codes[sstate['net']] if sstate['net'] is not None else None
+# with st.sidebar:
+#    #index_preselect =
+# net_codes[sstate['net']] if sstate['net'] is not None
+# else None
 #    # widget should handle session state
-#    sstate['net'] = st.selectbox('Network', net_codes.keys(), placeholder="Choose a Network")
+#    sstate['net'] = st.selectbox('Network', net_codes.keys(),
+# placeholder="Choose a Network")
 #    net = sstate['net']
 #    inv_stations = []
 #    if net is not None:
 #        inv_stations = inv.networks[net_codes[net]].stations
 #    sta_codes = (sta.code for sta in inv_stations)
-#    sstate['sta'] = st.selectbox('Station', sta_codes, placeholder="Choose a Station")
+#    sstate['sta'] = st.selectbox('Station', sta_codes,
+# placeholder="Choose a Station")
 #    sta = sstate['sta']
 #    inv_detailed = None
 #    if sta is not None:
-#        inv_detailed = client.get_stations(network=net, station=sta, level="channel")
-#    chan_codes = set(chan.code for chan in inv_detailed.networks[0].stations[0]) if inv_detailed is not None else set()
+#        inv_detailed = client.get_stations(network=net, station=sta,
+# level="channel")
+#    chan_codes = set(
+# chan.code for chan in inv_detailed.networks[0].stations[0]
+# ) if inv_detailed is not None else set()
 #    sstate['chans'] = st.multiselect("Select channel(s)", chan_codes)
 #    chans = sstate['chans']
 
-## Matplot lib plots
+# Matplot lib plots
 # fig = plt.figure()
 # plt.plot([1, 2, 3], [4, 5, 6])
 # st.pyplot(fig)
 # #traces.plot(fig=fig)
 
-#fig = sstate.traces.plot(handle=True)
-#fig.axes[-1].set_xlabel('Time')
-#fig.axes[-1].set_ylabel('Counts')
-#st.pyplot(fig)
+# fig = sstate.traces.plot(handle=True)
+# fig.axes[-1].set_xlabel('Time')
+# fig.axes[-1].set_ylabel('Counts')
+# st.pyplot(fig)
 
 # This below causes logic issue (radio button not showing in fragment, why?)
-#fig_html = mpld3.fig_to_html(fig)
-#components.html(fig_html, height=600)
- 
+# fig_html = mpld3.fig_to_html(fig)
+# components.html(fig_html, height=600)
