@@ -4,7 +4,7 @@ import io
 
 import streamlit as st
 
-# @st.fragment # this only work if output stored in session state: 
+# @st.fragment # this only work if output stored in session state:
 # need to rethink how to handle fragment logic
 
 
@@ -43,6 +43,12 @@ def select_channels_and_dates():
         step=3600
     )
 
+    if not isinstance(start_day, datetime.date):
+        st.error("Please select a valid start date.")
+        st.stop()
+    if not isinstance(end_day, datetime.date):
+        st.error("Please select a valid end date.")
+        st.stop()
     start_date = datetime.datetime.combine(start_day, start_time)
     end_date = datetime.datetime.combine(end_day, end_time)
     return loc, chans, start_date, end_date
@@ -51,7 +57,9 @@ def select_channels_and_dates():
 def select_filter_params(loc, chans, key):
     # get min fs from all selected channels
     sub_df = st.session_state.channel_df.query('Location == @loc')
-    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()  # should test
+    min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()
+    # should test
+
     unit = st.radio(
         "Units",
         ["Frequency", "Period"],
@@ -88,7 +96,7 @@ def select_filter_params(loc, chans, key):
             max_value=100000.,
             key=key + '_tmax'
         )
-        fmax = 1./ tmin
+        fmax = 1. / tmin
         fmin = 1. / tmax
 
     # todo: add validity check vs fs
@@ -96,12 +104,15 @@ def select_filter_params(loc, chans, key):
 
 
 @st.fragment
-def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=None):
+def download_trace(net, sta, loc, chans, start_date,
+                   end_date, fmin=None, fmax=None):
     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
+    trace_merged = None
     if file_format == "SAC":
         # should only be one trace, and with gap value filled
         if len(chans) > 1:
-            st.info("SAC files can only contain single component data.", icon="ℹ️")
+            st.info("SAC files can only contain single component data.",
+                    icon="ℹ️")
             return
 
         st.info(
@@ -109,7 +120,8 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
             "of the redundant values, and gaps are filled with 0.", icon="ℹ️"
         )
         trace_merged = copy.deepcopy(st.session_state.traces)
-        # in place op, method use most recent value when overlap, and 0 as fill value
+        # in place op, method use most recent value when overlap,
+        # and 0 as fill value
         trace_merged.merge(method=1, fill_value=0)
     # Save all Traces into 1 file?
     # should get actual earliest start and latest end times
@@ -126,9 +138,11 @@ def download_trace(net, sta, loc, chans, start_date, end_date, fmin=None, fmax=N
     file_buff = io.BytesIO()
 
     if file_format == "MSEED":
-        st.session_state.traces.write(file_buff, format=file_format)  # select appropriate encoding? nb: filehandle instead of filename also works!
-    elif file_format == "SAC":
-        trace_merged.write(file_buff, format=file_format)  # select appropriate encoding? nb: filehandle instead of filename also works!
+        st.session_state.traces.write(file_buff, format=file_format)
+        # select appropriate encoding?
+    elif file_format == "SAC" and trace_merged is not None:
+        trace_merged.write(file_buff, format=file_format)
+        # select appropriate encoding?
     elif file_format == "SEGY":
         try:
             st.session_state.traces.write(file_buff, format=file_format)

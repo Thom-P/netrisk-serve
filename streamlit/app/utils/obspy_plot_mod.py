@@ -1,5 +1,6 @@
-## Try to copy and mod obspy waveform plotting functions to use plotly instead of matplotlib
-# This would allow enhanced interactivity in streamlit
+# Copied from Obspy and modified by tplanes to use plotly instead of matplotlib
+# and allow enhanced plot interactivity in streamlit
+
 
 # -*- coding: utf-8 -*-
 # ------------------------------------------------------------------
@@ -20,7 +21,6 @@ Waveform plotting for obspy.Stream objects.
     (https://www.gnu.org/copyleft/lesser.html)
 """
 import functools
-import io
 import os
 import warnings
 from copy import copy
@@ -51,9 +51,6 @@ DATELOCATOR_WARNING_MSG = (
     "AutoDateLocator's intervald dictionary.")
 
 
-
-
-
 class ModifiedWaveformPlotting(object):
     """
     Class that provides several solutions for plotting large and small waveform
@@ -69,15 +66,11 @@ class ModifiedWaveformPlotting(object):
     It uses matplotlib to plot the waveforms.
     """
 
-
-
-
     def __init__(self, **kwargs):
         """
         Checks some variables and maps the kwargs to class variables.
         """
         self.kwargs = kwargs
-        self.stream = kwargs.get('stream')
         # Check if it is a Stream or a Trace object.
         if isinstance(self.stream, Trace):
             self.stream = Stream([self.stream])
@@ -222,14 +215,11 @@ class ModifiedWaveformPlotting(object):
         self.right_vertical_labels = kwargs.get('right_vertical_labels', False)
         self.one_tick_per_line = kwargs.get('one_tick_per_line', False)
         self.show_y_UTC_label = kwargs.get('show_y_UTC_label', True)
-        self.title = kwargs.get('title', self.stream[0].id)
+        # self.title = kwargs.get('title', self.stream[0].id)
+        # to silence warning
+        self.title = kwargs.get('title', self.stream.traces[0].id)
         self.fillcolor_pos, self.fillcolor_neg = \
             kwargs.get('fillcolors', (None, None))
-
-
-
-
-
 
     def __del__(self):
         """
@@ -250,8 +240,6 @@ class ModifiedWaveformPlotting(object):
                 not self.kwargs.get('handle'):
             plt.close()
 
-
-
     def __get_merge_id(self, tr):
         tr_id = tr.id
         # don't merge normal traces with previews
@@ -270,12 +258,10 @@ class ModifiedWaveformPlotting(object):
 
     def __get_mergable_ids(self):
         ids = set()
-        for tr in self.stream:
-            ids.add(self.__get_merge_id(tr))
+        if self.stream:
+            for tr in self.stream:
+                ids.add(self.__get_merge_id(tr))
         return sorted(ids, key=_id_key)
-
-
-
 
     def plot_waveform(self, *args, **kwargs):
         """
@@ -289,7 +275,7 @@ class ModifiedWaveformPlotting(object):
         'm' = magenta, 'y' = yellow, 'k' = black, 'w' = white) and gray shades
         can be given as a string encoding a float in the 0-1 range.
         """
-        #import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
         # Setup the figure if not passed explicitly.
         if not self.fig_obj:
             self.__setup_figure()
@@ -303,23 +289,26 @@ class ModifiedWaveformPlotting(object):
         else:
             self.plot(*args, **kwargs)
         # Adjust the subplot so there is always a fixed margin on every side
-        #if self.type != 'dayplot':
+        # if self.type != 'dayplot':
         #    fract_y = 60.0 / self.height
         #    fract_y2 = 40.0 / self.height
         #    fract_x = 80.0 / self.width
         #    self.fig.subplots_adjust(top=1.0 - fract_y, bottom=fract_y2,
         #                             left=fract_x, right=1.0 - fract_x / 2)
-        #if self.type == 'section':
+        # if self.type == 'section':
         #    self.fig.subplots_adjust(bottom=0.12)
-       
+
         self.fig.update_xaxes(showline=True, linewidth=1, showgrid=True)
         self.fig.update_xaxes(mirror=True, row=1, col=1)
         self.fig.update_xaxes(title_text='Time', row=len(self.axis), col=1)
-        self.fig.update_yaxes(showline=True, linewidth=1, mirror=True, showgrid=True)
-        
+        self.fig.update_yaxes(showline=True, linewidth=1, mirror=True,
+                              showgrid=True)
+
         # amplitude units fetched in caling script
-        #self.fig.add_annotation(text="Amplitude ({y_units})", textangle=-90, xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5, showarrow=False)
-         
+        # self.fig.add_annotation(text="Amplitude ({y_units})", textangle=-90,
+        # xref='paper', xanchor='right', xshift=-90, x=0, yref='paper', y=0.5,
+        # showarrow=False)
+
         return self.fig
         # with warnings.catch_warnings(record=True):
         #     warnings.filterwarnings("ignore", DATELOCATOR_WARNING_MSG,
@@ -365,11 +354,6 @@ class ModifiedWaveformPlotting(object):
         #             # notebooks.
         #             return self.fig
 
-
-
-
-
-
     def plot(self, *args, **kwargs):
         """
         Plot the Traces showing one graph per Trace.
@@ -380,23 +364,25 @@ class ModifiedWaveformPlotting(object):
         stream_new = []
         # Just remove empty traces.
         if not self.automerge:
-            for tr in self.stream:
-                stream_new.append([])
-                if len(tr.data):
-                    stream_new[-1].append(tr)
+            if self.stream:
+                for tr in self.stream:
+                    stream_new.append([])
+                    if len(tr.data):
+                        stream_new[-1].append(tr)
         else:
             # Generate sorted list of traces (no copy)
             # Sort order: id, starttime, endtime
             ids = self.__get_mergable_ids()
             for id in ids:
                 stream_new.append([])
-                for tr in self.stream:
-                    tr_id = self.__get_merge_id(tr)
-                    if tr_id == id:
-                        # does not copy the elements of the data array
-                        tr_ref = copy(tr)
-                        if tr_ref.data.size:
-                            stream_new[-1].append(tr_ref)
+                if self.stream:
+                    for tr in self.stream:
+                        tr_id = self.__get_merge_id(tr)
+                        if tr_id == id:
+                            # does not copy the elements of the data array
+                            tr_ref = copy(tr)
+                            if tr_ref.data.size:
+                                stream_new[-1].append(tr_ref)
                 # delete if empty list
                 if not len(stream_new[-1]):
                     stream_new.pop()
@@ -404,8 +390,9 @@ class ModifiedWaveformPlotting(object):
         # If everything is lost in the process raise an Exception.
         if not len(stream_new):
             raise Exception("Nothing to plot")
-        
-        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True, vertical_spacing=0, figure=self.fig)
+
+        make_subplots(rows=len(stream_new), cols=1, shared_xaxes=True,
+                      vertical_spacing=0, figure=self.fig)
         # Create helper variable to track ids and min/max/mean values.
         self.ids = []
         # Loop over each Trace and call the appropriate plotting method.
@@ -418,12 +405,12 @@ class ModifiedWaveformPlotting(object):
                       "sampling rate."
                 raise Exception(msg)
             sampling_rate = sampling_rates.pop()
-            #if _i == 0:
+            # if _i == 0:
             #    sharex = None
-            #else:
+            # else:
             #    sharex = self.axis[0]
-            axis_facecolor_kwargs = dict(facecolor=self.background_color)
-            #ax = self.fig.add_subplot(len(stream_new), 1, _i + 1,
+            # axis_facecolor_kwargs = dict(facecolor=self.background_color)
+            # ax = self.fig.add_subplot(len(stream_new), 1, _i + 1,
             #                          sharex=sharex, **axis_facecolor_kwargs)
             ax = _i + 1
             self.axis.append(ax)
@@ -443,31 +430,31 @@ class ModifiedWaveformPlotting(object):
             else:
                 msg = "Invalid plot method: '%s'" % method_
                 raise ValueError(msg)
-        
-        #for _i in range(len(stream_new)):
-            #ax.text(0.02, 0.95, self.ids[_i], transform=ax.transAxes,
+
+        # for _i in range(len(stream_new)):
+            # ax.text(0.02, 0.95, self.ids[_i], transform=ax.transAxes,
             #        fontdict=dict(fontsize="small", ha='left', va='top'),
             #        bbox=dict(boxstyle="round", fc="w", alpha=0.8))
-            self.fig.add_annotation(text=self.ids[_i], xref='x domain', x=0.004, yref='y domain', y=0.98, row=_i + 1, col=1, showarrow=False, bgcolor='white', bordercolor='black')
-        
+            self.fig.add_annotation(text=self.ids[_i], xref='x domain',
+                                    x=0.004, yref='y domain', y=0.98,
+                                    row=_i + 1, col=1, showarrow=False,
+                                    bgcolor='white', bordercolor='black')
+
         # Set ticks.
-        #self.__plot_set_x_ticks()
-        #self.__plot_set_y_ticks()
-        #xmin = self._time_to_xvalue(self.starttime)
-        #xmax = self._time_to_xvalue(self.endtime)
-        #ax.set_xlim(xmin, xmax)
-        #self._draw_overlap_axvspan_legend()
-
-
-
-
-
+        # self.__plot_set_x_ticks()
+        # self.__plot_set_y_ticks()
+        # xmin = self._time_to_xvalue(self.starttime)
+        # xmax = self._time_to_xvalue(self.endtime)
+        # ax.set_xlim(xmin, xmax)
+        # self._draw_overlap_axvspan_legend()
 
     def plot_day(self, *args, **kwargs):
         """
         Extend the seismogram.
         """
         # Merge and trim to pad.
+        if not self.stream:
+            return None
         self.stream.merge()
         if len(self.stream) != 1:
             msg = "All traces need to be of the same id for a dayplot"

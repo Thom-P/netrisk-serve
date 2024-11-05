@@ -3,11 +3,11 @@ import string
 valid_chars = set(string.ascii_uppercase + string.digits + '-')
 
 band_codes = {
-    'J': 'fs > 5000', 
+    'J': 'fs > 5000',
     'F': '1000 ≤ fs < 5000, Tc ≥ 10',
-    'G': '1000 ≤ fs < 5000, Tc < 10', 
+    'G': '1000 ≤ fs < 5000, Tc < 10',
     'D': '250 ≤ fs < 1000, Tc < 10',
-    'C': '250 ≤ fs < 1000, Tc ≥ 10', 
+    'C': '250 ≤ fs < 1000, Tc ≥ 10',
     'E': 'Extremely Short Period, 80 ≤ fs < 250, Tc < 10',
     'S': 'Short Period, 10 ≤ fs < 80, Tc < 10',
     'H': 'High Broadband, 80 ≤ fs < 250, Tc ≥ 10',
@@ -15,8 +15,8 @@ band_codes = {
     'M': 'Mid Period, 1 < fs < 10',
     'L': 'Long Period, fs ~ 1',
     'V': 'Very Long Period, 0.1 ≤ fs < 1',
-    'U': 'Ultra Long Period, 0.01 ≤ fs < 0.1', 
-    'W': 'Ultra-ultra Long Period, 0.001 ≤ fs < 0.01', 
+    'U': 'Ultra Long Period, 0.01 ≤ fs < 0.1',
+    'W': 'Ultra-ultra Long Period, 0.001 ≤ fs < 0.01',
     'R': 'Extremely Long Period, 0.0001 ≤ fs < 0.001',
     'P': 'On the order of 0.1 to 1 day, 0.00001 ≤ fs < 0.0001',
     'T': 'On the order of 1 to 10 days, 0.000001 ≤ fs < 0.00001',
@@ -29,7 +29,8 @@ source_codes = {
     'L': 'Low Gain Seismometer',
     'M': 'Mass Position Seismometer',
     'N': 'Accelerometer',
-    'P': 'Geophone, very short period seismometer with natural frequency 5 - 10 Hz or higher',
+    'P': ('Geophone, very short period seismometer with natural frequency '
+          '5 - 10 Hz or higher'),
     'A': 'Tilt Meter',
     'B': 'Creep Meter',
     'C': 'Calibration input',
@@ -54,7 +55,7 @@ source_codes = {
 }
 
 # need one category per source code...todo
-subsource_codes = { 
+subsource_codes = {
     'N, E, Z': 'North, East, Up',
     '1, 2, Z': 'Orthogonal components, nontraditional horizontals',
     '1, 2, 3': 'Orthogonal components, nontraditional orientations',

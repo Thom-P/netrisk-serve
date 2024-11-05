@@ -1,30 +1,52 @@
-import string
 import datetime
 
 import streamlit as st
-from obspy.core.inventory import Inventory, Network, Station, Channel, Response, Site, PolesZerosResponseStage, FIRResponseStage, InstrumentSensitivity, ResponseStage
+from obspy.core.inventory import (
+    Network, Station, Channel, Response, Site, PolesZerosResponseStage,
+    FIRResponseStage, InstrumentSensitivity, ResponseStage
+)
 from obspy.signal.invsim import corn_freq_2_paz
 from obspy.core import UTCDateTime
 
-from utils.FDSN_codes import band_codes, source_codes, subsource_codes, valid_chars
+from utils.FDSN_codes import (
+    band_codes,
+    source_codes,
+    subsource_codes,
+    valid_chars
+)
 
 
 def get_station_parameters():
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
 
-    net_url = 'http://docs.fdsn.org/projects/source-identifiers/en/v1.0/network-codes.html#'
+    net_url = ('http://docs.fdsn.org/projects/source-identifiers/en/v1.0/'
+               'network-codes.html#')
     st.page_link(net_url, label=':blue[More info on naming conventions ↗]')
 
     cols1 = st.columns(6)
-    net_code = cols1[0].text_input("__Network code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
-    sta_code = cols1[1].text_input("__Station code__", value=None, max_chars=8, type="default", help=code_help_str, placeholder="Required")
+    net_code = cols1[0].text_input("__Network code__", value=None, max_chars=8,
+                                   type="default", help=code_help_str,
+                                   placeholder="Required")
+    sta_code = cols1[1].text_input("__Station code__", value=None, max_chars=8,
+                                   type="default", help=code_help_str,
+                                   placeholder="Required")
 
-    lat = cols1[2].number_input("__Station latitude__", value=None, min_value=-90.0, max_value=89.999999, format="%.4f", help=coord_help_str, placeholder="Required")
-    lon = cols1[3].number_input("__Station longitude__", value=None, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, placeholder="Required")
-    elev = cols1[4].number_input("__Ground surface elevation__ (m)", value=None, min_value=-414, max_value=8848, format="%d", placeholder="Required")
+    lat = cols1[2].number_input("__Station latitude__", value=None,
+                                min_value=-90.0, max_value=89.999999,
+                                format="%.4f", help=coord_help_str,
+                                placeholder="Required")
+    lon = cols1[3].number_input("__Station longitude__", value=None,
+                                min_value=-180.0, max_value=180.0,
+                                format="%.4f", help=coord_help_str,
+                                placeholder="Required")
+    elev = cols1[4].number_input("__Ground surface elevation__ (m)",
+                                 value=None, min_value=-414, max_value=8848,
+                                 format="%d", placeholder="Required")
 
-    site = cols1[5].text_input("__Station site name__", value=None, max_chars=64, type="default", help=None, placeholder="Required")
+    site = cols1[5].text_input("__Station site name__", value=None,
+                               max_chars=64, type="default", help=None,
+                               placeholder="Required")
 
     if net_code is None or is_valid_code(net_code, valid_chars) is False:
         st.warning('Invalid or empty network code', icon="⚠️")
@@ -40,15 +62,19 @@ def get_station_parameters():
         st.stop()
     return net_code, sta_code, lat, lon, elev, site
 
+
 def is_valid_code(code, valid_chars):
-    # Following norm: http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
+    # Following norm: 
+    # http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
     if len(code) < 1 or len(code) > 8:
         return False
     if any(c not in valid_chars for c in code):
         return False
     return True
 
-def build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site):
+
+def build_station_and_network_objects(net_code, sta_code, lat,
+                                      lon, elev, site):
     sta = Station(
             code=sta_code,
             latitude=lat,
@@ -59,11 +85,13 @@ def build_station_and_network_objects(net_code, sta_code, lat, lon, elev, site):
     net = Network(code=net_code, stations=[sta])
     return net, sta
 
+
 def get_channel_codes():
     cols2 = st.columns(3)
     code_dicts = (band_codes, source_codes, subsource_codes)
     labels = (
-        "__Band code__ - fs: sample rate (Hz); Tc: lower period bound of instrument response (s)",
+        ("__Band code__ - fs: sample rate (Hz); Tc: lower period bound "
+         "of instrument response (s)"),
         "__Source code (instrument type)__",
         "__Subsource code(s) (components)__"
     )
@@ -81,17 +109,18 @@ def get_channel_codes():
     band_code, source_code, subsource_code = code_choices
     return band_code, source_code, subsource_code
 
+
 def choose_device(device_dict):
-    ## Device choice (sensor or datalogger)
+    # Device choice (sensor or datalogger)
     # todo make sure max depth is not greater than 6
-    #cols = st.columns(6, vertical_alignment="bottom")
+    # cols = st.columns(6, vertical_alignment="bottom")
     n_cols = 6  # todo: solve wrap if goes beyond 6
     cols = st.columns(n_cols, vertical_alignment="bottom")
     i_col = 0
-    device_keys=[]
+    device_keys = []
     curr_choices = device_dict
     while isinstance(curr_choices, dict):
-        col = cols[i_col % n_cols] # todo debug
+        col = cols[i_col % n_cols]  # todo debug
         choice = create_selectbox(curr_choices, col)
         i_col += 1
         if choice is None:
@@ -101,17 +130,29 @@ def choose_device(device_dict):
             curr_choices = curr_choices[choice]
     return device_keys
 
+
 def create_selectbox(choices: dict, col):
     label = choices.__str__().partition('(')[0]
-    choice = col.selectbox(label, choices.keys(), index=None, placeholder="Choose an option")
+    choice = col.selectbox(label, choices.keys(),
+                           index=None, placeholder="Choose an option")
     return choice
+
 
 def build_custom_geophone_response():
     cols = st.columns(4)
-    corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0, min_value=0.1, max_value=1000.0)
-    damping_ratio = cols[1].number_input("Damping ratio", value=0.707, min_value=0.01, max_value=1.0, format="%.3f")
-    sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0, min_value=0.1)
-    freq_sensitivity = cols[3].number_input("Frequency of sensitivity (Hz)", value=50.0, min_value=0.1, max_value=1000.0, help="Frequency at which the sensitivity is defined (should be in the flat response band)")
+    corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0,
+                                       min_value=0.1, max_value=1000.0)
+    damping_ratio = cols[1].number_input("Damping ratio", value=0.707,
+                                         min_value=0.01, max_value=1.0, 
+                                         format="%.3f")
+    sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0,
+                                       min_value=0.1)
+    freq_sensitivity = cols[3].number_input(
+        "Frequency of sensitivity (Hz)", value=50.0, min_value=0.1,
+        max_value=1000.0,
+        help=("Frequency at which the sensitivity is defined "
+              "(should be in the flat response band)")
+    )
     paz = corn_freq_2_paz(corner_freq, damping_ratio)
     sensor_resp = Response.from_paz(
         zeros=paz['zeros'],
@@ -127,11 +168,18 @@ def build_custom_geophone_response():
     input_units_description = 'Meters per second'
     output_units_description = 'Volts'
     sensor_resp.response_stages[0].input_units_description = input_units_description
-    sensor_resp.response_stages[0].output_units_description = output_units_description
-    sensor_resp.instrument_sensitivity.input_units_description = input_units_description
-    sensor_resp.instrument_sensitivity.output_units_description = output_units_description
-    description = f'Corner frequency = {corner_freq} Hz; Damping ratio = {damping_ratio}, Sensitivity = {sensitivity} V/(m/s) @ {freq_sensitivity} Hz'
+    sensor_resp.response_stages[0].output_units_description = \
+        output_units_description
+    sensor_resp.instrument_sensitivity.input_units_description = \
+        input_units_description
+    sensor_resp.instrument_sensitivity.output_units_description = \
+        output_units_description
+    description = (f'Corner frequency = {corner_freq} Hz; '
+                   'Damping ratio = {damping_ratio}, '
+                   'Sensitivity = {sensitivity} V/(m/s) '
+                   '@ {freq_sensitivity} Hz')
     return sensor_resp, description
+
 
 def build_custom_datalogger_response():
     cols = st.columns(4)
