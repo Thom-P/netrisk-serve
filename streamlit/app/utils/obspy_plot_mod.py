@@ -71,6 +71,7 @@ class ModifiedWaveformPlotting(object):
         Checks some variables and maps the kwargs to class variables.
         """
         self.kwargs = kwargs
+        self.stream = kwargs.get('stream')
         # Check if it is a Stream or a Trace object.
         if isinstance(self.stream, Trace):
             self.stream = Stream([self.stream])
