@@ -15,7 +15,7 @@ def create_map():
             # icon=icon,
             icon=folium.Icon(color='darkblue', prefix='fa', icon='rss'),
             popup=info,
-            tooltip='.'.join((row['Network'],row['Station']))
+            tooltip='.'.join((row['Network'], row['Station']))
             ).add_to(m)
     sw = st.session_state.df_stations[['Latitude', 'Longitude']].min() \
         .values.tolist()

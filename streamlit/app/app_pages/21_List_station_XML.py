@@ -51,6 +51,7 @@ def delete_files(rows):
             del st.session_state['df_stations']
         st.rerun()
 
+
 @st.dialog("Download archive")
 def download_xml_archive(files):
     zip_buffer = io.BytesIO()
@@ -60,7 +61,7 @@ def download_xml_archive(files):
         for file_name in files:
             zip_file.write('/data/xml/' + file_name)
     st.download_button(
-        label=f"Download",
+        label="Download",
         key='download_xml_archive',
         data=zip_buffer,
         file_name='stationXML_files.zip',
@@ -71,7 +72,7 @@ def download_xml_archive(files):
 def download_xml_file(fname):
     with open('/data/xml/' + fname, 'rt') as file:
         st.download_button(
-            label=f"Download",
+            label="Download",
             key='download_xml',
             data=file,
             file_name=fname,

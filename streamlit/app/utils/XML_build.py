@@ -64,7 +64,7 @@ def get_station_parameters():
 
 
 def is_valid_code(code, valid_chars):
-    # Following norm: 
+    # Following norm:
     # http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
     if len(code) < 1 or len(code) > 8:
         return False

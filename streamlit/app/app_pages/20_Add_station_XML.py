@@ -89,7 +89,7 @@ if attach_response == "Yes":
         sensor = Equipment(
             manufacturer='Unknown/Custom', type='Geophone',
             description=description
-        ) 
+        )
     else:
         sensor_keys = choose_device(nrl.sensors)
         sensor = Equipment(
@@ -144,7 +144,7 @@ if attach_response == "Yes":
                 fig.savefig(plot_buffer)
                 st.image(plot_buffer, use_column_width=True)
 
-placeholder = st.empty() # for cleaning widgets
+placeholder = st.empty()  # for cleaning widgets
 curr_channels = build_channel_objects(
     band_code, source_code, subsource_code, use_old_format,
     start_datetime, end_datetime, response, sensor, datalogger,
@@ -167,7 +167,7 @@ st.info(f"__Code__: {net.code}.{sta.code} ({sta.site.name}) — __Latitude, "
         f"Longitude__: {sta.latitude:.4f}, {sta.longitude:.4f} — "
         f"__Elevation__: {sta.elevation} m")
 st.markdown("#### Channels:")
-channels_data =[]
+channels_data = []
 for i, cha in enumerate(st.session_state.saved_channels):
     # chan_info = f"{cha.code}, loc:{cha.location_code}, lat: {cha.latitude},
     # lon: {cha.longitude}, elev: {cha.elevation}, depth: {cha.depth}, sens=,

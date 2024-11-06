@@ -35,6 +35,7 @@ def delete_accounts(rows):
             st.session_state.user_db.sync()
         st.rerun()
 
+
 @st.dialog("New FTP account creation")
 def create_account():
     login = st.text_input("Login:", max_chars=32)

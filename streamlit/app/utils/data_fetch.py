@@ -8,7 +8,7 @@ import streamlit as st
 import pandas as pd
 
 
-#@st.cache_data  # use obspy client instead?
+# @st.cache_data  # use obspy client instead?
 def fetch_stations():
     url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
         'network=*&format=text&level=station'
