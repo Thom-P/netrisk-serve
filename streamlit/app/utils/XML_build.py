@@ -143,7 +143,7 @@ def build_custom_geophone_response():
     corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0,
                                        min_value=0.1, max_value=1000.0)
     damping_ratio = cols[1].number_input("Damping ratio", value=0.707,
-                                         min_value=0.01, max_value=1.0, 
+                                         min_value=0.01, max_value=1.0,
                                          format="%.3f")
     sensitivity = cols[2].number_input("Sensitivity (V /(m/s))", value=1.0,
                                        min_value=0.1)
@@ -165,15 +165,16 @@ def build_custom_geophone_response():
         pz_transfer_function_type='LAPLACE (RADIANS/SECOND)',
         normalization_factor=1.0
     )
-    input_units_description = 'Meters per second'
-    output_units_description = 'Volts'
-    sensor_resp.response_stages[0].input_units_description = input_units_description
+    input_description = 'Meters per second'
+    output_description = 'Volts'
+    sensor_resp.response_stages[0].input_units_description = input_description
     sensor_resp.response_stages[0].output_units_description = \
-        output_units_description
-    sensor_resp.instrument_sensitivity.input_units_description = \
-        input_units_description
-    sensor_resp.instrument_sensitivity.output_units_description = \
-        output_units_description
+        output_description
+    if sensor_resp.instrument_sensitivity is not None:
+        sensor_resp.instrument_sensitivity.input_units_description = \
+            input_description
+        sensor_resp.instrument_sensitivity.output_units_description = \
+            output_description
     description = (f'Corner frequency = {corner_freq} Hz; '
                    'Damping ratio = {damping_ratio}, '
                    'Sensitivity = {sensitivity} V/(m/s) '
@@ -184,16 +185,33 @@ def build_custom_geophone_response():
 def build_custom_datalogger_response():
     cols = st.columns(4)
     # http://docs.fdsn.org/projects/stationxml/en/latest/reference.html#stage
-    preamp_gain = cols[0].number_input("Preamp gain factor", value=1.0, min_value=0.1, max_value=10000.0, help='Modeled as an analog gain-only stage (ref).')
-    bit_resolution = cols[1].number_input("Bit resolution", value=24, min_value=8, max_value=128, help='Number of bits over which the input voltage is digitized.')
-    input_range = cols[2].number_input("Input voltage range (Vpp)", value=1.0, format="%.3f" ,min_value=0.1, max_value=128.0, help='Peak-to-peak voltage input range of the digitizer.')
+    preamp_gain = cols[0].number_input(
+        "Preamp gain factor", value=1.0, min_value=0.1, max_value=10000.0,
+        help='Modeled as an analog gain-only stage (ref).'
+    )
+    bit_resolution = cols[1].number_input(
+        "Bit resolution", value=24, min_value=8, max_value=128,
+        help='Number of bits over which the input voltage is digitized.'
+    )
+    input_range = cols[2].number_input(
+        "Input voltage range (Vpp)", value=1.0, format="%.3f", min_value=0.1,
+        max_value=128.0,
+        help='Peak-to-peak voltage input range of the digitizer.'
+    )
     voltage_resolution = input_range / (2 ** bit_resolution - 1)
-    adc_gain=1.0 / voltage_resolution
-    sampling_rate = cols[3].number_input("Sampling rate (Hz)", value=100.0, min_value=0.1, max_value=100000.0)
+    adc_gain = 1.0 / voltage_resolution
+    sampling_rate = cols[3].number_input("Sampling rate (Hz)", value=100.0,
+                                         min_value=0.1, max_value=100000.0)
     st.write(f"Voltage resolution = {voltage_resolution:.3e} V/count")
-    st.info("The anti-aliasing filter is not modeled in this response. Make sure its effect is negligible in your frequency range of interest.", icon="ℹ️")
-    dummy_stage = ResponseStage(stage_sequence_number=1, stage_gain=1.0,
-        stage_gain_frequency=1.0, input_units='M/S', output_units='V') # dummy stage that will be removed by nrl combine sensor-datalogger function
+    st.info(
+        "The anti-aliasing filter is not modeled in this response. Make "
+        "sure its effect is negligible in your frequency range of interest.",
+        icon="ℹ️"
+    )
+    dummy_stage = ResponseStage(
+        stage_sequence_number=1, stage_gain=1.0,
+        stage_gain_frequency=1.0, input_units='M/S', output_units='V'
+    )  # dummy stage that will be removed by nrl combine sensor-datalogger func
     preamp_stage = PolesZerosResponseStage(
         stage_sequence_number=2,
         stage_gain=preamp_gain,
@@ -214,19 +232,30 @@ def build_custom_datalogger_response():
         coefficients=[1.0], input_units_description='Volts',
         output_units_description='Digital counts',
         decimation_input_sample_rate=sampling_rate,
-        decimation_factor=1, decimation_offset=0, decimation_delay=0, decimation_correction=0,
+        decimation_factor=1, decimation_offset=0, decimation_delay=0,
+        decimation_correction=0,
     )
     instrument_sensitivity = InstrumentSensitivity(
         value=preamp_gain * adc_gain, frequency=min(1.0, sampling_rate / 4.0),
         input_units='V', output_units='COUNTS',
-        input_units_description='Volts', output_units_description='Digital counts',
+        input_units_description='Volts',
+        output_units_description='Digital counts',
     )
-    datalogger_resp = Response(response_stages=[dummy_stage, preamp_stage, ADC_stage], instrument_sensitivity=instrument_sensitivity)
-    #datalogger_resp.recalculate_overall_sensitivity()
-    description = f'Preamp gain = {preamp_gain}, Bit resolution = {bit_resolution} bits, Input range = {input_range} Vpp, Sampling rate = {sampling_rate} Hz'
+    datalogger_resp = Response(
+        response_stages=[dummy_stage, preamp_stage, ADC_stage],
+        instrument_sensitivity=instrument_sensitivity
+    )
+    # datalogger_resp.recalculate_overall_sensitivity()
+    description = (f'Preamp gain = {preamp_gain}, '
+                   f'Bit resolution = {bit_resolution} bits, '
+                   f'Input range = {input_range} Vpp, '
+                   f'Sampling rate = {sampling_rate} Hz')
     return datalogger_resp, description
 
-def build_channel_objects(band_code, source_code, subsource_code, use_old_format, start_date, end_date, response, sensor, datalogger, sta, ph):
+
+def build_channel_objects(band_code, source_code, subsource_code,
+                          use_old_format, start_date, end_date,
+                          response, sensor, datalogger, sta, ph):
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
@@ -240,27 +269,53 @@ def build_channel_objects(band_code, source_code, subsource_code, use_old_format
             chan_code = '_'.join((band_code, source_code, sub_code))
         with cont:
             st.write(f"__Channel {chan_code}__")
-            value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" in st.session_state else "00" # otherwise looses previous value if widget hidden
-            loc_code = st.text_input("Location code", value=value, max_chars=8, type="default", help=code_help_str, key=f"loc_chan_{i}")
-            if loc_code is None or is_valid_code(loc_code, valid_chars) is False:
-                   st.warning('Invalid or empty location code', icon="⚠️")
-                   st.stop()
+            value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" \
+                in st.session_state else "00"  # saves value if widget hidden
+            loc_code = st.text_input(
+                "Location code", value=value, max_chars=8, type="default",
+                help=code_help_str, key=f"loc_chan_{i}"
+            )
+            if loc_code is None or \
+                    is_valid_code(loc_code, valid_chars) is False:
+                st.warning('Invalid or empty location code', icon="⚠️")
+                st.stop()
 
-            value = st.session_state[f"lat_chan_{i}"] if f"lat_chan_{i}" in st.session_state else sta.latitude # otherwise looses previous value if widget hidden
-            chan_lat = st.number_input("__Channel latitude__", value=value, min_value=-90.0, max_value=90.0, format="%.4f", help=coord_help_str, key=f"lat_chan_{i}")
+            value = st.session_state[f"lat_chan_{i}"] if f"lat_chan_{i}" \
+                in st.session_state else sta.latitude
+            chan_lat = st.number_input(
+                "__Channel latitude__", value=value, min_value=-90.0,
+                max_value=90.0, format="%.4f", help=coord_help_str,
+                key=f"lat_chan_{i}"
+            )
 
-            value = st.session_state[f"lon_chan_{i}"] if f"lon_chan_{i}" in st.session_state else sta.longitude # otherwise looses previous value if widget hidden
-            chan_lon = st.number_input("__Channel longitude__", value=value, min_value=-180.0, max_value=180.0, format="%.4f", help=coord_help_str, key=f"lon_chan_{i}")
+            value = st.session_state[f"lon_chan_{i}"] if f"lon_chan_{i}" \
+                in st.session_state else sta.longitude
+            chan_lon = st.number_input(
+                "__Channel longitude__", value=value, min_value=-180.0,
+                max_value=180.0, format="%.4f", help=coord_help_str,
+                key=f"lon_chan_{i}"
+            )
 
-            value = st.session_state[f"depth_chan_{i}"] if f"depth_chan_{i}" in st.session_state else 0 # otherwise looses previous value if widget hidden
-            chan_depth = st.number_input("__Sensor depth__ (m)", value=value, min_value=-1000, max_value=10000, format="%d", help="Positive value for buried sensors", key=f"depth_chan_{i}")
+            value = st.session_state[f"depth_chan_{i}"] if f"depth_chan_{i}" \
+                in st.session_state else 0
+            chan_depth = st.number_input(
+                "__Sensor depth__ (m)", value=value, min_value=-1000,
+                max_value=10000, format="%d",
+                help="Positive value for buried sensors", key=f"depth_chan_{i}"
+            )
 
             chan_elev = sta.elevation - chan_depth
-            st.write(f"__Sensor elevation__ = {chan_elev} m") # only shows correct value if session_state used in previous widgets
+
+            # only shows correct value if session_state used in prev widgets
+            st.write(f"__Sensor elevation__ = {chan_elev} m")
             if response is not None:
                 st.divider()
-                sensor_str = f"__Sensor__: {sensor.manufacturer} - {sensor.type} ({sensor.description})"
-                datalogger_str = f"__Datalogger__: {datalogger.manufacturer} - {datalogger.type} ({datalogger.description})"
+                sensor_str = (f"__Sensor__: {sensor.manufacturer} - "
+                              f"{sensor.type} ({sensor.description})")
+                datalogger_str = (
+                    f"__Datalogger__: {datalogger.manufacturer} "
+                    f"- {datalogger.type} ({datalogger.description})"
+                )
                 st.write(sensor_str)
                 st.write(datalogger_str)
 
@@ -268,7 +323,7 @@ def build_channel_objects(band_code, source_code, subsource_code, use_old_format
         cha = Channel(
             code=chan_code,
             location_code=loc_code,
-            # Note that these coordinates can differ from the station coordinates.
+            # Note that these coordinates can differ from the stat coords
             latitude=chan_lat,
             longitude=chan_lon,
             elevation=chan_elev,
@@ -277,9 +332,9 @@ def build_channel_objects(band_code, source_code, subsource_code, use_old_format
             equipments=equipments,
             start_date=UTCDateTime(start_date),
             end_date=UTCDateTime(end_date) if end_date is not None else None,
-            #azimuth=0.0,
-            #dip=-90.0,
-            #sample_rate=200
+            # azimuth=0.0,
+            # dip=-90.0,
+            # sample_rate=200
         )
         channel_objs.append(cha)
     return channel_objs
@@ -288,8 +343,8 @@ def build_channel_objects(band_code, source_code, subsource_code, use_old_format
 def get_channel_start_stop():
     cols = st.columns(4)
     start_day = cols[0].date_input('__Channel(s) start date__ (UTC)',
-        value=None)
-    if start_day is None:
+                                   value=None)
+    if not isinstance(start_day, datetime.date):
         st.warning('Start date needed', icon="⚠️")
         st.stop()
     start_time = cols[1].time_input(
@@ -309,7 +364,10 @@ def get_channel_start_stop():
         disabled=True if stop_day is None else False
     )
     start_date = datetime.datetime.combine(start_day, start_time)
-    stop_date = datetime.datetime.combine(stop_day, stop_time) if stop_day is not None else None
+    if isinstance(stop_day, datetime.date):
+        stop_date = datetime.datetime.combine(stop_day, stop_time)
+    else:
+        stop_date = None
     return start_date, stop_date
 
 
@@ -321,10 +379,19 @@ def add_channels_without_duplicates(new_channels):
         if (new_chan.code, new_chan.location_code) not in unique_chans:
             unique_chans.add((new_chan.code, new_chan.location_code))
             st.session_state.saved_channels.append(new_chan)
-            st.toast(f"Channel {new_chan.location_code}_{new_chan.code} added successfully!", icon="✅")
+            st.toast(
+                (f"Channel {new_chan.location_code}_{new_chan.code} "
+                 f"added successfully!"),
+                icon="✅"
+            )
         else:
-            st.toast(f"Channel {new_chan.location_code}_{new_chan.code} not added because it already exists!", icon="⚠️")
+            st.toast(
+                (f"Channel {new_chan.location_code}_{new_chan.code} "
+                 f"not added because it already exists!"),
+                icon="⚠️"
+            )
     return
+
 
 def fetch_resp_units(response):
     input_units = "UNKNOWN"
@@ -335,15 +402,3 @@ def fetch_resp_units(response):
     if i_s and i_s.output_units:
         output_units = i_s.output_units
     return f"{output_units} / ({input_units})"
-
-##################################################
-#class Instrument:
-#    def __init__(self):
-#        self.sensor_keys = None
-#        self.datalogger_keys = None
-#        self.response = None
-#        self.channels = []
-
-#class StationXML:
-#    def __init__(self):
-#        self.params
