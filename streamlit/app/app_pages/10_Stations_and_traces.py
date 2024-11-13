@@ -22,7 +22,7 @@ from utils.trace_view import (
 
 st.header('Stations and traces')  # st.title too big
 
-client = Client("http://seiscomp:8080")  # todo connection test here
+client = Client("http://seiscomp:8080")  # TODO connection test here
 
 
 if "df_stations" not in sstate:
@@ -66,29 +66,33 @@ if "df_stations" not in sstate:
 # # need to test if empty
 
 
-# Map
-m = create_map()
+# Station map
+map = create_map()
 
-col1, col2 = st.columns([0.6, 0.4])
-with col2:
+data_column, map_column = st.columns([0.6, 0.4])
+with map_column:
     st.text("")  # Hack for pseudo alignment of map
-    map_data = st_folium(m, width=get_map_col_width(), returned_objects=[])
+    map_data = st_folium(map, width=get_map_col_width(), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
     # with df very convoluted (could try with updating keys to refresh map
     # select and df select)
 
-tab1, tab2, tab3 = col1.tabs(["Station info", "Trace", "Day plot"])
+station_tab, trace_tab, day_plot_tab = data_column.tabs(
+    ["Stations", "Trace", "Day plot"]
+)
 
 net, sta = None, None
 
-# ****** Station info
-with tab1:
+
+# ****** Station information tab
+with station_tab:
     status_help = (
         "Last data received: 🟢 - under an hour ago; 🟡 - under a day ago; "
         "🔴 - over a day ago; ⚫ - no data"
     )
+    # Display stations as dataframe and get selection events
     event = st.dataframe(
         sstate.df_stations,
         hide_index=True,
@@ -105,15 +109,8 @@ with tab1:
 
     # Station selection in dataframe
     row_index = None
-    if 'selection' in event and 'rows' in event['selection']:
-        row_index = event['selection']['rows']
-    # row_index = event.selection['rows']
-    if not row_index:
-        st.info(
-            "Select station by ticking box in the leftmost column.",
-            icon="ℹ️"
-        )
-    else:
+    if 'selection' in event and 'rows' in event['selection'] and \
+            (row_index := event['selection']['rows']):
         net, sta = sstate.df_stations.iloc[row_index[0]][[
             'Network', 'Station'
         ]]
@@ -121,10 +118,15 @@ with tab1:
             display_channels(net, sta)
         with st.expander('Data availability'):
             display_availabilty(net, sta)
+    else:
+        st.info(
+            "Select station by ticking box in the leftmost column.",
+            icon="ℹ️"
+        )
 
 
 # ****** Trace viewer
-with tab2:
+with trace_tab:
     if sta is None:
         st.write('Select a station in the previous tab.')
     else:
@@ -163,6 +165,9 @@ with tab2:
                         stream=sstate.traces, handle=True, size=(width, height)
                     )
                     fig = waveform.plot_waveform(handle=True)
+                    if fig is None:
+                        st.error("No data to plot.", icon="⚠️")
+                        st.stop()
                     units = fetch_trace_units(sstate.traces[0], resp_remove)
                     fig.add_annotation(
                         text=f"Amplitude ({units})", textangle=-90,
@@ -205,7 +210,7 @@ with tab2:
     # (compressed digital counts).')
 
 # ###### Day plot
-with tab3:  # need indep vars?
+with day_plot_tab:
     if sta is None:
         st.write('Select a station in the previous tab.')
     else:
@@ -261,49 +266,3 @@ with tab3:  # need indep vars?
                     # fig.axes[-1].set_xlabel('Time')
                     # fig.axes[-1].set_ylabel('Counts')
                     st.pyplot(fig)
-
-
-# Side bar selections
-# sstate['net'] = None
-# sstate['sta'] = None
-# sstate['chans'] = set()
-
-# with st.sidebar:
-#    #index_preselect =
-# net_codes[sstate['net']] if sstate['net'] is not None
-# else None
-#    # widget should handle session state
-#    sstate['net'] = st.selectbox('Network', net_codes.keys(),
-# placeholder="Choose a Network")
-#    net = sstate['net']
-#    inv_stations = []
-#    if net is not None:
-#        inv_stations = inv.networks[net_codes[net]].stations
-#    sta_codes = (sta.code for sta in inv_stations)
-#    sstate['sta'] = st.selectbox('Station', sta_codes,
-# placeholder="Choose a Station")
-#    sta = sstate['sta']
-#    inv_detailed = None
-#    if sta is not None:
-#        inv_detailed = client.get_stations(network=net, station=sta,
-# level="channel")
-#    chan_codes = set(
-# chan.code for chan in inv_detailed.networks[0].stations[0]
-# ) if inv_detailed is not None else set()
-#    sstate['chans'] = st.multiselect("Select channel(s)", chan_codes)
-#    chans = sstate['chans']
-
-# Matplot lib plots
-# fig = plt.figure()
-# plt.plot([1, 2, 3], [4, 5, 6])
-# st.pyplot(fig)
-# #traces.plot(fig=fig)
-
-# fig = sstate.traces.plot(handle=True)
-# fig.axes[-1].set_xlabel('Time')
-# fig.axes[-1].set_ylabel('Counts')
-# st.pyplot(fig)
-
-# This below causes logic issue (radio button not showing in fragment, why?)
-# fig_html = mpld3.fig_to_html(fig)
-# components.html(fig_html, height=600)

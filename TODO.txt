@@ -29,19 +29,17 @@
 - interactive xml edit system ? using st df data editor
 - check/debug illegal resp error on some datalog choices
 - revert to offline NRL
-- add auto processings
 - add explicit option to merge traces in MSEED?
 - could add an obspy section plot tab, for seeing an event on different sections at the same time
-- add a dashboard as home page where stations are listed, with a green/yellow/red stoplight depending on last data reception (channels details with hover?)  
 - could propose large trace as an image (pyplot), and small trace as an interactive plotly object
 - watchout margin 120 can give error with resize using cmd +/- (wrap in error catch)
 - mod trace colors
-- plot day with plotly?
 - put progress bars instead of spinner on remove resp when long?
 - should test timeline when avauilability differs by channel
 - add possibility of lowpass or highpass filter only
 
 ## End
-- documentation/readme
+- code doc: module, class, and func level docstrings: https://peps.python.org/pep-0257/#one-line-docstrings
+- github readme
 - error handling
 - freeze versions
