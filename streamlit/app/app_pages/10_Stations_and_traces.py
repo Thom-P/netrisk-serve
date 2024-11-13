@@ -7,14 +7,13 @@ from streamlit import session_state as sstate
 from streamlit_folium import st_folium
 from obspy.clients.fdsn import Client
 
-from utils.obspy_plot_mod import ModifiedWaveformPlotting
 from utils.data_fetch import fetch_stations, get_trace, fetch_latest_data_times
 from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import (
     select_channels_and_dates,
     select_filter_params,
-    fetch_trace_units,
+    plot_traces,
     download_trace,
     preprocess_traces,
 )
@@ -133,11 +132,14 @@ with trace_tab:
         st.markdown(f'## {net}.{sta}')
         loc, chans, start_date, end_date = select_channels_and_dates()
 
+        # Optional filter
         fmin, fmax = None, None
         filt_msg = "Applies linear detrend, taper, and a 4th order " \
             "Butterworth bandpass filter."
         if st.checkbox('Apply filter', help=filt_msg):
             fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
+
+        # Optional response removal
         resp_msg = (
             "The deconvolution involves mean removal, cosine tapering in time"
             " domain (5%), and the use of a water level (60 dB) to clip the "
@@ -158,56 +160,13 @@ with trace_tab:
 
             if sstate.traces is not None:
                 with st.spinner('Loading plot...'):
-                    # nb: width will be adjusted to fit column container
+                    # Width will be auto adjusted to fit column container
                     height = 200 + 300 * len(chans)
-                    width = height
-                    waveform = ModifiedWaveformPlotting(
-                        stream=sstate.traces, handle=True, size=(width, height)
-                    )
-                    fig = waveform.plot_waveform(handle=True)
-                    if fig is None:
-                        st.error("No data to plot.", icon="⚠️")
-                        st.stop()
-                    units = fetch_trace_units(sstate.traces[0], resp_remove)
-                    fig.add_annotation(
-                        text=f"Amplitude ({units})", textangle=-90,
-                        xref='paper', xanchor='right', xshift=-90,
-                        x=0, yref='paper', y=0.5, showarrow=False
-                    )
-                    st.plotly_chart(fig, use_container_width=True, theme=None)
-                    max_npts = waveform.max_npts
-                    st.info(
-                        f"Traces including more than {max_npts} samples "
-                        f"({int(max_npts / 6000)} mins at 100Hz) are plotted "
-                        "using the low resolution min/max method (add ref). "
-                        "To interact with the fully resolved data, reduce the "
-                        "time window.",
-                        icon="ℹ️"
-                    )
+                    plot_traces(sstate.traces, resp_remove, height)
 
                 download_trace(
                     net, sta, loc, chans, start_date, end_date, fmin, fmax
                 )
-
-    # Easier to keep traces separated and download separately?,
-    # could also use a zip archive
-    # for trace in traces:
-    #    id = trace.get_id()
-    #    id
-    #    if fmin is not None and fmax is not None:
-    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}
-    # _bandpassed_{fmin}Hz_{fmax}Hz.mseed' # replace with actual dates
-    #    else:
-    #        fname = f'{id}_{start_date.isoformat()}_{end_date.isoformat()}
-    # .mseed' # replace with actual dates
-    #    file_buff = io.BytesIO()
-    #    trace.write(file_buff, format="MSEED") # select appropriate encoding?
-    # nb: filehandle instead of filename also works!
-    #    # need a unique key otherwise error
-    #    st.download_button(label=f'Download {trace.meta.channel} trace',
-    # data=file_buff, file_name=fname, type="secondary", help='Note that
-    # filtered traces are much larger than their unfiltered counterparts
-    # (compressed digital counts).')
 
 # ###### Day plot
 with day_plot_tab:

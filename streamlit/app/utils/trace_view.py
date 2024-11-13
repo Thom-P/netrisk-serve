@@ -4,6 +4,8 @@ import io
 
 import streamlit as st
 
+from utils.obspy_plot_mod import ModifiedWaveformPlotting
+
 # @st.fragment # this only work if output stored in session state:
 # need to rethink how to handle fragment logic
 
@@ -192,3 +194,32 @@ def preprocess_traces(traces, fmin, fmax, resp_remove):
                 st.error(err, icon="🚨")
                 st.stop()
     return traces
+
+
+def plot_traces(traces, resp_remove, height):
+    # Width will be auto adjusted to fit column container
+    width = height
+    waveform = ModifiedWaveformPlotting(
+        stream=traces, handle=True, size=(width, height)
+    )
+    fig = waveform.plot_waveform(handle=True)
+    if fig is None:
+        st.error("No data to plot.", icon="🚨")
+        st.stop()
+    units = fetch_trace_units(traces[0], resp_remove)
+    fig.add_annotation(
+        text=f"Amplitude ({units})", textangle=-90,
+        xref='paper', xanchor='right', xshift=-90,
+        x=0, yref='paper', y=0.5, showarrow=False
+    )
+    st.plotly_chart(fig, use_container_width=True, theme=None)
+    max_npts = waveform.max_npts
+    st.info(
+        f"Traces including more than {max_npts} samples "
+        f"({int(max_npts / 6000)} mins at 100Hz) are plotted "
+        "using the low resolution min/max method (add ref). "
+        "To interact with the fully resolved data, reduce the "
+        "time window.",
+        icon="ℹ️"
+    )
+    return
