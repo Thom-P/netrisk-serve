@@ -1,5 +1,4 @@
 import io
-import datetime
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +11,7 @@ from utils.station_map import create_map, get_map_col_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import (
     select_channels_and_dates,
+    select_day_plot_params,
     select_filter_params,
     plot_traces,
     download_trace,
@@ -174,30 +174,13 @@ with day_plot_tab:
         st.write('Select a station in the previous tab.')
     else:
         st.markdown(f'## {net}.{sta}')
-
-        col31, col32 = st.columns(2)
-        loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
-        loc = col31.selectbox("Select location", loc_codes, key="loc_day_plot")
-        chan_codes = sstate.channel_df.query(
-            'Location == @loc'
-        )['Channel'].unique().tolist()
-        chan = col32.selectbox("Select channel", chan_codes)
-        # sstate['chans'] = st.multiselect("Select channel(s)", chan_codes)
-        # chans = sstate['chans']
-
-        day = st.date_input('Day', value="today")
-        if not isinstance(day, datetime.date):
-            st.error("Please select a valid date.")
-            st.stop()
-        start_date = datetime.datetime(day.year, day.month, day.day)
-        end_date = start_date + datetime.timedelta(hours=24)
-
+        loc, chan, start_date, end_date = select_day_plot_params()
         fmin, fmax = None, None
         filt_msg = "Applies linear detrend, taper, and a 4th order " \
             "Butterworth bandpass filter."
         if st.checkbox('Apply day filter', help=filt_msg):
             fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
-        #   # add validity check vs fs
+        # TODO: add validity check vs fs
 
         if "day_traces" not in sstate:
             sstate.day_traces = None
@@ -211,13 +194,13 @@ with day_plot_tab:
                     sstate.day_traces = None
                     st.stop()
 
-            traces.detrend("linear")  # otherwise cannot see anything
             if fmin is not None and fmax is not None:
-                with st.spinner('Filtering...'):
-                    traces.taper(max_percentage=0.05)
-                    traces.filter("bandpass", freqmin=fmin, freqmax=fmax)
+                sstate.day_traces = preprocess_traces(traces, fmin, fmax,
+                                                      resp_remove=False)
+            else:
+                traces.detrend("linear")  # Necessary for decent visualization
+                sstate.day_traces = traces
             # traces.merge(method=1)
-            sstate.day_traces = traces
             # add info about these preprocesses
             if sstate.day_traces is not None:
                 with st.spinner('Loading plot...'):

@@ -3,6 +3,7 @@ import copy
 import io
 
 import streamlit as st
+from streamlit import session_state as sstate
 
 from utils.obspy_plot_mod import ModifiedWaveformPlotting
 
@@ -11,14 +12,13 @@ from utils.obspy_plot_mod import ModifiedWaveformPlotting
 
 
 def select_channels_and_dates():
-    col1, col2 = st.columns(2)
-    loc_codes = sorted(
-        st.session_state.channel_df['Location'].unique().tolist()
-    )
-    loc = col1.selectbox("Select location", loc_codes)  # add 2 digit format
-    sub_df = st.session_state.channel_df.query('Location == @loc')
+    loc_column, chans_column = st.columns(2)
+    loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
+    # TODO: add 2 digit format
+    loc = loc_column.selectbox("Select location", loc_codes)
+    sub_df = sstate.channel_df.query('Location == @loc')
     chan_codes = sub_df['Channel'].unique().tolist()
-    chans = col2.multiselect("Select channel(s)", chan_codes)
+    chans = chans_column.multiselect("Select channel(s)", chan_codes)
 
     col3, col4, col5, col6 = st.columns(4)
     start_day = col3.date_input('Start Date', value="default_value_today")
@@ -30,14 +30,9 @@ def select_channels_and_dates():
     end_day = col5.date_input(
         'End Date',
         value="default_value_today",
-        min_value=None,
-        max_value=None,
         key=None,
         help=None,
-        on_change=None,
         format="YYYY/MM/DD",
-        disabled=False,
-        label_visibility="visible"
     )
     end_time = col6.time_input(
         'End Time',
@@ -223,3 +218,21 @@ def plot_traces(traces, resp_remove, height):
         icon="ℹ️"
     )
     return
+
+
+def select_day_plot_params():
+    loc_column, chan_column = st.columns(2)
+    loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
+    loc = loc_column.selectbox("Select location", loc_codes, key="loc_dayplot")
+    chan_codes = sstate.channel_df.query(
+        'Location == @loc'
+    )['Channel'].unique().tolist()
+    chan = chan_column.selectbox("Select channel", chan_codes)
+
+    day = st.date_input('Day', value="today")
+    if not isinstance(day, datetime.date):
+        st.error("Please select a valid date.")
+        st.stop()
+    start_date = datetime.datetime(day.year, day.month, day.day)
+    end_date = start_date + datetime.timedelta(hours=24)
+    return loc, chan, start_date, end_date
