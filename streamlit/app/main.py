@@ -16,23 +16,28 @@ st.logo(sidebar_logo, icon_image=main_body_logo)
 apply_style_tweaks()
 
 # Pages declaration
-stat_and_traces = st.Page("app_pages/10_Stations_and_traces.py",
+stat_and_traces = st.Page("app_pages/stations_and_traces.py",
                           title="Stations and traces", icon="📌")
-add_xml = st.Page("app_pages/20_Add_station_XML.py",
+add_xml = st.Page("app_pages/add_station_XML.py",
                   title="Create new station XML", icon="✏️")
-list_xml = st.Page("app_pages/21_List_station_XML.py",
+list_xml = st.Page("app_pages/list_station_XML.py",
                    title="Manage XML files", icon="📁")
-ftp_accounts = st.Page("app_pages/30_Station_FTP_account.py",
+ftp_accounts = st.Page("app_pages/station_FTP_account.py",
                        title="Manage FTP accounts", icon="📡")
 
 # Get the current page through navigation and run the associated script
 # (first page runs as default)
 pg = st.navigation(
         [stat_and_traces, ftp_accounts, list_xml, add_xml]
+        # or to use subcategories:
         # {
         #     "Stations and Traces": [stat_and_traces],
         #     "Station XML files": [add_xml, list_xml],
         #     "FTP accounts": [ftp_accounts],
         # }
     )
-pg.run()
+try:
+    pg.run()
+except Exception as e:
+    st.error(f"Unexpected error: {e}", icon="🚨")
+    st.stop()

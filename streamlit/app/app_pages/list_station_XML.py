@@ -94,4 +94,4 @@ if cols[1].button("Download", disabled=is_disabled):
         download_xml_file(df['File name'].iloc[selected_rows[0]])
 
 if cols[2].button("Create new"):
-    st.switch_page("app_pages/20_Add_station_XML.py")
+    st.switch_page("app_pages/add_station_XML.py")
