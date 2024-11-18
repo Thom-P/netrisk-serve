@@ -20,10 +20,13 @@ from utils.trace_view import (
 
 
 st.header('Stations and traces')  # st.title too big
+try:
+    client = Client("http://seiscomp:8080")
+except Exception as e:
+    st.error(f"Connection error to FDSN server: {e}", icon="🚨")
+    st.stop()
 
-client = Client("http://seiscomp:8080")  # TODO connection test here
-
-
+# Fetch stations info and populate dataframe if not already done
 if "df_stations" not in sstate:
     stations_txt = fetch_stations()
     if stations_txt is None:
@@ -136,7 +139,7 @@ with trace_tab:
         fmin, fmax = None, None
         filt_msg = "Applies linear detrend, taper, and a 4th order " \
             "Butterworth bandpass filter."
-        if st.checkbox('Apply filter', help=filt_msg):
+        if st.checkbox('Apply filter', help=filt_msg, key='trace_filter_box'):
             fmin, fmax = select_filter_params(loc, chans, key="trace_filter")
 
         # Optional response removal
@@ -168,17 +171,19 @@ with trace_tab:
                     net, sta, loc, chans, start_date, end_date, fmin, fmax
                 )
 
-# ###### Day plot
+# ****** Day plot
 with day_plot_tab:
     if sta is None:
         st.write('Select a station in the previous tab.')
     else:
         st.markdown(f'## {net}.{sta}')
         loc, chan, start_date, end_date = select_day_plot_params()
+        st.info("A linear detrend is applied to all traces for better \
+                visualization.", icon="ℹ️")
         fmin, fmax = None, None
         filt_msg = "Applies linear detrend, taper, and a 4th order " \
             "Butterworth bandpass filter."
-        if st.checkbox('Apply day filter', help=filt_msg):
+        if st.checkbox('Apply filter', help=filt_msg, key="day_filter_box"):
             fmin, fmax = select_filter_params(loc, [chan], key="day_filter")
         # TODO: add validity check vs fs
 
@@ -200,11 +205,15 @@ with day_plot_tab:
             else:
                 traces.detrend("linear")  # Necessary for decent visualization
                 sstate.day_traces = traces
-            # traces.merge(method=1)
-            # add info about these preprocesses
             if sstate.day_traces is not None:
                 with st.spinner('Loading plot...'):
+                    date_str = start_date.strftime("%A %d %B %Y")
+                    # prev_col, date_col, next_col = st.columns(3)  #TODO?
+                    # if prev_col.button('◀️'):
+                    st.markdown(
+                        f'<div style="text-align: center;">{date_str}</div>',
+                        unsafe_allow_html=True
+                    )
+                    # if next_col.button('▶️')
                     fig = sstate.day_traces.plot(handle=True, type='dayplot')
-                    # fig.axes[-1].set_xlabel('Time')
-                    # fig.axes[-1].set_ylabel('Counts')
                     st.pyplot(fig)
