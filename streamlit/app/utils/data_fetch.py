@@ -14,9 +14,9 @@ def fetch_stations():
         'network=*&format=text&level=station'
     try:
         data = requests.get(url)
-    except FDSNNoDataException:
-        st.warning('No station found.', icon="⚠️")
-        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request error: {e}", icon="🚨")
+        st.stop()
     if data.status_code != 200:
         st.warning(data.reason, icon="⚠️")
         return None
@@ -31,9 +31,13 @@ def fetch_channels(net, sta):
         f'&station={sta}' \
         f'&format=text' \
         f'&level=channel'
-    data = requests.get(url)
+    try:
+        data = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request error: {e}", icon="🚨")
+        st.stop()
     if data.status_code != 200:
-        st.write(data.reason)
+        st.warning(data.reason, icon="⚠️")
         return None
     text = data.content.decode('utf-8')
     return text
@@ -41,13 +45,15 @@ def fetch_channels(net, sta):
 
 # @st.cache_data
 def fetch_availability(net, sta):
-    # f'starttime=2024-09-01T00%3A00%3A00' \
-    # f'&endtime=2024-09-27T00%3A00%3A00' \
     url = f'http://seiscomp:8080/fdsnws/availability/1/query?' \
           f'&network={net}' \
           f'&station={sta}' \
           f'&merge=overlap,samplerate,quality'
-    data = requests.get(url)
+    try:
+        data = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request error: {e}", icon="🚨")
+        st.stop()
     if data.status_code != 200:
         st.write(data.reason)
         return None
@@ -58,7 +64,11 @@ def fetch_availability(net, sta):
 def fetch_latest_data_times():
     url = 'http://seiscomp:8080/fdsnws/availability/1/extent?' \
           'network=*&station=*&merge=samplerate,quality'
-    data = requests.get(url)
+    try:
+        data = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request error: {e}", icon="🚨")
+        st.stop()
     if data.status_code != 200:
         st.write(data.reason)
         return None
@@ -105,8 +115,7 @@ def get_trace(client, net, sta, loc, chans, start_date, end_date):
     except FDSNNoDataException:
         st.warning('No data found for the requested period.', icon="⚠️")
         return None
-    except Exception as e:
-        st.exception(e)
-        # print(f"Unexpected {err=}, {type(err)=}")
-        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request error: {e}", icon="🚨")
+        st.stop()
     return waveform_stream
