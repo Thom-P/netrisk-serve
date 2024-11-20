@@ -12,7 +12,7 @@ from utils.data_fetch import (
     fetch_latest_data_times
 )
 from utils.station_map import create_map, get_map_column_width
-from utils.station_infos import display_channels, display_availabilty
+from utils.station_infos import display_channels, display_availability
 from utils.trace_view import (
     select_channels_and_dates,
     select_day_plot_params,
@@ -78,7 +78,8 @@ map = create_map()
 data_column, map_column = st.columns([0.6, 0.4])
 with map_column:
     st.text("")  # Hack for pseudo alignment of map
-    map_data = st_folium(map, width=get_map_column_width(), returned_objects=[])
+    map_data = st_folium(map, width=get_map_column_width(),
+                         returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
@@ -123,7 +124,7 @@ with station_tab:
         with st.expander('Channels'):
             display_channels(net, sta)
         with st.expander('Data availability'):
-            display_availabilty(net, sta)
+            display_availability(net, sta)
     else:
         st.info(
             "Select station by ticking box in the leftmost column.",

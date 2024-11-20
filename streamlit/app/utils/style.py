@@ -1,4 +1,4 @@
-"""Module to apply custom style tweaks on streamlit widgets"""
+"""Module to apply custom style tweaks on streamlit widgets."""
 
 import streamlit as st
 

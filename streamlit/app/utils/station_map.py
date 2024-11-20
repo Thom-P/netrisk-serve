@@ -1,9 +1,15 @@
+"""Module to create the folium map of seismic stations."""
+
 import streamlit as st
 import folium
 from streamlit_dimensions import st_dimensions
 
 
 def create_map():
+    """Create a folium map centered on the seismic stations.
+
+    Adjust scale to fit all stations.
+    """
     map_center = st.session_state.df_stations[['Latitude', 'Longitude']].mean(
         ).values.tolist()
     m = folium.Map(map_center)  # create map centered on network
@@ -30,18 +36,24 @@ def create_map():
     return m
 
 
-def get_icon_div(label):
-    div = folium.DivIcon(html=(
-        '<svg height="50" width="50">'
-        '<polygon points="5,5 45,5 25,45" fill="red" stroke="black" />'
-        '<text x="11" y="15" font-size="10px" font-weight="bold"'
-        'fill="black">' + label + '</text>'  # need to sanitize label?
-        '</svg>'
-    ))
-    return div
+# def get_icon_div(label):
+#     div = folium.DivIcon(html=(
+#         '<svg height="50" width="50">'
+#         '<polygon points="5,5 45,5 25,45" fill="red" stroke="black" />'
+#         '<text x="11" y="15" font-size="10px" font-weight="bold"'
+#         'fill="black">' + label + '</text>'  # need to sanitize label?
+#         '</svg>'
+#     ))
+#     return div
 
 
 @st.fragment
 def get_map_column_width():
+    """Get the width of the column containing the map.
+    
+    Nb: the call to the st_dimensions module seems to trigger a rerun
+    of the app, and can thus interfere with the plots. 
+    (Wrapped in fragment as a workaround.)
+    """
     width = st_dimensions(key="map_col")
     return width
