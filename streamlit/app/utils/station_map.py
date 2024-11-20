@@ -42,6 +42,6 @@ def get_icon_div(label):
 
 
 @st.fragment
-def get_map_col_width():
+def get_map_column_width():
     width = st_dimensions(key="map_col")
     return width

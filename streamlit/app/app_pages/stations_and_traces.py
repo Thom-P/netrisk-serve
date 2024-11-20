@@ -1,21 +1,25 @@
 import io
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 from streamlit import session_state as sstate
 from streamlit_folium import st_folium
 from obspy.clients.fdsn import Client
 
-from utils.data_fetch import fetch_stations, get_trace, fetch_latest_data_times
-from utils.station_map import create_map, get_map_col_width
+from utils.data_fetch import (
+    fetch_stations,
+    fetch_traces,
+    fetch_latest_data_times
+)
+from utils.station_map import create_map, get_map_column_width
 from utils.station_infos import display_channels, display_availabilty
 from utils.trace_view import (
     select_channels_and_dates,
     select_day_plot_params,
     select_filter_params,
+    preprocess_traces,
     plot_traces,
     download_trace,
-    preprocess_traces,
 )
 
 
@@ -74,7 +78,7 @@ map = create_map()
 data_column, map_column = st.columns([0.6, 0.4])
 with map_column:
     st.text("")  # Hack for pseudo alignment of map
-    map_data = st_folium(map, width=get_map_col_width(), returned_objects=[])
+    map_data = st_folium(map, width=get_map_column_width(), returned_objects=[])
     # call to render Folium map in Streamlit, but don't get any data back
     # from the map (so that it won't rerun the app when the user interacts)
     # disabled interactivity because absence of on_click callable makes synchro
@@ -152,7 +156,7 @@ with trace_tab:
 
         if st.button('View Trace', disabled=False if chans else True):
             with st.spinner('Fetching traces...'):
-                traces = get_trace(
+                traces = fetch_traces(
                     client, net, sta, loc, ','.join(chans),
                     start_date, end_date
                 )
@@ -192,7 +196,7 @@ with day_plot_tab:
         disable_day_plot = True if chan is None else False
         if st.button('View day plot', disabled=disable_day_plot):
             with st.spinner('Fetching traces...'):
-                traces = get_trace(
+                traces = fetch_traces(
                     client, net, sta, loc, chan, start_date, end_date
                 )
                 if traces is None:

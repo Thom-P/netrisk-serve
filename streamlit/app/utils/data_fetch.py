@@ -1,3 +1,9 @@
+"""Data and metadata fetching module for the local Seiscomp (FDSNWS) server.
+
+Fetch stations, channels, traces, and data availability from
+the local Seiscomp (FDSNWS) server through HTTP requests (Docker network).
+"""
+
 import requests
 import io
 import datetime
@@ -7,13 +13,15 @@ from obspy.clients.fdsn.header import FDSNNoDataException
 import streamlit as st
 import pandas as pd
 
+BASE_URL = 'http://seiscomp:8080/fdsnws'
+
 
 # @st.cache_data  # use obspy client instead?
 def fetch_stations():
-    url = 'http://seiscomp:8080/fdsnws/station/1/query?' \
-        'network=*&format=text&level=station'
+    """Fetch all stations from the Seiscomp FDSNWS server."""
+    suffix = '/fdsnws/station/1/query?network=*&format=text&level=station'
     try:
-        data = requests.get(url)
+        data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:
         st.error(f"Request error: {e}", icon="🚨")
         st.stop()
@@ -26,13 +34,14 @@ def fetch_stations():
 
 # @st.cache_data
 def fetch_channels(net, sta):
-    url = f'http://seiscomp:8080/fdsnws/station/1/query?' \
-        f'network={net}' \
-        f'&station={sta}' \
-        f'&format=text' \
-        f'&level=channel'
+    """Fetch all channels for a given station."""
+    suffix = f'/station/1/query?' \
+             f'network={net}' \
+             f'&station={sta}' \
+             f'&format=text' \
+             f'&level=channel'
     try:
-        data = requests.get(url)
+        data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:
         st.error(f"Request error: {e}", icon="🚨")
         st.stop()
@@ -45,12 +54,13 @@ def fetch_channels(net, sta):
 
 # @st.cache_data
 def fetch_availability(net, sta):
-    url = f'http://seiscomp:8080/fdsnws/availability/1/query?' \
-          f'&network={net}' \
-          f'&station={sta}' \
-          f'&merge=overlap,samplerate,quality'
+    """Fetch data availability for a given station."""
+    suffix = f'/availability/1/query?' \
+             f'&network={net}' \
+             f'&station={sta}' \
+             f'&merge=overlap,samplerate,quality'
     try:
-        data = requests.get(url)
+        data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:
         st.error(f"Request error: {e}", icon="🚨")
         st.stop()
@@ -62,10 +72,18 @@ def fetch_availability(net, sta):
 
 
 def fetch_latest_data_times():
-    url = 'http://seiscomp:8080/fdsnws/availability/1/extent?' \
+    """Fetch the most recent data timestamps for each station.
+
+    Return a dataframe containing a color-coded status depending
+    on the time elapsed since the most recent data timestamp:
+    - Green light if < 1 hour
+    - Yellow light if < 1 day
+    - Red light if > 1 day 
+    """
+    suffix = '/availability/1/extent?' \
           'network=*&station=*&merge=samplerate,quality'
     try:
-        data = requests.get(url)
+        data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:
         st.error(f"Request error: {e}", icon="🚨")
         st.stop()
@@ -101,7 +119,8 @@ def fetch_latest_data_times():
 
 
 # @st.cache_data(show_spinner=False)
-def get_trace(client, net, sta, loc, chans, start_date, end_date):
+def fetch_traces(client, net, sta, loc, chans, start_date, end_date):
+    """Fetch traces for a given station, location, channels, and time frame."""
     try:
         waveform_stream = client.get_waveforms(
             net,
