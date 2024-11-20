@@ -1,3 +1,8 @@
+"""Module to handle trace selection and plotting in Streamlit app.
+
+TODO write details after refactor.
+"""
+
 import datetime
 import copy
 import io
@@ -12,6 +17,7 @@ from utils.obspy_plot_mod import ModifiedWaveformPlotting
 
 
 def select_channels_and_dates():
+    """Get user input for location, channel(s), and time window."""
     loc_column, chans_column = st.columns(2)
     loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
     # TODO: add 2 digit format
@@ -52,10 +58,14 @@ def select_channels_and_dates():
 
 
 def select_filter_params(loc, chans, key):
-    # get min fs from all selected channels
+    """Get user input for bandpass filter parameters.
+
+    Allow selection in Frequency or Period units.
+    """
+    # Get min fs from all selected channels
     sub_df = st.session_state.channel_df.query('Location == @loc')
     min_fs = sub_df[sub_df['Channel'].isin(chans)]['SampleRate'].min()
-    # should test
+    # TODO should test
 
     unit = st.radio(
         "Units",
@@ -65,29 +75,29 @@ def select_filter_params(loc, chans, key):
         key=key + '_units'
     )
 
-    col27, col28 = st.columns(2)
+    left_column, right_column = st.columns(2)
     if unit == "Frequency":
-        fmin = col27.number_input(
+        fmin = left_column.number_input(
                     'Lower Freq. (Hz)',
                     min_value=0.,
                     max_value=min_fs * 0.45,
                     key=key + '_fmin'
                 )
-        fmax = col28.number_input(
+        fmax = right_column.number_input(
                     'Higher Freq. (Hz)',
                     min_value=fmin,
                     max_value=min_fs * 0.45,
                     key=key + '_fmax'
                 )
     else:
-        tmin = col27.number_input(
+        tmin = left_column.number_input(
                     'Lower Period (s)',
                     min_value=1. / (0.45 * min_fs),
                     max_value=100000.,
                     key=key + '_tmin'
         )
 
-        tmax = col28.number_input(
+        tmax = right_column.number_input(
             'Upper Period (s)',
             min_value=tmin,
             max_value=100000.,
@@ -103,6 +113,7 @@ def select_filter_params(loc, chans, key):
 @st.fragment
 def download_trace(net, sta, loc, chans, start_date,
                    end_date, fmin=None, fmax=None):
+    """Download traces as MSEED, SAC, or SEGY file."""
     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
     trace_merged = None
     if file_format == "SAC":
@@ -161,6 +172,12 @@ def download_trace(net, sta, loc, chans, start_date,
 
 
 def fetch_trace_units(trace, is_resp_removed):
+    """Get the proper units of the trace data.
+
+    If the instrument response has been removed, the physical
+    input units are returned. Otherwise, the output units are returned
+    (usually digital counts).
+    """
     instr_sens = trace._get_response(None).instrument_sensitivity
     if instr_sens is None:
         return "Unknown"
@@ -171,6 +188,7 @@ def fetch_trace_units(trace, is_resp_removed):
 
 
 def preprocess_traces(traces, fmin, fmax, resp_remove):
+    """Preprocess traces (filter and/or response removal) before plotting."""
     if fmin is not None and fmax is not None:
         with st.spinner('Filtering...'):
             traces.detrend("linear")
@@ -192,6 +210,10 @@ def preprocess_traces(traces, fmin, fmax, resp_remove):
 
 
 def plot_traces(traces, resp_remove, height):
+    """Plot traces using a modified Obspy plotting class and Plotly.
+
+    TODO detail
+    """
     # Width will be auto adjusted to fit column container
     width = height
     waveform = ModifiedWaveformPlotting(
