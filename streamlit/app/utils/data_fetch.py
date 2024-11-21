@@ -19,7 +19,7 @@ BASE_URL = 'http://seiscomp:8080/fdsnws'
 # @st.cache_data  # use obspy client instead?
 def fetch_stations():
     """Fetch all stations from the Seiscomp FDSNWS server."""
-    suffix = '/fdsnws/station/1/query?network=*&format=text&level=station'
+    suffix = '/station/1/query?network=*&format=text&level=station'
     try:
         data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:
@@ -78,10 +78,10 @@ def fetch_latest_data_times():
     on the time elapsed since the most recent data timestamp:
     - Green light if < 1 hour
     - Yellow light if < 1 day
-    - Red light if > 1 day 
+    - Red light if > 1 day
     """
     suffix = '/availability/1/extent?' \
-          'network=*&station=*&merge=samplerate,quality'
+             'network=*&station=*&merge=samplerate,quality'
     try:
         data = requests.get(BASE_URL + suffix)
     except requests.exceptions.RequestException as e:

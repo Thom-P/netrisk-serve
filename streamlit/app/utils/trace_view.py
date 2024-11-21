@@ -117,21 +117,20 @@ def download_trace(net, sta, loc, chans, start_date,
     file_format = st.radio("Select file format", ["MSEED", "SAC", "SEGY"])
     trace_merged = None
     if file_format == "SAC":
-        # should only be one trace, and with gap value filled
+        # Should only be one trace, and with gap value filled.
         if len(chans) > 1:
             st.info("SAC files can only contain single component data.",
                     icon="ℹ️")
             return
-
         st.info(
             "If present, overlapping traces are merged using the lastest "
             "of the redundant values, and gaps are filled with 0.", icon="ℹ️"
         )
         trace_merged = copy.deepcopy(st.session_state.traces)
-        # in place op, method use most recent value when overlap,
-        # and 0 as fill value
+        # In place operation, method use most recent value when overlap.
         trace_merged.merge(method=1, fill_value=0)
     # Save all Traces into 1 file?
+
     # should get actual earliest start and latest end times
     chans_str = '_'.join(chans)
     stream_id = f'{net}.{sta}.{loc}.{chans_str}'
@@ -159,7 +158,6 @@ def download_trace(net, sta, loc, chans, start_date,
             st.stop()
         # raise
 
-    # select appropriate encoding?
     dl_msg = 'Note that filtered traces are much larger than their ' \
         'unfiltered counterparts (compressed digital counts).'
     st.download_button(
@@ -212,9 +210,10 @@ def preprocess_traces(traces, fmin, fmax, resp_remove):
 def plot_traces(traces, resp_remove, height):
     """Plot traces using a modified Obspy plotting class and Plotly.
 
-    TODO detail
+    One subplot per channel. Height is fixed and width is auto-adjusted to
+    fit the container.
     """
-    # Width will be auto adjusted to fit column container
+    # Nb: width will be auto adjusted to fit column container
     width = height
     waveform = ModifiedWaveformPlotting(
         stream=traces, handle=True, size=(width, height)
@@ -233,19 +232,22 @@ def plot_traces(traces, resp_remove, height):
     max_npts = waveform.max_npts
     st.info(
         f"Traces including more than {max_npts} samples "
-        f"({int(max_npts / 6000)} mins at 100Hz) are plotted "
-        "using the low resolution min/max method (add ref). "
-        "To interact with the fully resolved data, reduce the "
-        "time window.",
+        f"({int(max_npts / 6000)} mins at 100Hz) are plotted using the low "
+        "resolution [min/max](https://docs.obspy.org/packages/autogen/"
+        "obspy.imaging.waveform.WaveformPlotting.html#obspy.imaging.waveform."
+        "WaveformPlotting.__plot_min_max) nethod. To interact with the fully "
+        "resolved data, reduce the time window.",
         icon="ℹ️"
     )
     return
 
 
 def select_day_plot_params():
+    """Get user input for location, channel, and day for day plot."""
     loc_column, chan_column = st.columns(2)
     loc_codes = sorted(sstate.channel_df['Location'].unique().tolist())
     loc = loc_column.selectbox("Select location", loc_codes, key="loc_dayplot")
+
     chan_codes = sstate.channel_df.query(
         'Location == @loc'
     )['Channel'].unique().tolist()
