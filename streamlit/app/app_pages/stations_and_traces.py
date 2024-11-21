@@ -1,3 +1,15 @@
+"""Application main page, for stations inventory and traces visualization.
+
+Divide screen into two columns, provide three tabs on left column:
+- Stations: display a table of stations info and status. Upon station
+selection, show detailed information about channels and data availability.
+- Trace: get user input for location, channel(s), and time window.
+Allow optional filtering and response removal. Display traces in interactive
+plot. Allow trace download in various formats.
+- Day plot: get user input for location, single channel, and day. Show
+corresponding a day plot (24h of data in one figure).
+Display a map of all stations on the right column.
+"""
 import io
 
 import pandas as pd

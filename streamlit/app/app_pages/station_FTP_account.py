@@ -1,10 +1,16 @@
+"""Page to manage the FTP accounts of the netrisk stations.
+
+Display a list of all FTP accounts. Allow to create and delete accounts.
+The accounts are stored in a BerkeleyDB database on the server. They are
+needed for authentication before upload of the raw seismic data.
+"""
 import os
 from pathlib import Path
 
-from passlib.hash import sha512_crypt
 import streamlit as st
 import pandas as pd
 import berkeleydb
+from passlib.hash import sha512_crypt
 
 from utils.dataframe import dataframe_with_selections
 
@@ -17,14 +23,14 @@ if 'user_db' not in st.session_state:
     st.session_state['user_db'] = user_db
 users = st.session_state.user_db.items()
 
+# Create and display the user (account) table
 df = pd.DataFrame(users, columns=('Login', 'Password hash'),  dtype=str)
-# event = st.dataframe(data=df, hide_index=True, on_select='rerun')
-
 selection = dataframe_with_selections(df)
 
 
 @st.dialog("Confirmation required")
 def delete_accounts(rows):
+    """Delete the selected FTP accounts from the server upon confirmation."""
     st.write("The following account(s) will be deleted on the server:")
     st.write(', '.join(df['Login'].iloc[rows].tolist()))
     if st.button("Delete", key='confirm_delete_accounts'):
@@ -38,6 +44,15 @@ def delete_accounts(rows):
 
 @st.dialog("New FTP account creation")
 def create_account():
+    """Create a new FTP account on the server.
+
+    Prompt the user for a login and password. The login must be unique and
+    have at least 4 characters. The password must have at least 6 characters.
+    Use SHA-512 to encrypt the password. Add the login and password hash to
+    the BerkeleyDB database. Create a directory for the new station data.
+    Touch the RELOAD file to trigger the incron daemon to reload its table
+    (and watch the newly created directory).
+    """
     login = st.text_input("Login:", max_chars=32)
     if len(login) < 4:
         st.warning("Logins should have at least 4 characters")
@@ -67,12 +82,7 @@ def create_account():
 selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
 
-
-# if users:
-#    st.info('Tick boxes in the leftmost column to select FTP accounts.',
-# icon="ℹ️")
-
-# hack to have buttons side by side without big gap
+# Hack to have buttons side by side without big gap
 cols = st.columns([1, 1, 5])
 if cols[0].button("Delete", key='delete_ftp_accounts', disabled=is_disabled):
     delete_accounts(selected_rows)
