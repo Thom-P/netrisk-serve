@@ -1,6 +1,12 @@
+"""Page to manage the station XML files.
+
+Display a table of station XML files, including file name, last modified date,
+and size. Provide options to download, delete, or navigate to the XML file
+creation page.
+"""
 import os
-from datetime import datetime
 import io
+from datetime import datetime
 
 import zipfile
 import streamlit as st
@@ -22,31 +28,19 @@ df = pd.DataFrame(
     xml_files,
     columns=['File name', 'Last modified (UTC)', 'Size (kB)']
 )
-# event = st.dataframe(df, hide_index=True, on_select='rerun',
-#     column_config={
-#         #'Size': st.column_config.NumberColumn(format="%.4f"),
-#         'Last modified (UTC)': st.column_config.DatetimeColumn(
-#                     format="DD MMM YYYY, HH:mm",
-#                     step=60,
-#                 ),
-#     })
-# selected_rows = event.selection['rows']
-# if xml_files:
-#    st.info('Tick boxes in the leftmost column to select station files.',
-# icon="ℹ️")
-
 selection = dataframe_with_selections(df)
 
 
 @st.dialog("Confirmation required")
 def delete_files(rows):
+    """Delete the selected XML files upon confirmation."""
     st.write("The following file(s) will be deleted on the server:")
     st.write(', '.join(df['File name'].iloc[rows].tolist()))
     if st.button("Delete", key='delete_xml'):
         for row in rows:
             os.remove('/data/xml/' + df['File name'].iloc[row])
         if 'stations_txt' in st.session_state:
-            del st.session_state['stations_txt']  # to allow update
+            del st.session_state['stations_txt']  # For update of Home page
         if 'df_stations' in st.session_state:
             del st.session_state['df_stations']
         st.rerun()
@@ -54,6 +48,7 @@ def delete_files(rows):
 
 @st.dialog("Download archive")
 def download_xml_archive(files):
+    """Download a zip archive of multiple XML files."""
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, mode='a',
                          compression=zipfile.ZIP_DEFLATED,
@@ -70,6 +65,7 @@ def download_xml_archive(files):
 
 @st.dialog("Download XML file")
 def download_xml_file(fname):
+    """Download a single XML file."""
     with open('/data/xml/' + fname, 'rt') as file:
         st.download_button(
             label="Download",
@@ -82,7 +78,7 @@ def download_xml_file(fname):
 selected_rows = selection['selected_rows_indices']
 is_disabled = len(selected_rows) == 0
 
-# hack to have buttons side by side without big gap
+# Hack to have buttons side by side without big gap
 cols = st.columns([1, 1, 1, 4])
 if cols[0].button("Delete", disabled=is_disabled):
     delete_files(selected_rows)
