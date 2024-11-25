@@ -1,10 +1,15 @@
+"""Module for utility functions related to dataframes.
+
+The dataframe_with_selections function is a workaround of the standard
+streamlit st_dataframe to keep the selection tickbox visible.
+"""
 import streamlit as st
 import numpy as np
 
 
-# workaround to keep tickbox visible
 # (https://github.com/streamlit/streamlit/issues/688)
 def dataframe_with_selections(df, column_config={}):
+    """Display a dataframe with a selection tickbox always visible."""
     df_with_selections = df.copy()
     df_with_selections.insert(0, "Select", False)
     column_config["Select"] = st.column_config.CheckboxColumn(required=True)

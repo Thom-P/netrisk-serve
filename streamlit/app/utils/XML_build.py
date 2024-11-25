@@ -1,3 +1,17 @@
+"""Module for utility functions to build StationXML files from user input.
+
+- get station parameters
+- build Obspy Station and Network objects
+- get channel codes
+- choose sensor/datalogger device
+- build custom geophone response
+- build custom datalogger response
+- build Obspy channel objects
+- get channel start and stop dates
+- add channels without duplicates into session state saved list
+- fetch response units from instrument sensitivity object
+"""
+
 import datetime
 
 import streamlit as st
@@ -17,6 +31,15 @@ from utils.FDSN_codes import (
 
 
 def get_station_parameters():
+    """Get a valid user input for the following station parameters:
+
+    - Network code
+    - Station code
+    - Station latitude
+    - Station longitude
+    - Ground surface elevation
+    - Station site name
+    """
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
 
@@ -64,8 +87,10 @@ def get_station_parameters():
 
 
 def is_valid_code(code, valid_chars):
-    # Following norm:
-    # http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
+    """Check network and station code validity following FDSN norm
+
+    http://docs.fdsn.org/projects/source-identifiers/en/v1.0/definition.html
+    """
     if len(code) < 1 or len(code) > 8:
         return False
     if any(c not in valid_chars for c in code):
@@ -75,6 +100,7 @@ def is_valid_code(code, valid_chars):
 
 def build_station_and_network_objects(net_code, sta_code, lat,
                                       lon, elev, site):
+    """Build Obspy Station and Network objects from parameters"""
     sta = Station(
             code=sta_code,
             latitude=lat,
@@ -87,7 +113,8 @@ def build_station_and_network_objects(net_code, sta_code, lat,
 
 
 def get_channel_codes():
-    cols2 = st.columns(3)
+    """Get user input for channel codes from FDSN code sets"""
+    cols = st.columns(3)
     code_dicts = (band_codes, source_codes, subsource_codes)
     labels = (
         ("__Band code__ - fs: sample rate (Hz); Tc: lower period bound "
@@ -97,7 +124,7 @@ def get_channel_codes():
     )
     code_choices = []
     for i, code_dict in enumerate(code_dicts):
-        code = cols2[i].selectbox(
+        code = cols[i].selectbox(
             labels[i],
             code_dict,
             index=None,
@@ -111,10 +138,13 @@ def get_channel_codes():
 
 
 def choose_device(device_dict):
-    # Device choice (sensor or datalogger)
-    # todo make sure max depth is not greater than 6
-    # cols = st.columns(6, vertical_alignment="bottom")
-    n_cols = 6  # todo: solve wrap if goes beyond 6
+    """Get user selection for sensor or datalogger device.
+
+    The device manufacturer, model, and parameters are sequentially chosen
+    from nested dictionaries (IRIS Nominal Response Library).
+    """
+    # TODO make sure max depth is not greater than 6
+    n_cols = 6  # TODO: solve wrap if goes beyond 6
     cols = st.columns(n_cols, vertical_alignment="bottom")
     i_col = 0
     device_keys = []
@@ -132,6 +162,7 @@ def choose_device(device_dict):
 
 
 def create_selectbox(choices: dict, col):
+    """Create a selectbox widget for user selection from a dictionary"""
     label = choices.__str__().partition('(')[0]
     choice = col.selectbox(label, choices.keys(),
                            index=None, placeholder="Choose an option")
@@ -139,6 +170,11 @@ def create_selectbox(choices: dict, col):
 
 
 def build_custom_geophone_response():
+    """Build a custom geophone response from user input.
+
+    User must choose the corner frequency, damping ratio, sensitivity,
+    and frequency of sensitivity.
+    """
     cols = st.columns(4)
     corner_freq = cols[0].number_input("Corner frequency (Hz)", value=1.0,
                                        min_value=0.1, max_value=1000.0)
@@ -183,8 +219,13 @@ def build_custom_geophone_response():
 
 
 def build_custom_datalogger_response():
+    """Build a simplified custom datalogger response from user input.
+
+    User must choose the preamp gain, bit resolution, input voltage range,
+    and sampling rate.
+    http://docs.fdsn.org/projects/stationxml/en/latest/reference.html#stage
+    """
     cols = st.columns(4)
-    # http://docs.fdsn.org/projects/stationxml/en/latest/reference.html#stage
     preamp_gain = cols[0].number_input(
         "Preamp gain factor", value=1.0, min_value=0.1, max_value=10000.0,
         help='Modeled as an analog gain-only stage (ref).'
@@ -208,10 +249,11 @@ def build_custom_datalogger_response():
         "sure its effect is negligible in your frequency range of interest.",
         icon="ℹ️"
     )
+    # This dummy stage will be removed by the combine_sensor_datalogger fct
     dummy_stage = ResponseStage(
         stage_sequence_number=1, stage_gain=1.0,
         stage_gain_frequency=1.0, input_units='M/S', output_units='V'
-    )  # dummy stage that will be removed by nrl combine sensor-datalogger func
+    )
     preamp_stage = PolesZerosResponseStage(
         stage_sequence_number=2,
         stage_gain=preamp_gain,
@@ -256,6 +298,7 @@ def build_custom_datalogger_response():
 def build_channel_objects(band_code, source_code, subsource_code,
                           use_old_format, start_date, end_date,
                           response, sensor, datalogger, sta, ph):
+    """Build valid Obspy Channel objects from user input"""
     channel_objs = []
     code_help_str = "1 - 8 uppercase alphanumeric or dash characters"
     coord_help_str = "in decimal degrees - WGS84"
@@ -270,7 +313,7 @@ def build_channel_objects(band_code, source_code, subsource_code,
         with cont:
             st.write(f"__Channel {chan_code}__")
             value = st.session_state[f"loc_chan_{i}"] if f"loc_chan_{i}" \
-                in st.session_state else "00"  # saves value if widget hidden
+                in st.session_state else "00"  # Saves value if widget hidden
             loc_code = st.text_input(
                 "Location code", value=value, max_chars=8, type="default",
                 help=code_help_str, key=f"loc_chan_{i}"
@@ -303,10 +346,9 @@ def build_channel_objects(band_code, source_code, subsource_code,
                 max_value=10000, format="%d",
                 help="Positive value for buried sensors", key=f"depth_chan_{i}"
             )
-
             chan_elev = sta.elevation - chan_depth
 
-            # only shows correct value if session_state used in prev widgets
+            # Only shows correct value if session_state used in prev widgets
             st.write(f"__Sensor elevation__ = {chan_elev} m")
             if response is not None:
                 st.divider()
@@ -341,6 +383,7 @@ def build_channel_objects(band_code, source_code, subsource_code,
 
 
 def get_channel_start_stop():
+    """Get user input for channel start and stop dates"""
     cols = st.columns(4)
     start_day = cols[0].date_input('__Channel(s) start date__ (UTC)',
                                    value=None)
@@ -372,6 +415,7 @@ def get_channel_start_stop():
 
 
 def add_channels_without_duplicates(new_channels):
+    """Add new channels in saved channels only if not already present."""
     unique_chans = set()
     for chan in st.session_state.saved_channels:
         unique_chans.add((chan.code, chan.location_code))
@@ -394,6 +438,7 @@ def add_channels_without_duplicates(new_channels):
 
 
 def fetch_resp_units(response):
+    """Fetch response units from instrument sensitivity object"""
     input_units = "UNKNOWN"
     output_units = "UNKNOWN"
     i_s = response.instrument_sensitivity
