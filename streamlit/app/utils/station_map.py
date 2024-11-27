@@ -50,9 +50,9 @@ def create_map():
 @st.fragment
 def get_map_column_width():
     """Get the width of the column containing the map.
-    
+
     Nb: the call to the st_dimensions module seems to trigger a rerun
-    of the app, and can thus interfere with the plots. 
+    of the app, and can thus interfere with the plots.
     (Wrapped in fragment as a workaround.)
     """
     width = st_dimensions(key="map_col")
