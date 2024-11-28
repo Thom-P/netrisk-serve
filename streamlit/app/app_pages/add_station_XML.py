@@ -2,10 +2,10 @@ import os
 import io
 
 import streamlit as st
+import pandas as pd
 from obspy.clients.nrl import NRL
 from obspy.core.inventory import Inventory
 from obspy.core.inventory.util import Equipment
-import pandas as pd
 
 from utils.XML_build import (
     get_station_parameters, build_station_and_network_objects,
@@ -24,8 +24,6 @@ st.header('Create station XML')
 # If using v2, need to rethink custom geophone response creation?
 nrl = NRL()  # tmp revert to online
 # nrl = NRL('./NRL')
-
-
 if 'saved_channels' not in st.session_state:
     st.session_state.saved_channels = []
 
@@ -33,7 +31,6 @@ if 'saved_channels' not in st.session_state:
 st.subheader("Station parameters")
 
 net_code, sta_code, lat, lon, elev, site = get_station_parameters()
-
 net, sta = build_station_and_network_objects(
     net_code, sta_code, lat, lon, elev, site
 )
@@ -47,8 +44,8 @@ st.divider()
 
 ############################################################################
 st.subheader("Channel code(s)")
-channels = []
 
+channels = []
 band_url = ('http://docs.fdsn.org/projects/source-identifiers/en/v1.0'
             '/channel-codes.html#band-code')
 st.page_link(band_url, label=':blue[More info on channel codes ↗]')
@@ -61,6 +58,8 @@ use_old_format = st.toggle(
 band_code, source_code, subsource_code = get_channel_codes()
 start_datetime, end_datetime = get_channel_start_stop()
 
+############################################################################
+# Instrument response
 # todo: add response params to session_state?
 response = None
 sensor = None
@@ -157,8 +156,8 @@ if st.button("Add channel(s)", type='primary'):
     #    st.toast(f"Channel(s) {chan.code} added successfully", icon=None)
     # placeholder.empty()
     # keep curr resp inst/dl in seesion state
-
 st.divider()
+
 #######################################
 # Display channels
 st.subheader("Summary")
@@ -197,7 +196,6 @@ df = pd.DataFrame(
         'Sensor', 'Datalogger'
     ]
 )
-# event = st.dataframe(df, hide_index=True, on_select='rerun',
 selection = dataframe_with_selections(
     df,
     column_config={
@@ -216,6 +214,7 @@ selection = dataframe_with_selections(
 
 
 def delete_rows(rows):
+    """Delete selected rows from the saved channels."""
     # reverse so that delete doesnt change remaining indices
     for row in reversed(rows):
         del st.session_state.saved_channels[row]
@@ -230,12 +229,12 @@ if st.button("Delete selected row(s)", disabled=is_disabled,
 
 ############################
 # XML File creation
-
 # Write to a StationXML file. Also force a validation against
 # the StationXML schema to ensure it produces a valid StationXML file.
 
 
 def create_xml(fname, net):
+    """Create the station XML file."""
     net.stations[0].channels = st.session_state.saved_channels
     inv = Inventory(
         networks=[net],
