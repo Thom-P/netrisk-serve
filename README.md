@@ -52,7 +52,7 @@ The home page (_Stations and traces_) lists your currently registered stations (
 
 ### FTP accounts
 
-The _Manage FTP accounts_ page allows you to create a login and password for every station. These credentials should be included in the station's config files to allow FTP connection. Any account can also be deleted to revoke further data upload to the server.
+The _Manage FTP accounts_ page allows you to create a login and password for every station. These credentials should be included in the Netrisk station's config files to allow FTP connection. Any account can also be deleted to revoke further data upload to the server.
 
 ### Station XML files
 
@@ -65,8 +65,13 @@ You can download or delete any of the current StationXML files from the _Manage 
 You can select a given station in the _Stations_ tab of the home page to get a detailed list of its channels and corresponding data availability segments.
 
 ### Traces
-To view a single- or multi-channel trace of a station within a given time window, go to the trace tab of the home page and select the location code, channel(s) code, and start and stop date of the time window. You can optionaly apply a bandpass filter and/or remove the station response from the raw data. 
 
-If the number of sample in the segment is larger than 400'000, a low resolution [min/max](https://docs.obspy.org/packages/autogen/obspy.imaging.waveform.WaveformPlotting.html#obspy.imaging.waveform.WaveformPlotting.__plot_min_max)
+To view a single- or multi-channel trace of a station within a given time window, go to the _Trace_ tab of the home page and select the location code, channel(s) code, and start and stop date of the time window. You can optionaly apply a bandpass filter and/or remove the station response from the raw data. 
+
+If the number of sample in the segment is larger than 400'000, a low resolution [min/max](https://docs.obspy.org/packages/autogen/obspy.imaging.waveform.WaveformPlotting.html#obspy.imaging.waveform.WaveformPlotting.__plot_min_max) plot of the data will appear. These min/max plots do not allow for advanced zooming. If a smaller segment is selected, the full data resolution is accessible via interactive zooming. 
+
+Traces can be downloaded as a png image (from the interactive plot), or as data files in MSEED, SAC, or SEGY formats.
 
 ### Daily plots
+
+To view a full day worth of data in a single, select a location, channel, and day in the _Day plot_ tab of the home page. You can optionaly apply a bandpass filter. The daily plots can only be saved as images.
