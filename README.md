@@ -60,9 +60,13 @@ Every station should have a corresponding [FDSN StationXML file](https://www.fds
 
 You can download or delete any of the current StationXML files from the _Manage XML files_ page.
 
+<img src="screenshotXML.png" alt="app screenshot" width="1000">
+
 ### Channel info and data availability
 
 You can select a given station in the _Stations_ tab of the home page to get a detailed list of its channels and corresponding data availability segments.
+
+<img src="screenshotChannels.png" alt="app screenshot" width="1000">
 
 ### Traces
 
