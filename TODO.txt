@@ -29,6 +29,7 @@
 - test timeline when availability differs by channel
 - add possibility of lowpass or highpass filter only
 - ask deletion/download of vuser myo data before deleting account?
+- check diff between ? status and black light status
 
 ## Last
 - https://peps.python.org/pep-0257/#one-line-docstrings
