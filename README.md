@@ -1,5 +1,7 @@
-# Netrisk serve
+# Netrisk serve 
 _(under development)_
+
+<img src="screenshot.png" alt="app screenshot" width="1000">
 
 Netrisk-serve is a self-hosted web application designed to manage a network of NETRISK stations. The application contains three main components:
  - an FTP server ([vsftpd](https://security.appspot.com/vsftpd.html)) to receive the raw data sent by the NETRISK stations at regular intervals.
