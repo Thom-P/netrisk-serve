@@ -1,19 +1,13 @@
-## Next:
-- ask deletion/download of vuser myo data before deleting account?
-
 ## General
 - cycle data myo and sds data volumes?
-- verify that sensitive infos do not end up in docker images thru env
-- define a log file for each process/app, and make it accessible to UI; on each action started from UI, catch respective log and display
-- integrate python converter within streamlit container instead of seiscomp? to avoid double python install
-- catch all errors and warning and add a report bug form
-
-## Nginx
+- verify that sensitive infos do not end up in docker images through env
+- create a log file for each backend process? make it accessible to UI? on each action started from UI, could catch respective log and display.
+- integrate python converter within streamlit container instead of seiscomp? would avoid double python install
+- add optional bug report form triggered on error catch
 
 ## Seiscomp
 - send alert to user if myo to mseed conversion failure?
-- enforce env variable validity?
-- make lighter image removing unused fetaures?
+- make lighter docker image removing unused features?
 
 ## Mariadb
 - check if init mounted db overrides existing one at container restart/rebuild
@@ -21,25 +15,28 @@
 ## Vsftpd
 - clean up vsftpd conf file
 - check dotenv variable validity
-- allow special account to be able to manage  myo/mseed_segments/archive?
+- allow special account to be able to manage myo/mseed_segments/archive?
 
 ## Streamlit
 - possibility to upload stationXML directly?
 - handle XML validity with obspy?
-- interactive xml edit system ? using st df data editor
 - check/debug illegal resp error on some datalog choices
-- revert to offline NRL
-- add explicit option to merge traces in MSEED?
-- could add an obspy section plot tab, for seeing an event on different sections at the same time
-- could propose large trace as an image (pyplot), and small trace as an interactive plotly object
+- revert to offline NRL?
+- prevent zoom on min/max plots?
 - watchout margin 120 can give error with resize using cmd +/- (wrap in error catch)
 - mod trace colors
 - put progress bars instead of spinner on remove resp when long?
-- should test timeline when avauilability differs by channel
+- test timeline when availability differs by channel
 - add possibility of lowpass or highpass filter only
+- ask deletion/download of vuser myo data before deleting account?
 
-## End
-- code doc: module, class, and func level docstrings: https://peps.python.org/pep-0257/#one-line-docstrings
+## Last
+- https://peps.python.org/pep-0257/#one-line-docstrings
 - github readme
 - error handling
+- auto test
 - freeze versions
+
+## Possible future additions
+- interactive mods of XML file
+- add an obspy section plot tab: could visualize an event on different stations at the same time

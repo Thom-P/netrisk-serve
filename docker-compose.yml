@@ -1,13 +1,4 @@
 services:
-  #certbot:
-  #  image: certbot/certbot
-  #  container_name: certbot
-  #  volumes:
-  #    - certbot-etc:/etc/letsencrypt
-  #    #- certbot-var:/var/lib/letsencrypt
-  #  ports:
-  #    - "80:80"
-  #  command: certonly --standalone --cert-name=netrisk -m "test@tutu.com" -d "need_domain_name" --agree-tos
   proxy:
     build: ./nginx
     depends_on:
@@ -24,9 +15,8 @@ services:
       - streamlit_net
       - adminer_net # to debug
     ports:
-      #- "443:443" # when ready to expose to web
-      - "127.0.0.1:443:443" # only accessible form server (via ssh and port forward)
-    #stop_grace_period: 30s
+      - "443:443" # when ready to expose to web
+      #- "127.0.0.1:443:443" # only accessible form server (via ssh and port forward)
   db:
     image: mariadb:11.2
     restart: always
@@ -66,13 +56,10 @@ services:
       - adminer_net
   ftp:
     build: ./ftp
-    #depends_on:
-    #  - certbot # new certif handle test
     init: true # allows to transfer stop/SIGTERM to vsftpd process
     restart: always
     container_name: vsftpd
     ports:
-      #- "20:20" # not needed in PASSIVE mode
       - "21:21"
       - "7000-7050:7000-7050" # reduced number of published port by 10x to reduce container startup and stop time
       #- "7000-7500:7000-7500"
@@ -80,7 +67,6 @@ services:
       - ftp_data:/data/ftp
       - ssl_cert:/etc/ssl/certs
       - ftp_userdb:/etc/vsftpd # need to share with streamlit
-    #  - certbot-etc:/etc/letsencrypt
     environment:
       - COUNTRY_CODE=${COUNTRY_CODE:-XX}
       - STATE=${STATE:-State}
@@ -122,7 +108,6 @@ services:
       - seiscomp
     restart: always
     container_name: streamlit
-    #ports:
     expose:
       - "8501"
     networks:
@@ -143,7 +128,6 @@ volumes:
   seiscomp_data_archive:
   seiscomp_inventory:
   ssl_cert:
-  #certbot-etc:
 networks:
   db_net:
   adminer_net:
