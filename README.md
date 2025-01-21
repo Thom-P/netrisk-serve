@@ -1,7 +1,7 @@
 # Netrisk serve 
 _(under development)_
 
-<img src="screenshot.png" alt="app screenshot" width="1000">
+<img src="readme_images/screenshot.png" alt="app screenshot" width="1000">
 
 Netrisk-serve is a self-hosted web application designed to manage a network of NETRISK stations. The application contains three main components:
  - an FTP server ([vsftpd](https://security.appspot.com/vsftpd.html)) to receive the raw data sent by the NETRISK stations at regular intervals.
@@ -60,13 +60,13 @@ Every station should have a corresponding [FDSN StationXML file](https://www.fds
 
 You can download or delete any of the current StationXML files from the _Manage XML files_ page.
 
-<img src="screenshotXML.png" alt="app screenshot" width="1000">
+<img src="readme_images/screenshotXML.png" alt="app screenshot" width="1000">
 
 ### Channel info and data availability
 
 You can select a given station in the _Stations_ tab of the home page to get a detailed list of its channels and corresponding data availability segments.
 
-<img src="screenshotChannels.png" alt="app screenshot" width="1000">
+<img src="readme_images/screenshotChannels.png" alt="app screenshot" width="1000">
 
 ### Traces
 
@@ -79,3 +79,13 @@ Traces can be downloaded as a png image (from the interactive plot), or as data 
 ### Daily plots
 
 To view a full day worth of data in a single, select a location, channel, and day in the _Day plot_ tab of the home page. You can optionaly apply a bandpass filter. The daily plots can only be saved as images.
+
+## Acknowledgments
+
+This project was initiated at the Institute of Earth Sciences ([ISTerre](https://www.isterre.fr/?lang=en)) of Grenoble, France. It received financial support from the [Région Auvergne-Rhône-Alpes](https://www.auvergnerhonealpes.fr/).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="readme_images/LOGO_REGION_RVB-BLEU_BLANC.png" width=200>
+  <source media="(prefers-color-scheme: light)" srcset="readme_images/LOGO_REGION_RVB-BLEU-GRIS.png" width=200>
+  <img alt="Auvergne Rhone Alpes Region logo">
+</picture>

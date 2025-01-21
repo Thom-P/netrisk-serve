@@ -24,11 +24,12 @@ list_xml = st.Page("app_pages/list_station_XML.py",
                    title="Manage XML files", icon="📁")
 ftp_accounts = st.Page("app_pages/station_FTP_account.py",
                        title="Manage FTP accounts", icon="📡")
+about = st.Page("app_pages/about.py", title="About", icon="ℹ️")
 
 # Get the current page through navigation and run the associated script
 # (first page runs as default)
 pg = st.navigation(
-        [stat_and_traces, ftp_accounts, list_xml, add_xml]
+        [stat_and_traces, ftp_accounts, list_xml, add_xml, about]
         # or to use subcategories:
         # {
         #     "Stations and Traces": [stat_and_traces],
