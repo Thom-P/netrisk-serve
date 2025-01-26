@@ -1,12 +1,14 @@
-# Netrisk serve 
-_(under development)_
-
-<img src="readme_images/screenshot.png" alt="app screenshot" width="1000">
+# Netrisk serve
 
 Netrisk-serve is a self-hosted web application designed to manage a network of NETRISK stations. The application contains three main components:
  - an FTP server ([vsftpd](https://security.appspot.com/vsftpd.html)) to receive the raw data sent by the NETRISK stations at regular intervals.
  - a [SeisComP](https://www.seiscomp.de/) installation to convert and archive the data into an SDS structure, and to serve [FDSN Web Services](https://www.fdsn.org/webservices/) HTTP requests (stations, dataselect, availability).
  - a user interface built with [Streamlit](https://streamlit.io/) and [Obspy](https://docs.obspy.org/) for managing the stations FTP accounts and metadata ([StationXML](https://www.fdsn.org/xml/station/)), interactive visualization of the data, format conversion, and download.
+
+<figure>
+  <img src="readme_images/screenshot.png" alt="app screenshot" width="800">
+  <figcaption>Netrisk-serve trace viewer</figcaption>
+</figure>
 
 ## Installation
 The installation is intended to be user-friendly and platform independent with the use of Docker containers.
@@ -60,13 +62,20 @@ Every station should have a corresponding [FDSN StationXML file](https://www.fds
 
 You can download or delete any of the current StationXML files from the _Manage XML files_ page.
 
-<img src="readme_images/screenshotXML.png" alt="app screenshot" width="1000">
+<figure>
+  <img src="readme_images/screenshotXML.png" alt="app screenshot" width="800">
+  <figcaption>StationXML intercative builder</figcaption>
+</figure>
+
 
 ### Channel info and data availability
 
 You can select a given station in the _Stations_ tab of the home page to get a detailed list of its channels and corresponding data availability segments.
 
-<img src="readme_images/screenshotChannels.png" alt="app screenshot" width="1000">
+<figure>
+  <img src="readme_images/screenshotChannels.png" alt="app screenshot" width="800">
+  <figcaption>Channel and data availability view</figcaption>
+</figure>
 
 ### Traces
 
@@ -79,6 +88,15 @@ Traces can be downloaded as a png image (from the interactive plot), or as data 
 ### Daily plots
 
 To view a full day worth of data in a single, select a location, channel, and day in the _Day plot_ tab of the home page. You can optionaly apply a bandpass filter. The daily plots can only be saved as images.
+
+## Architecture
+
+A simplified view of the app architecture is shown below:
+
+<figure>
+  <img src="readme_images/diagram.png" alt="app architecture" width="800">
+  <figcaption> Docker services (rectangles) and data volumes (ellipses) </figcaption>
+</figure>
 
 ## Acknowledgments
 

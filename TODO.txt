@@ -33,7 +33,7 @@
 
 ## Last
 - https://peps.python.org/pep-0257/#one-line-docstrings
-- github readme
+- github readme, add stations in diagram
 - error handling
 - auto test
 - freeze versions
