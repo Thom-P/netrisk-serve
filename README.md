@@ -41,6 +41,12 @@ vim .env
 
 ### Building and running the app
 
+Make sure docker is running (use sudo if needed).
+```sh
+sudo docker run hello-world
+```
+
+Build and run the containers:
 ```sh
 sudo docker compose up -d
 ```
